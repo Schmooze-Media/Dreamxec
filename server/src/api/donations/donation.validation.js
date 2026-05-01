@@ -1,35 +1,21 @@
-const zod = require("zod");
+const { z } = require('zod');
 
-export const createOrderSchema = z.object({
-  body: z.object({
-    amount: zod.number().positive("Amount must be a positive number"),
-    email:zod.string().email("Invalid email").required(),
-    projectId: zod.string().min(1, "Project ID is required"),
-    guestEmail: zod.string().email("Invalid email").optional(),
-    guestPAN: zod.string()
-      .regex(/[A-Z]{5}[0-9]{4}[A-Z]{1}/, 'Invalid PAN format')
-      .optional()
-  }).refine(
-    (data) =>
-      data.guestEmail && data.guestPAN || !data.guestEmail,
-    {
-      message: "PAN is required for guest donations",
-      path: ["guestPAN"]
-    }
-  ),
+// ─── Create Order ────────────────────────────────────────────────────────────
+const createOrderSchema = z.object({
+  amount: z.number({ required_error: 'Amount is required' })
+    .positive('Amount must be a positive number'),
+  projectId: z.string().min(1, 'Project ID is required'),
+  email: z.string().email('Invalid email').optional(),
+  name: z.string().optional(),
+  message: z.string().optional(),
+  anonymous: z.boolean().optional(),
 });
 
-export const makeDonationDirectSchema = z.object({
-  body: z.object({
-    amount: z.number().positive("Amount must be a positive number"),
-    projectId: z.string().min(1, "Project ID is required"),
-  }),
+// ─── Verify Payment ──────────────────────────────────────────────────────────
+const verifyPaymentSchema = z.object({
+  razorpay_order_id: z.string().min(1, 'Order ID required'),
+  razorpay_payment_id: z.string().min(1, 'Payment ID required'),
+  razorpay_signature: z.string().min(1, 'Signature required'),
 });
 
-export const verifyPaymentSchema = z.object({
-  body: z.object({
-    razorpayOrderId: z.string().min(1),
-    razorpayPaymentId: z.string().min(1),
-    razorpaySignature: z.string().min(1),
-  }),
-});
+module.exports = { createOrderSchema, verifyPaymentSchema };

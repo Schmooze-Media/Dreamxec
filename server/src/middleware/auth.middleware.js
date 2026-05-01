@@ -4,6 +4,41 @@ const prisma = require('../config/prisma');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 
+/**
+ * optionalAuth — attaches req.user if a valid JWT is present,
+ * but NEVER blocks the request. Use for routes that serve both
+ * authenticated users and guests (e.g. guest donations).
+ */
+exports.optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next(); // no token — continue as guest
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) return next();
+
+    let decoded;
+    try {
+      decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    } catch {
+      return next(); // invalid/expired token — continue as guest
+    }
+
+    let currentUser = await prisma.user.findUnique({ where: { id: decoded.id } });
+    if (!currentUser) {
+      currentUser = await prisma.donor.findUnique({ where: { id: decoded.id } });
+      if (currentUser) currentUser.role = 'DONOR';
+    }
+
+    if (currentUser) req.user = currentUser;
+  } catch {
+    // silently ignore any unexpected errors — always let request through
+  }
+  next();
+};
+
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
 

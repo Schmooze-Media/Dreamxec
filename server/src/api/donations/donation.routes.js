@@ -1,13 +1,16 @@
 const express = require('express');
 const donationController = require('./donation.controller');
-const { protect, restrictTo } = require('../../middleware/auth.middleware');
+const { protect, optionalAuth, restrictTo } = require('../../middleware/auth.middleware');
+
 
 const router = express.Router();
 
 // PUBLIC ROUTES 
-router.post('/create-order', protect, donationController.createOrder);  
+// optionalAuth: attaches req.user if logged in, but lets guests through too
+router.post('/create-order', optionalAuth, donationController.createOrder);  
 router.post('/verify', donationController.verifyPayment);
 router.post('/webhook', donationController.razorpayWebhook);
+
 
 // AUTHENTICATED ROUTES  
 router.get('/my', protect, donationController.getMyDonations);                    
