@@ -199,6 +199,7 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
   const [donationAmount, setDonationAmount] = useState('');
   const [email, setEmail] = useState('');
   const [showDonateModal, setShowDonateModal] = useState(false);
+
   type CampaignTab = 'about' | 'video' | 'media' | 'presentation' | 'faqs';
   const [activeTab, setActiveTab] = useState<CampaignTab>('about');
   const showMobileCTA = campaign?.status === 'approved';
@@ -307,6 +308,7 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
         if (!email) throw new Error('Email required for guests');
         res = await createRazorpayOrderGuest({ amount, projectId: campaign.id, email });
       }
+
       const { orderId, amount: razorAmount, key } = res;
       if (!orderId || !key) throw new Error('Invalid order payload');
       const options = {
@@ -321,7 +323,9 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
           });
           setShowDonateModal(false);
           setDonationAmount('');
+          setEmail('');
           setTimeout(async () => { await refreshCampaign(); }, 2000);
+
         },
         theme: { color: '#0B9C2C' },
       };
@@ -428,11 +432,12 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
                 <div className="flex flex-wrap gap-2 sm:gap-3">
                   {[
                     { emoji: '🏛️', label: campaign.club?.college },
-                    {
-                      emoji: '👥',
+                    { emoji: '👥',
                       label: campaign.club?.name,
-                      onClick: campaign.club?.slug ? () => navigate(`/clubs/${campaign.club?.slug}`) : undefined,
+                      // Use club.id (MongoDB ObjectId) — ClubDetails queries by id, not slug
+                      onClick: campaign.club?.id ? () => navigate(`/clubs/${campaign.club?.id}`) : undefined,
                     },
+
                     { emoji: '🏷️', label: campaign.category || 'Technology' },
                   ].map((chip, i) => (
                     <div
@@ -836,6 +841,8 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
           email={email}
           setEmail={setEmail}
         />
+
+
 
         <MobileDonateCTA
           visible={showMobileCTA}

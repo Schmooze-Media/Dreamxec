@@ -6,15 +6,25 @@ const catchAsync = require("../../utils/catchAsync");
 const { publishEvent } = require('../../services/eventPublisher.service');
 const EVENTS = require('../../config/events');
 
+
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 const { getDonorEligibility } = require('../../utils/donorEligibility');
 
-// STEP 1: Create Razorpay Order (UNCHANGED - PERFECT ✅)
-exports.createOrder = catchAsync(async (req, res) => {
-  const { amount, projectId, message, anonymous, email } = req.body;
+
+// STEP 1: Create Razorpay Order (SUPPORTS BOTH LOGGED-IN AND GUEST USERS)
+exports.createOrder = catchAsync(async (req, res, next) => {
+  const { amount, projectId, message, anonymous, email, name } = req.body;
+
+  // ── Basic validation ──────────────────────────────────────────
+  if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+    return next(new AppError('A valid donation amount is required', 400));
+  }
+  if (!projectId) {
+    return next(new AppError('Project ID is required', 400));
+  }
 
   console.log("🔍 FULL REQUEST OBJECT:", {
     hasUser: !!req.user,
@@ -25,42 +35,48 @@ exports.createOrder = catchAsync(async (req, res) => {
     session: req.session
   });
 
+  const donationAmount = Number(amount);
   let userId = null;
   let donorId = null;
 
-  // 🔥 PRIORITY 1: JWT user (Google login)
+  // 🔥 PRIORITY 1: JWT user (logged-in)
   if (req.user) {
     userId = req.user.id;
     console.log("✅ JWT USER:", req.user.email, "→", userId);
   }
-  // PRIORITY 2: Guest email
-  else if (email) {
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+  // PRIORITY 2: Guest user — requires email
+  else {
+    if (!email || !email.trim()) {
+      return next(new AppError('Email is required for guest donations', 400));
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email: email.trim() } });
     if (existingUser) {
       userId = existingUser.id;
       console.log("✅ GUEST EMAIL MATCHED USER:", email, "→", userId);
     } else {
-      let donor = await prisma.donor.findUnique({ where: { email } });
+      let donor = await prisma.donor.findUnique({ where: { email: email.trim() } });
       if (!donor) {
         donor = await prisma.donor.create({
-          data: { 
-            email, 
-            name: req.body.name || "Anonymous Donor" 
+          data: {
+            email: email.trim(),
+            name: name || 'Anonymous Donor'
           }
         });
       }
       donorId = donor.id;
-      console.log("✅ NEW DONOR CREATED:", email, "→", donorId);
+      console.log("✅ NEW/EXISTING DONOR:", email, "→", donorId);
     }
   }
 
   const donation = await prisma.donation.create({
     data: {
-      amount,
+      amount: donationAmount,
       message: message || null,
       anonymous: anonymous || false,
       userId,
       donorId,
+      guestEmail: !userId ? (email?.trim() || null) : null,
       userProjectId: projectId,
       paymentStatus: "created"
     }
@@ -69,7 +85,7 @@ exports.createOrder = catchAsync(async (req, res) => {
   console.log("💰 NEW DONATION:", donation.id, "userId:", userId, "donorId:", donorId);
 
   const order = await razorpay.orders.create({
-    amount: amount * 100,
+    amount: donationAmount * 100,
     currency: "INR",
     receipt: `receipt_${donation.id}`,
     notes: {
@@ -91,6 +107,7 @@ exports.createOrder = catchAsync(async (req, res) => {
     key: process.env.RAZORPAY_KEY_ID
   });
 });
+
 
 // STEP 2: VERIFY PAYMENT - Now also updates donation and project
 exports.verifyPayment = async (req, res, next) => {
