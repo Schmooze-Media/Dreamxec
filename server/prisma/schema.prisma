@@ -13,6 +13,8 @@ datasource db {
 enum Role {
   USER
   DONOR
+  ALUMNI
+  MENTOR
   ADMIN
   STUDENT_PRESIDENT
 }
@@ -69,6 +71,13 @@ enum AccountStatus {
 enum MilstoneStatus {
   PENDING
   SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum MentorStatus {
+  PENDING
+  REVIEWED
   APPROVED
   REJECTED
 }
@@ -206,6 +215,10 @@ model Donor {
   education         String?
   occupation        Occupation?
   address           String?
+  institution       String?
+  graduationYear    Int?
+  expertiseSkills   String[]
+  openToConnect     Boolean  @default(false)
 
   // Social & Bio
   instagram         String?
@@ -847,7 +860,7 @@ model MentorApplication {
   mentorReferral String? // One person they recommend as a mentor
 
   // ── METADATA ──
-  status String @default("PENDING") // PENDING, REVIEWED, APPROVED, REJECTED
+  status MentorStatus @default(PENDING) // PENDING, REVIEWED, APPROVED, REJECTED
   score Float? // Internal scoring for quality assessment
   adminNotes String? // Admin's review notes
   createdAt DateTime @default(now())
