@@ -10,6 +10,8 @@ import axios from "axios";
 import DonorAnalyticsChart from "./DonorAnalyticsChart";
 import DonationHeatmap from "./CalendarHeatmap";
 import { ApiResponse } from "../services/api";
+import { useSearchParams } from "react-router-dom";
+import BecomeMentor from "../sections/Pages/supporters/BecomeMentor";
 
 // ─── API Setup ────────────────────────────────────────────────────────────────
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -788,7 +790,8 @@ type Tab =
   | "applications"
   | "donations"
   | "wishlist"
-  | "profile";
+  | "profile"
+  | "mentorship";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN DASHBOARD INNER
@@ -805,7 +808,10 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [selectedTab, setSelectedTab] = useState<Tab>("overview");
+  const [searchParams] = useSearchParams();
+  const [selectedTab, setSelectedTab] = useState<Tab>(
+    (searchParams.get("section") as Tab) ?? "overview",
+  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [myDonations, setMyDonations] = useState<Donation[]>([]);
   const [loadingDonations, setLoadingDonations] = useState(true);
@@ -1153,6 +1159,15 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
             active={selectedTab === "profile"}
             badge={profileComplete ? 0 : 1}
             onClick={() => navigate("/profile/setup")}
+          />
+          {selectedTab === "mentorship" && (
+            <BecomeMentor /> // already exists at src/sections/Pages/supporters/BecomeMentor.tsx
+          )}
+          <SideNavItem
+            icon="🧑‍🏫"
+            label="Mentorship"
+            active={selectedTab === "mentorship"}
+            onClick={() => switchTab("mentorship")}
           />
         </nav>
 
