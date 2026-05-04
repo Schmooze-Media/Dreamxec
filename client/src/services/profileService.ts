@@ -98,3 +98,20 @@ export const uploadProfilePicture = async (file: File) => {
     body: formData,
   });
 };
+
+// Add the API call
+export interface activateroleResponse {
+  status: string;
+  message: string;
+  data: {
+    role: "ALUMNI" | "MENTOR";
+    redirectTo: string;
+  };
+}
+
+export const activaterole = async (role: "ALUMNI") => {
+  return apiRequest<activateroleResponse>("/users/activate-role", {
+    method: "POST",
+    body: JSON.stringify({ role }),
+  });
+};
