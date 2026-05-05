@@ -11,7 +11,8 @@ import DonorAnalyticsChart from "./DonorAnalyticsChart";
 import DonationHeatmap from "./CalendarHeatmap";
 import { ApiResponse } from "../services/api";
 import { useSearchParams } from "react-router-dom";
-import BecomeMentor from "../sections/Pages/supporters/BecomeMentor";
+import MentorshipApplication from './MentorshipApplication';
+import { activaterole } from "@/services/profileService";
 
 // ─── API Setup ────────────────────────────────────────────────────────────────
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -220,7 +221,10 @@ type IconName =
   | "alert"
   | "check-circle"
   | "x-circle"
-  | "clock";
+  | "clock"
+  | "users"
+  | "user-check"
+  | "calendar";
 
 const Ico: React.FC<{ name: IconName; className?: string }> = ({
   name,
@@ -235,6 +239,8 @@ const Ico: React.FC<{ name: IconName; className?: string }> = ({
     menu: "M3 12h18M3 6h18M3 18h18",
     x: "M18 6L6 18M6 6l12 12",
     check: "M9 12l2 2 4-4",
+    users:
+      "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75M9 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z",
     star: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
     heart:
       "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z",
@@ -244,6 +250,10 @@ const Ico: React.FC<{ name: IconName; className?: string }> = ({
     download: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3",
     alert:
       "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
+    "user-check":
+      "M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM17 11l2 2 4-4",
+    calendar:
+      "M8 7V3M16 7V3M3 11h18M5 5h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z",
   };
   if (name === "check-circle")
     return (
@@ -791,7 +801,9 @@ type Tab =
   | "donations"
   | "wishlist"
   | "profile"
-  | "mentorship";
+  | "mentorship"
+  | "my-mentees"
+  | "sessions";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN DASHBOARD INNER
@@ -838,6 +850,7 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
   const [wishlistError, setWishlistError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [eligibility, setEligibility] = useState<Eligibility | null>(null);
+  const [mentorStatus, setMentorStatus] = useState<string | null>(null);
 
   const totalDonated = myDonations.reduce((s, d) => s + d.amount, 0);
   const avgDonation = myDonations.length
@@ -894,6 +907,11 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
       setLoadingDonations(false);
     }
   }, []);
+  const [upgradeCard, setUpgradeCard] = useState<{
+    suppressed: boolean;
+    isAlumniEligible?: boolean;
+    isMentorEligible?: boolean;
+  } | null>(null);
 
   const loadApplications = useCallback(async () => {
     setLoadingApplications(true);
@@ -980,6 +998,42 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
       } catch {}
     };
     fetchEligibility();
+  }, []);
+  useEffect(() => {
+    const fetchUpgradeCard = async () => {
+      try {
+        const res = await axios.get<{
+          status: string;
+          data: {
+            upgradeCard: {
+              suppressed: boolean;
+              isAlumniEligible?: boolean;
+              isMentorEligible?: boolean;
+            };
+          };
+        }>(`${API_BASE}/profile`, { withCredentials: true });
+        setUpgradeCard(res.data.data.upgradeCard);
+      } catch {
+        /* non-fatal */
+      }
+    };
+    fetchUpgradeCard();
+  }, []);
+  useEffect(() => {
+    const fetchMentorStatus = async () => {
+      try {
+        const res = await axios.get<{
+          success: boolean;
+          data: { status: string };
+        }>(`${API_BASE}/users/me/mentor-application`, {
+          withCredentials: true,
+        });
+        setMentorStatus(res.data.data.status);
+      } catch {
+        // No application filed yet — leave as null, sub-items stay hidden
+      }
+    };
+    fetchMentorStatus();
   }, []);
   useEffect(() => {
     if (selectedTab === "applications") loadApplications();
@@ -1160,8 +1214,30 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
             badge={profileComplete ? 0 : 1}
             onClick={() => navigate("/profile/setup")}
           />
+          <SideNavItem
+            icon="users"
+            label="Mentorship"
+            active={selectedTab === "mentorship"}
+            onClick={() => switchTab("mentorship")}
+          />
+          {mentorStatus === "APPROVED" && (
+            <>
+              <SideNavItem
+                icon="user-check"
+                label="My Mentees"
+                active={selectedTab === "my-mentees"}
+                onClick={() => switchTab("my-mentees")}
+              />
+              <SideNavItem
+                icon="calendar"
+                label="Sessions"
+                active={selectedTab === "sessions"}
+                onClick={() => switchTab("sessions")}
+              />
+            </>
+          )}
           {selectedTab === "mentorship" && (
-            <BecomeMentor /> // already exists at src/sections/Pages/supporters/BecomeMentor.tsx
+          <MentorshipApplication />
           )}
           <SideNavItem
             icon="🧑‍🏫"
@@ -1246,6 +1322,61 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
             <>
               {/* Profile Incomplete Banner */}
               {profileComplete === false && (
+                {/* ── Role Upgrade Card (recoverable from "Maybe Later" / "Skip") ── */}
+{upgradeCard && !upgradeCard.suppressed && (upgradeCard.isAlumniEligible || upgradeCard.isMentorEligible) && (
+    <div
+        className="p-5 bg-white"
+        style={{ border: '3px solid #003366', boxShadow: '6px 6px 0 #FF7F00' }}
+    >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+                <span className="text-xl">🎉</span>
+                <p className="text-sm font-black text-[#003366] uppercase tracking-wide">
+                    You have unlocked new roles
+                </p>
+            </div>
+            <button
+                onClick={async () => {
+                    try { await suppressUpgradeCard(); } catch { /* non-fatal */ }
+                    setUpgradeCard(c => c ? { ...c, suppressed: true } : c);
+                }}
+                className="text-xs font-black text-[#003366]/50 uppercase tracking-widest hover:text-[#003366] transition-colors"
+            >
+                Dismiss ✕
+            </button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+            {/* Alumni CTA */}
+            {upgradeCard.isAlumniEligible && (
+                <button
+                    onClick={async () => {
+                        try {
+                            await activaterole('ALUMNI');
+                            setUpgradeCard(c => c ? { ...c, suppressed: true } : c);
+                        } catch { /* non-fatal */ }
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-xs font-black text-white uppercase tracking-widest"
+                    style={{ background: '#003366', border: '3px solid #003366', boxShadow: '3px 3px 0 #FF7F00' }}
+                >
+                    🎓 Activate Alumni →
+                </button>
+            )}
+
+            {/* Mentor CTA */}
+            {upgradeCard.isMentorEligible && (
+                <button
+                    onClick={() => switchTab('mentorship')}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-xs font-black text-white uppercase tracking-widest"
+                    style={{ background: '#0B9C2C', border: '3px solid #003366', boxShadow: '3px 3px 0 #003366' }}
+                >
+                    🧑‍🏫 Start Mentor Application →
+                </button>
+            )}
+        </div>
+    </div>
+)}
                 <a
                   href="/profile/setup"
                   className="flex items-center gap-4 p-4 transition-all hover:translate-x-[-2px] hover:translate-y-[-2px]"
@@ -2103,6 +2234,42 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
                   })}
                 </div>
               )}
+            </div>
+          )}
+          {selectedTab === "my-mentees" && (
+            <div
+              className="p-8 text-center"
+              style={{
+                border: "4px solid #003366",
+                boxShadow: "6px 6px 0 #FF7F00",
+              }}
+            >
+              <div className="text-4xl mb-3">🧑‍🎓</div>
+              <h2 className="text-xl font-black text-[#003366] uppercase tracking-tight mb-2">
+                My Mentees
+              </h2>
+              <p className="text-sm font-medium text-[#003366]/60">
+                Your assigned mentees will appear here once the platform matches
+                you.
+              </p>
+            </div>
+          )}
+
+          {selectedTab === "sessions" && (
+            <div
+              className="p-8 text-center"
+              style={{
+                border: "4px solid #003366",
+                boxShadow: "6px 6px 0 #0B9C2C",
+              }}
+            >
+              <div className="text-4xl mb-3">📅</div>
+              <h2 className="text-xl font-black text-[#003366] uppercase tracking-tight mb-2">
+                Sessions
+              </h2>
+              <p className="text-sm font-medium text-[#003366]/60">
+                Scheduled mentorship sessions will appear here once activated.
+              </p>
             </div>
           )}
         </div>
