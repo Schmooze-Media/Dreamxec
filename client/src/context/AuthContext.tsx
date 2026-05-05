@@ -18,7 +18,13 @@ import {
 import { mapBackendRole, mapFrontendRole } from "../services/mappers";
 import { getToken } from "../services/api";
 
-type BackendRoleType = "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT";
+type BackendRoleType =
+  | "USER"
+  | "DONOR"
+  | "ADMIN"
+  | "STUDENT_PRESIDENT"
+  | "ALUMNI"
+  | "MENTOR";
 
 interface BackendUser {
   id: string;
