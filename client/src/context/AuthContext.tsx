@@ -29,7 +29,7 @@ type BackendRoleType =
 interface BackendUser {
   id: string;
   email: string;
-  role: BackendRoleType;
+  role?: BackendRoleType;
   emailVerified?: boolean;
   clubIds?: string[];
   createdAt?: string;

@@ -63,6 +63,9 @@ export type UserRole =
   | "student"
   | "admin"
   | "donor"
+  | "USER"
+  | "ADMIN"
+  | "DONOR"
   | "STUDENT_PRESIDENT"
   | "ALUMNI"
   | "MENTOR";
@@ -78,7 +81,7 @@ export interface User {
 
   emailVerified: boolean;
   studentVerified: boolean;
-
+  profileComplete?: boolean;
   isClubPresident: boolean;
   isClubMember: boolean;
   clubVerified: boolean;

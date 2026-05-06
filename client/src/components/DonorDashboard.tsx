@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import DonorAnalyticsChart from "./DonorAnalyticsChart";
 import DonationHeatmap from "./CalendarHeatmap";
-import { ApiResponse } from "../services/api";
+import { ApiResponse, suppressUpgradeCard } from "../services/api";
 import { useSearchParams } from "react-router-dom";
 import MentorshipApplication from "./MentorshipApplication";
 import { activaterole } from "@/services/profileService";

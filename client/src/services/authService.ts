@@ -16,13 +16,14 @@ export interface User {
   organizationName?: string;
   studentVerified?: boolean;
   accountStatus?: "ACTIVE" | "BLOCKED" | "SUSPENDED" | "UNDER_REVIEW";
+  profileComplete?: boolean;
 }
 
 export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT"; // Added STUDENT_PRESIDENT
+  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR"; // Added STUDENT_PRESIDENT
   organizationName?: string;
 }
 
@@ -103,7 +104,7 @@ export const resetPassword = async (
 
 // Google OAuth - Initiate authentication
 export const initiateGoogleAuth = (
-  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT",
+  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR",
 ): void => {
   // Added STUDENT_PRESIDENT
   const envUrl = import.meta.env.VITE_API_URL;

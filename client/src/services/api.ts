@@ -142,5 +142,9 @@ async function apiRequest<T>(
     throw new Error("Network error. Please check your connection.");
   }
 }
-
+export const suppressUpgradeCard = async () => {
+  return await apiRequest("/users/suppress-upgrade-card", {
+    method: "PATCH",
+  });
+};
 export default apiRequest;

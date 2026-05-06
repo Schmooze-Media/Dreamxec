@@ -1408,7 +1408,7 @@ function AppContent() {
                                       <BrowseProjects
                                         projects={approvedProjects}
                                         currentUserId={user?.id}
-                                        role={user?.role}
+                                        // role={user?.role}
                                         onApply={handleApplyToProject}
                                         userApplications={userApplications}
                                       />
@@ -1670,5 +1670,4 @@ const App = () => {
     </Router>
   );
 };
-
 export default App;

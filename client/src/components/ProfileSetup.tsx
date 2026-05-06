@@ -11,7 +11,13 @@ import { useAuth } from "../context/AuthContext";
 /* ─────────────────────────────────────────
    TYPES
 ───────────────────────────────────────── */
-type Role = "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT";
+type Role =
+  | "USER"
+  | "DONOR"
+  | "ADMIN"
+  | "STUDENT_PRESIDENT"
+  | "ALUMNI"
+  | "MENTOR";
 type Gender = "MALE" | "FEMALE" | "OTHER";
 type YearOfStudy = "FIRST" | "SECOND" | "THIRD" | "FINAL";
 type Occupation = "SALARIED" | "BUSINESS" | "PROFESSIONAL" | "OTHER";

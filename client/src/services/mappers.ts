@@ -29,7 +29,7 @@ export const PROJECT_STATUS = {
 } as const;
 
 // Backend → Frontend
-type BackendRole =
+export type BackendRole =
   | "USER"
   | "DONOR"
   | "ADMIN"
@@ -55,9 +55,11 @@ export const mapFrontendRole = (frontendRole: UserRole): BackendRole => {
     donor: "DONOR",
     DONOR: "DONOR",
     admin: "ADMIN",
+    ADMIN: "ADMIN",
+    USER: "USER",
     STUDENT_PRESIDENT: "STUDENT_PRESIDENT",
-    ALUMNI: "ALUMNI", // ← ADD
-    MENTOR: "MENTOR", // ← ADD
+    ALUMNI: "ALUMNI",
+    MENTOR: "MENTOR",
   };
   return roleMap[frontendRole];
 };
