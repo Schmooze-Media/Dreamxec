@@ -4,6 +4,14 @@ export type AccountStatus = "ACTIVE" | "BLOCKED" | "SUSPENDED" | "UNDER_REVIEW";
 
 export type ProjectStatus = "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "PAUSED" | "FROZEN" | "pending" | "approved" | "rejected" | "completed" | "paused" | "frozen";
 
+export type TransferStatus =
+  | "PENDING_ACCEPTANCE"
+  | "PENDING_PRESIDENT"
+  | "PENDING_ADMIN"
+  | "COMPLETED"
+  | "REJECTED"
+  | "EXPIRED";
+
 export interface PaginationMeta {
   total: number;
   page: number;
@@ -250,6 +258,26 @@ export interface Student {
   avatar?: string;
 }
 
+/* =========================================================
+   Campaign Transfers
+========================================================= */
+export interface CampaignTransfer {
+  id: string;
+  campaignId: string;
+  fromUserId: string;
+  toUserId: string;
+  status: TransferStatus;
+
+  requestNote?: string;
+  presidentNote?: string;
+  adminNote?: string;
+  rejectionReason?: string;
+
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+  expiresAt: string;
+}
 
 /* =========================================================
    Admin Specific Types

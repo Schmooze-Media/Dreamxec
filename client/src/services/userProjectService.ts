@@ -1,3 +1,4 @@
+import { CampaignTransfer } from "@/types";
 import apiRequest, { type ApiResponse } from "./api";
 import axios from "axios";
 
@@ -293,4 +294,64 @@ export const deleteUserProject = async (
   return apiRequest(`/user-projects/${id}`, {
     method: "DELETE",
   });
+};
+
+/* =========================================================
+   TRANSFER APIs
+========================================================= */
+
+export const getTransfers = async (
+  campaignId: string
+): Promise<ApiResponse<{ data: CampaignTransfer[] }>> => {
+  return apiRequest(`/user-projects/${campaignId}/transfers`, {
+    method: "GET",
+  });
+};
+
+export const initiateTransfer = async (
+  campaignId: string,
+  data: { toUserId: string; note?: string }
+): Promise<ApiResponse<{ data: CampaignTransfer }>> => {
+  return apiRequest(`/user-projects/${campaignId}/transfers`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
+export const acceptTransfer = async (
+  campaignId: string,
+  transferId: string
+): Promise<ApiResponse<{ data: CampaignTransfer }>> => {
+  return apiRequest(
+    `/user-projects/${campaignId}/transfers/${transferId}/accept`,
+    { method: "PATCH" }
+  );
+};
+
+export const rejectTransfer = async (
+  campaignId: string,
+  transferId: string,
+  data: { reason: string }
+): Promise<ApiResponse<{ data: CampaignTransfer }>> => {
+  return apiRequest(
+    `/user-projects/${campaignId}/transfers/${transferId}/reject`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }
+  );
+};
+
+export const approveTransfer = async (
+  campaignId: string,
+  transferId: string,
+  data?: { note?: string }
+): Promise<ApiResponse<{ data: CampaignTransfer }>> => {
+  return apiRequest(
+    `/user-projects/${campaignId}/transfers/${transferId}/approve`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(data || {}),
+    }
+  );
 };

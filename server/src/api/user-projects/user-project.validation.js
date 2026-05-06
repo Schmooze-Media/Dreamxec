@@ -7,7 +7,7 @@ const zod = require("zod");
 const MAX_TEAM_MEMBERS = 20;
 const MAX_FAQS = 15;
 const MAX_MILESTONES = 20;
-const MAX_GOAL_AMOUNT = 10_000_000; // 1 Cr limit safety
+const MAX_GOAL_AMOUNT = 10_000_000;
 
 /* =====================================================
    HELPERS
@@ -51,8 +51,6 @@ const milestoneSchema = zod.object({
 const teamMemberSchema = zod.object({
   name: zod.string().min(2).max(50),
   role: zod.string().min(2).max(50),
-
-  // image injected by backend
   image: zod.string().url().optional(),
 });
 
@@ -66,184 +64,148 @@ const faqSchema = zod.object({
 });
 
 /* =====================================================
+   BASE BODY SCHEMA (REUSABLE)
+===================================================== */
+
+const createUserProjectBody = zod.object({
+  title: zod.string().min(5).max(200),
+  description: zod.string().min(20).max(5000),
+
+  companyName: zod
+    .string()
+    .trim()
+    .max(120)
+    .optional()
+    .transform((v) => (v === "" ? undefined : v)),
+
+  campaignType: zod
+    .enum(["INDIVIDUAL", "TEAM"])
+    .default("INDIVIDUAL"),
+
+  goalAmount: zod.preprocess(
+    (v) => (typeof v === "string" ? parseFloat(v) : v),
+    zod.number().positive().max(MAX_GOAL_AMOUNT)
+  ),
+
+  skillsRequired: zod
+    .preprocess((v) => {
+      if (!v) return [];
+      if (typeof v === "string") return safeJSONParse(v, "skills");
+      return v;
+    }, zod.array(zod.string().min(2).max(50)).max(20))
+    .optional(),
+
+  teamMembers: zod
+    .preprocess((v) => {
+      if (!v) return [];
+      if (typeof v === "string") return safeJSONParse(v, "teamMembers");
+      return v;
+    }, zod.array(teamMemberSchema).max(MAX_TEAM_MEMBERS))
+    .optional(),
+
+  faqs: zod
+    .preprocess((v) => {
+      if (!v) return [];
+      if (typeof v === "string") return safeJSONParse(v, "faqs");
+      return v;
+    }, zod.array(faqSchema).max(MAX_FAQS))
+    .default([]),
+
+  youtubeUrl: zod
+    .string()
+    .optional()
+    .refine((v) => !v || youtubeRegex.test(v), "Invalid YouTube URL"),
+
+  milestones: zod.preprocess(
+    (v) =>
+      typeof v === "string"
+        ? safeJSONParse(v, "milestones")
+        : v,
+    zod.array(milestoneSchema).min(1).max(MAX_MILESTONES)
+  ),
+
+  presentationDeckUrl: zod
+    .string()
+    .url()
+    .optional()
+    .or(zod.literal("")),
+});
+
+/* =====================================================
    CREATE USER PROJECT SCHEMA
 ===================================================== */
 
 const createUserProjectSchema = zod.object({
-  body: zod
-    .object({
-      /* ------------------ */
-      /* BASIC INFO */
-      /* ------------------ */
+  body: createUserProjectBody.superRefine((data, ctx) => {
+    // Budget validation
+    let totalMilestones = 0;
+    if (Array.isArray(data.milestones)) {
+      totalMilestones = data.milestones.reduce(
+        (s, m) => s + m.budget,
+        0
+      );
+    }
 
-      title: zod.string().min(5).max(200),
-      description: zod.string().min(20).max(5000),
+    if (totalMilestones > data.goalAmount) {
+      ctx.addIssue({
+        path: ["milestones"],
+        message:
+          "Total milestone budget cannot exceed goal amount",
+        code: zod.ZodIssueCode.custom,
+      });
+    }
 
-      companyName: zod
-        .string()
-        .trim()
-        .max(120)
-        .optional()
-        .transform((v) => (v === "" ? undefined : v)),
+    // Team validation
+    if (
+      data.campaignType === "TEAM" &&
+      (!data.teamMembers || data.teamMembers.length === 0)
+    ) {
+      ctx.addIssue({
+        path: ["teamMembers"],
+        message:
+          "TEAM campaign must include team members",
+        code: zod.ZodIssueCode.custom,
+      });
+    }
 
-      campaignType: zod
-        .enum(["INDIVIDUAL", "TEAM"])
-        .default("INDIVIDUAL"),
+    // Duplicate milestone titles
+    const titles = Array.isArray(data.milestones)
+      ? data.milestones.map((m) => m.title.toLowerCase())
+      : [];
 
-      goalAmount: zod.preprocess(
-        (v) => (typeof v === "string" ? parseFloat(v) : v),
-        zod.number().positive().max(MAX_GOAL_AMOUNT)
-      ),
+    if (new Set(titles).size !== titles.length) {
+      ctx.addIssue({
+        path: ["milestones"],
+        message:
+          "Milestone titles must be unique",
+        code: zod.ZodIssueCode.custom,
+      });
+    }
 
-      /* ------------------ */
-      /* SKILLS */
-      /* ------------------ */
+    // Duplicate FAQ questions
+    if (data.faqs) {
+      const questions = data.faqs.map((f) =>
+        f.question.toLowerCase()
+      );
 
-      skillsRequired: zod
-        .preprocess((v) => {
-          if (!v) return [];
-          if (typeof v === "string") return safeJSONParse(v, "skills");
-          return v;
-        }, zod.array(zod.string().min(2).max(50)).max(20))
-        .optional(),
-
-      /* ------------------ */
-      /* TEAM */
-      /* ------------------ */
-
-      teamMembers: zod
-        .preprocess((v) => {
-          if (!v) return [];
-          if (typeof v === "string") return safeJSONParse(v, "teamMembers");
-          return v;
-        }, zod.array(teamMemberSchema).max(MAX_TEAM_MEMBERS))
-        .optional(),
-
-      /* ------------------ */
-      /* FAQS */
-      /* ------------------ */
-
-      faqs: zod
-        .preprocess((v) => {
-          if (!v) return [];
-          if (typeof v === "string") return safeJSONParse(v, "faqs");
-          return v;
-        }, zod.array(faqSchema).max(MAX_FAQS))
-        .default([]),
-
-      /* ------------------ */
-      /* YOUTUBE */
-      /* ------------------ */
-
-      youtubeUrl: zod
-        .string()
-        .optional()
-        .refine(
-          (v) => !v || youtubeRegex.test(v),
-          "Invalid YouTube URL"
-        ),
-
-      /* ------------------ */
-      /* MILESTONES */
-      /* ------------------ */
-
-      milestones: zod.preprocess(
-        (v) =>
-          typeof v === "string"
-            ? safeJSONParse(v, "milestones")
-            : v,
-        zod
-          .array(milestoneSchema)
-          .min(1)
-          .max(MAX_MILESTONES)
-      ),
-
-      presentationDeckUrl: zod
-        .string()
-        .url()
-        .optional()
-        .or(zod.literal("")),
-    })
-
-    /* =====================================================
-       SUPER VALIDATION
-    ===================================================== */
-
-    .superRefine((data, ctx) => {
-      /* ------------------ */
-      /* Budget vs Milestones */
-      /* ------------------ */
-
-      let totalMilestones = 0;
-      if (Array.isArray(data.milestones)) {
-        totalMilestones = data.milestones.reduce(
-          (s, m) => s + m.budget,
-          0
-        );
-      }
-
-      if (totalMilestones > data.goalAmount) {
+      if (new Set(questions).size !== questions.length) {
         ctx.addIssue({
-          path: ["milestones"],
+          path: ["faqs"],
           message:
-            "Total milestone budget cannot exceed goal amount",
+            "Duplicate FAQ questions detected",
           code: zod.ZodIssueCode.custom,
         });
       }
+    }
+  }),
+});
 
-      /* ------------------ */
-      /* Team rule */
-      /* ------------------ */
+/* =====================================================
+   UPDATE USER PROJECT SCHEMA (SAFE PARTIAL)
+===================================================== */
 
-      if (
-        data.campaignType === "TEAM" &&
-        (!data.teamMembers ||
-          data.teamMembers.length === 0)
-      ) {
-        ctx.addIssue({
-          path: ["teamMembers"],
-          message:
-            "TEAM campaign must include team members",
-          code: zod.ZodIssueCode.custom,
-        });
-      }
-
-      /* ------------------ */
-      /* Duplicate milestone titles */
-      /* ------------------ */
-
-      const titles = Array.isArray(data.milestones)
-        ? data.milestones.map((m) => m.title.toLowerCase())
-        : [];
-
-      if (new Set(titles).size !== titles.length) {
-        ctx.addIssue({
-          path: ["milestones"],
-          message:
-            "Milestone titles must be unique",
-          code: zod.ZodIssueCode.custom,
-        });
-      }
-
-      /* ------------------ */
-      /* Duplicate FAQ questions */
-      /* ------------------ */
-
-      if (data.faqs) {
-        const questions = data.faqs.map((f) =>
-          f.question.toLowerCase()
-        );
-
-        if (new Set(questions).size !== questions.length) {
-          ctx.addIssue({
-            path: ["faqs"],
-            message:
-              "Duplicate FAQ questions detected",
-            code: zod.ZodIssueCode.custom,
-          });
-        }
-      }
-    }),
+const updateUserProjectSchema = zod.object({
+  body: createUserProjectBody.partial(),
 });
 
 /* =====================================================
@@ -251,19 +213,24 @@ const createUserProjectSchema = zod.object({
 ===================================================== */
 
 const submitMilestoneSchema = zod.object({
-  body: zod.object({
-    proofUrl: zod.string().url().optional(),
-    mediaUrl: zod.string().url().optional(),
-    notes: zod.string().max(2000).optional(),
-  }).refine(
-    (data) => data.proofUrl || data.mediaUrl,
-    {
-      message: "At least one proof link (Drive or YouTube) is required",
-    }
-  ),
+  body: zod
+    .object({
+      proofUrl: zod.string().url().optional(),
+      mediaUrl: zod.string().url().optional(),
+      notes: zod.string().max(2000).optional(),
+    })
+    .refine((data) => data.proofUrl || data.mediaUrl, {
+      message:
+        "At least one proof link (Drive or YouTube) is required",
+    }),
 });
+
+/* =====================================================
+   EXPORTS
+===================================================== */
 
 module.exports = {
   createUserProjectSchema,
+  updateUserProjectSchema,
   submitMilestoneSchema,
 };

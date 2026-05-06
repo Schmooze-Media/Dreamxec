@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
+const transferController = require('./transfer/transfer.controller');
 const {
   createUserProject,
   updateUserProject,
@@ -19,6 +20,7 @@ const {
   updateUserProjectSchema,
   submitMilestoneSchema,
 } = require('./user-project.validation');
+
 
 // 🟢 Import the new middleware
 const { validateCampaignEligibility, resolveCampaignClub } = require('../../middleware/club.middleware');
@@ -91,6 +93,41 @@ router.patch(
   submitMilestone
 );
 
+// 🔄 TRANSFER ROUTES
 
+// Initiate transfer (Owner / President / Admin)
+router.post(
+  '/:id/transfers',
+  restrictTo('USER', 'STUDENT_PRESIDENT', 'ADMIN'),
+  transferController.initiate
+);
+
+// Accept transfer (New Owner)
+router.patch(
+  '/:id/transfers/:transferId/accept',
+  restrictTo('USER', 'STUDENT_PRESIDENT'),
+  transferController.accept
+);
+
+// Reject transfer (New Owner)
+router.patch(
+  '/:id/transfers/:transferId/reject',
+  restrictTo('USER', 'STUDENT_PRESIDENT'),
+  transferController.rejectByUser
+);
+
+// Approve transfer (President / Admin)
+router.patch(
+  '/:id/transfers/:transferId/approve',
+  restrictTo('STUDENT_PRESIDENT', 'ADMIN'),
+  transferController.approve
+);
+
+// 📄 GET TRANSFERS (IMPORTANT)
+router.get(
+  '/:id/transfers',
+  restrictTo('USER', 'STUDENT_PRESIDENT', 'ADMIN'),
+  transferController.getTransfers
+);
 
 module.exports = router;

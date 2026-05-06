@@ -7,9 +7,10 @@ const EVENTS = require('../../config/events');
 const generateUniqueSlug = require("../../utils/generateSlug");
 const { getCache, setCache, delCache } = require('../../utils/cache');
 const isBot = require('../../utils/isBot');
+const transferService = require('./transfer/transfer.service');
 
 const PUBLIC_PROJECTS_TTL = 60;   // seconds
-const PROJECT_DETAIL_TTL  = 120;  // seconds
+const PROJECT_DETAIL_TTL = 120;  // seconds
 
 
 
@@ -274,6 +275,11 @@ exports.updateUserProject = catchAsync(async (req, res, next) => {
     include: { milestones: true },
   });
 
+  // 🔒 TRANSFER GUARD
+  if (userProject.transferStatus === "TRANSFER_PENDING") {
+    return next(new AppError("Campaign is under transfer", 400));
+  }
+
   if (!userProject)
     return next(new AppError('User project not found', 404));
 
@@ -365,6 +371,11 @@ exports.deleteUserProject = catchAsync(async (req, res, next) => {
   const userProject = await prisma.userProject.findUnique({
     where: { id: req.params.id },
   });
+
+  // 🔒 TRANSFER GUARD
+  if (userProject.transferStatus === "TRANSFER_PENDING") {
+    return next(new AppError("Campaign is under transfer", 400));
+  }
 
   if (!userProject)
     return next(new AppError('User project not found', 404));
@@ -467,59 +478,59 @@ exports.getUserProject = catchAsync(async (req, res, next) => {
 exports.getPublicUserProjects = catchAsync(
   async function getPublicUserProjects(req, res) {
 
-  const limit  = Math.min(parseInt(req.query.limit  || '20', 10), 100);
-  const cursor = req.query.cursor || null; 
-  const cacheKey = `public:projects:cursor:${cursor || 'start'}:limit:${limit}`;
-  const cached   = await getCache(cacheKey);
-  if (cached) {
-    console.log(`[Cache] HIT ${cacheKey}`);
-    return res.status(200).json(cached);
-  }
+    const limit = Math.min(parseInt(req.query.limit || '20', 10), 100);
+    const cursor = req.query.cursor || null;
+    const cacheKey = `public:projects:cursor:${cursor || 'start'}:limit:${limit}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      console.log(`[Cache] HIT ${cacheKey}`);
+      return res.status(200).json(cached);
+    }
 
-  const rawProjects = await prisma.userProject.findMany({
-    where: { status: 'APPROVED' },
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    take: limit + 1, 
-    include: {
-      club: { select: { id: true, name: true, college: true } },
-      milestones: {
-        orderBy: { order: 'asc' },
-        select: { id: true, title: true, status: true, order: true, budget: true },
+    const rawProjects = await prisma.userProject.findMany({
+      where: { status: 'APPROVED' },
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      take: limit + 1,
+      include: {
+        club: { select: { id: true, name: true, college: true } },
+        milestones: {
+          orderBy: { order: 'asc' },
+          select: { id: true, title: true, status: true, order: true, budget: true },
+        },
       },
-    },
-    orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const hasNextPage = rawProjects.length > limit;
+    const projects = hasNextPage ? rawProjects.slice(0, limit) : rawProjects;
+    const nextCursor = hasNextPage ? projects[projects.length - 1].id : null;
+
+    const userIds = [...new Set(projects.map(p => p.userId).filter(Boolean))];
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true },
+    });
+    const userMap = Object.fromEntries(users.map(u => [u.id, u]));
+
+    const userProjects = projects
+      .map(p => ({ ...p, user: userMap[p.userId] || null }))
+      .filter(p => p.user !== null);
+
+    const payload = {
+      status: 'success',
+      results: userProjects.length,
+      pagination: { nextCursor, hasNextPage },
+      data: { userProjects },
+    };
+
+    await setCache(cacheKey, payload, PUBLIC_PROJECTS_TTL);
+
+    res.status(200).json(payload);
   });
-
-  const hasNextPage = rawProjects.length > limit;
-  const projects    = hasNextPage ? rawProjects.slice(0, limit) : rawProjects;
-  const nextCursor  = hasNextPage ? projects[projects.length - 1].id : null;
-
-  const userIds = [...new Set(projects.map(p => p.userId).filter(Boolean))];
-  const users = await prisma.user.findMany({
-    where: { id: { in: userIds } },
-    select: { id: true, name: true },
-  });
-  const userMap = Object.fromEntries(users.map(u => [u.id, u]));
-
-  const userProjects = projects
-    .map(p => ({ ...p, user: userMap[p.userId] || null }))
-    .filter(p => p.user !== null);
-
-  const payload = {
-    status: 'success',
-    results: userProjects.length,
-    pagination: { nextCursor, hasNextPage },
-    data: { userProjects },
-  };
-
-  await setCache(cacheKey, payload, PUBLIC_PROJECTS_TTL);
-
-  res.status(200).json(payload);
-});
 
 
 exports.getMyUserProjects = catchAsync(async (req, res) => {
-  const userProjects = await prisma.userProject.findMany({
+  const projects = await prisma.userProject.findMany({
     where: { userId: req.user.id },
     include: {
       club: { select: { id: true, name: true, college: true } },
@@ -531,10 +542,31 @@ exports.getMyUserProjects = catchAsync(async (req, res) => {
             take: 1
           }
         }
-      }, user: { select: { id: true, name: true } },
-      donations: { select: { amount: true } },
+      },
+      user: { select: { id: true, name: true } },
+      donations: {
+        where: { paymentStatus: "completed" }, // ✅ only real payments
+        select: { amount: true }
+      },
     },
     orderBy: { createdAt: 'desc' },
+  });
+
+  // ✅ SAFE HYBRID FIX (no DB changes)
+  const userProjects = projects.map(p => {
+    const donationTotal = p.donations.reduce((sum, d) => sum + d.amount, 0);
+
+    // 🔥 KEY FIX: handle both old (amountRaised) + new (donations)
+    const total = Math.max(
+      donationTotal,
+      p.amountRaised || 0
+    );
+
+    return {
+      ...p,
+      currentAmount: total,
+      amountRaised: total
+    };
   });
 
   res.status(200).json({
@@ -552,8 +584,11 @@ exports.getStudentAnalytics = catchAsync(async (req, res, next) => {
     where: { userId: req.user.id },
     select: {
       status: true,
-      currentAmount: true,
-      donations: { select: { amount: true } }
+      amountRaised: true, // ✅ ADD THIS
+      donations: {
+        where: { paymentStatus: "completed" },
+        select: { amount: true }
+      }
     }
   });
 
@@ -566,15 +601,20 @@ exports.getStudentAnalytics = catchAsync(async (req, res, next) => {
   };
 
   projects.forEach(p => {
-    // Status counting (case-insensitive safety)
     const status = p.status ? p.status.toUpperCase() : 'PENDING';
+
     if (status === 'APPROVED') analytics.approvedCount++;
     else if (status === 'PENDING') analytics.pendingCount++;
     else if (status === 'REJECTED') analytics.rejectedCount++;
 
-    // Calculate funds raised
-    // Use currentAmount or calculate from donations
-    const raised = p.currentAmount || p.donations?.reduce((sum, d) => sum + d.amount, 0) || 0;
+    // 🔥 SAME FIX AS BEFORE
+    const donationTotal = p.donations.reduce((sum, d) => sum + d.amount, 0);
+
+    const raised = Math.max(
+      donationTotal,
+      p.amountRaised || 0
+    );
+
     analytics.totalRaised += raised;
   });
 
@@ -593,6 +633,11 @@ exports.submitMilestone = catchAsync(async (req, res, next) => {
     where: { id: milestoneId },
     include: { project: true },
   });
+
+  // 🔒 TRANSFER GUARD
+  if (milestone.project.transferStatus === "TRANSFER_PENDING") {
+    return next(new AppError("Campaign is under transfer", 400));
+  }
 
   if (!milestone) {
     return next(new AppError("Milestone not found", 404));
@@ -680,3 +725,62 @@ exports.submitMilestone = catchAsync(async (req, res, next) => {
     data: { submission },
   });
 });
+
+exports.initiateTransfer = catchAsync(async (req, res, next) => {
+  const { toUserId, note } = req.body;
+
+  const result = await transferService.initiateTransfer({
+    campaignId: req.params.id,
+    userId: req.user.id,
+    toUserId,
+    note,
+  });
+
+  res.status(201).json({
+    status: "success",
+    data: result,
+  });
+});
+
+exports.acceptTransfer = catchAsync(async (req, res, next) => {
+  const result = await transferService.acceptTransfer({
+    transferId: req.params.transferId,
+    userId: req.user.id,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: result,
+  });
+});
+
+exports.rejectTransfer = catchAsync(async (req, res, next) => {
+  const { reason } = req.body;
+
+  const result = await transferService.rejectByNewOwner({
+    transferId: req.params.transferId,
+    userId: req.user.id,
+    reason,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: result,
+  });
+});
+
+exports.approveTransfer = catchAsync(async (req, res, next) => {
+  const { note } = req.body;
+
+  const result = await transferService.approveTransfer({
+    transferId: req.params.transferId,
+    userId: req.user.id,
+    note,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: result,
+  });
+});
+

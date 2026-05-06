@@ -16,6 +16,12 @@ const compression = require("compression");
 
 const prisma = require("./src/config/prisma");
 
+// 🔥 NEW
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const cron = require("node-cron");
+const expireTransfers = require("./src/cron/expireTransfers");
+
 // Load env
 dotenv.config();
 
@@ -54,33 +60,52 @@ require("./src/config/passport");
 
 const app = express();
 
+/* ======================================================
+   🔐 SECURITY LAYER
+====================================================== */
+
+// Helmet (security headers)
+app.use(helmet());
+
+// Global Rate Limit
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+});
+app.use(limiter);
+
+/* ======================================================
+   🧾 REQUEST SETUP
+====================================================== */
+
 app.use(requestId);
-// --------------------------------------------
-// GZIP COMPRESSION
-// --------------------------------------------
 app.use(compression());
-// --------------------------------------------
-// REQUEST LOGGING
-// --------------------------------------------
+
 if (process.env.NODE_ENV === "production") {
   app.use(morgan("combined"));
 } else {
   app.use(morgan("dev"));
 }
 
-// --------------------------------------------
-// 1️⃣ CORS
-// --------------------------------------------
+/* ======================================================
+   🌐 CORS (STRICT)
+====================================================== */
 app.use(
   cors({
-    origin: CLIENT_URL,
+    origin: function (origin, callback) {
+      if (!origin || origin === CLIENT_URL) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
-  }),
+  })
 );
 
-// --------------------------------------------
-// 2️⃣ SESSION (Redis-backed)
-// --------------------------------------------
+/* ======================================================
+   🔐 SESSION (REDIS)
+====================================================== */
 app.use(
   session({
     store: new RedisStore({
@@ -98,21 +123,17 @@ app.use(
       sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
     },
-  }),
+  })
 );
-// --------------------------------------------
-// 5️⃣ JSON BODY PARSER (EVERYTHING ELSE)
-// --------------------------------------------
+
+/* ======================================================
+   📦 BODY PARSER
+====================================================== */
 app.use(express.json());
 
-/* -------------------------------------------------------
-   CLUB ROUTES 
-------------------------------------------------------- */
-app.use("/api/clubs", clubRoutes);
-
-// --------------------------------------------
-// 3️⃣ PASSPORT
-// --------------------------------------------
+/* ======================================================
+   🔐 PASSPORT
+====================================================== */
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -125,23 +146,15 @@ app.use((req, res, next) => {
   }
   next();
 });
-// --------------------------------------------
-// 4️⃣ RAZORPAY WEBHOOK (RAW BODY ONLY)
-// MUST come BEFORE express.json()
-// --------------------------------------------
-// app.use(
-//   '/api/donations/webhook',
-//   express.raw({ type: 'application/json' })
-// );
 
-// --------------------------------------------
-// HEALTH / REDIS
-// --------------------------------------------
+/* ======================================================
+   🩺 HEALTH
+====================================================== */
 app.use("/api", healthRoutes);
 
-// --------------------------------------------
-// DEV TOKEN (optional)
-// --------------------------------------------
+/* ======================================================
+   🧪 DEV TOKEN
+====================================================== */
 app.get("/dev/gen-token", (req, res) => {
   const generateDevToken = require("./src/utils/devToken");
 
@@ -154,27 +167,26 @@ app.get("/dev/gen-token", (req, res) => {
 
   res.json({
     success: true,
-    note: "Use this token in Authorization header",
     token,
   });
 });
 
-// --------------------------------------------
-// ROOT
-// --------------------------------------------
+/* ======================================================
+   🏠 ROOT
+====================================================== */
 app.get("/", (req, res) => {
   if (CLIENT_URL) return res.redirect(CLIENT_URL);
   res.json({ service: "dreamxec backend", status: "running" });
 });
 
-// --------------------------------------------
-// API ROUTES
-// --------------------------------------------
+/* ======================================================
+   📡 API ROUTES
+====================================================== */
 app.use("/api/auth", authRoutes);
 app.use("/api/user-projects", userProjectRoutes);
 app.use("/api/donor-projects", donorProjectRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/donations", donationRoutes); // includes webhook
+app.use("/api/donations", donationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin", adminRedisRoutes);
 app.use("/api/applications", applicationRoutes);
@@ -192,37 +204,31 @@ app.use("/api", campaignCommentRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/mentor", mentorRoutes);
 app.use("/", seoRoutes);
-app.get("/debug-sentry", function mainHandler(req, res) {
-  throw new Error("My first Sentry error!");
-});
-// --------------------------------------------
-// 404 HANDLER
-// --------------------------------------------
+
+/* ======================================================
+   ❌ 404 HANDLER
+====================================================== */
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// --------------------------------------------
-// 🔴 SENTRY ERROR HANDLER (MUST BE BEFORE GLOBAL ERROR HANDLER)
-// --------------------------------------------
-
-// The error handler must be registered before any other error middleware and after all controllers
+/* ======================================================
+   🔴 SENTRY ERROR HANDLER
+====================================================== */
 Sentry.setupExpressErrorHandler(app);
 
-// Keep the Sentry handler in chain, but let the global error middleware
-// decide final status/message for operational errors (e.g. validation 400).
-app.use(function onError(err, req, res, next) {
+app.use((err, req, res, next) => {
   next(err);
 });
 
-// --------------------------------------------
-// GLOBAL ERROR HANDLER
-// --------------------------------------------
+/* ======================================================
+   🌍 GLOBAL ERROR HANDLER
+====================================================== */
 app.use(globalErrorHandler);
 
-// --------------------------------------------
-// REDIS CLEANUP ON BOOT
-// --------------------------------------------
+/* ======================================================
+   🧹 REDIS CLEANUP
+====================================================== */
 redis.on("ready", async () => {
   console.log("✅ Redis connected");
 
@@ -236,11 +242,20 @@ redis.on("ready", async () => {
   }
 });
 
-// --------------------------------------------
-// START SERVER
-// --------------------------------------------
+/* ======================================================
+   ⏳ CRON JOBS
+====================================================== */
+cron.schedule("*/10 * * * *", async () => {
+  console.log("⏳ Running transfer expiry job...");
+  await expireTransfers();
+});
+
+/* ======================================================
+   🚀 START SERVER
+====================================================== */
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+
+const server = app.listen(PORT, () => {
   prisma
     .$connect()
     .then(() => {
@@ -248,4 +263,19 @@ app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     })
     .catch((err) => console.error("Database connection failed:", err));
+});
+
+/* ======================================================
+   🛑 GRACEFUL SHUTDOWN
+====================================================== */
+process.on("SIGINT", async () => {
+  console.log("🛑 Graceful shutdown...");
+  await prisma.$disconnect();
+  server.close(() => process.exit(0));
+});
+
+process.on("SIGTERM", async () => {
+  console.log("🛑 SIGTERM received...");
+  await prisma.$disconnect();
+  server.close(() => process.exit(0));
 });
