@@ -37,10 +37,7 @@ exports.createMentorApplication = async (mentorData) => {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
-      throw new AppError(
-        "An application with this email already exists",
-        409
-      );
+      throw new AppError("An application with this email already exists", 409);
     }
 
     // ✅ Preserve AppError if thrown elsewhere
@@ -118,7 +115,7 @@ exports.updateMentorApplicationStatus = async (
   status,
   adminNotes = null,
 ) => {
-  const validStatuses = ["PENDING", "REVIEWED", "APPROVED", "REJECTED"];
+  const validStatuses = ["PENDING", "REVIEWED", "APPROVED", "REJECTED", "HOLD"];
 
   if (!validStatuses.includes(status)) {
     throw new AppError(
@@ -127,7 +124,7 @@ exports.updateMentorApplicationStatus = async (
     );
   }
 
-  return await prisma.mentorApplication.update({
+  const updatedApplication = await prisma.mentorApplication.update({
     where: { id },
     data: {
       status,
@@ -135,6 +132,23 @@ exports.updateMentorApplicationStatus = async (
       updatedAt: new Date(),
     },
   });
+
+  if (status === "APPROVED") {
+    const user = await prisma.user.findUnique({
+      where: { email: updatedApplication.email },
+    });
+
+    if (user) {
+      if (user.role !== "MENTOR" && user.role !== "ADMIN") {
+        await prisma.user.update({
+          where: { email: updatedApplication.email },
+          data: { role: "MENTOR" },
+        });
+      }
+    }
+  }
+
+  return updatedApplication;
 };
 
 /**

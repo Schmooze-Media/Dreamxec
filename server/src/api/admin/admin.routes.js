@@ -1,34 +1,37 @@
-const express = require('express');
-const adminController = require('./admin.controller');
-const { protect } = require('../../middleware/auth.middleware');
-const { requirePermission, Permissions } = require('../../rbac');
-const upload = require('../../middleware/upload.middleware');
-const studentVerificationController = require('../../api/studentVerification/studentverfication.controller')
+const express = require("express");
+const adminController = require("./admin.controller");
+const { protect, restrictTo } = require("../../middleware/auth.middleware");
+const upload = require("../../middleware/upload.middleware");
+const studentVerificationController = require("../../api/studentVerification/studentverfication.controller");
 
 const router = express.Router();
 
 router.use(protect);
-router.use(requirePermission(Permissions.ALL));
+router.use(restrictTo("ADMIN"));
 
 // --- DASHBOARD STATS ---
-router.get('/stats', adminController.getDashboardStats); // Make sure controller has this!
+router.get("/stats", adminController.getDashboardStats); // Make sure controller has this!
 
 // --- PROJECTS ---
-router.get('/projects', adminController.getAllProjects);
-router.patch('/projects/user/:id/verify', adminController.verifyUserProject);
-router.patch('/projects/donor/:id/verify', adminController.verifyDonorProject);
+router.get("/projects", adminController.getAllProjects);
+router.patch("/projects/user/:id/verify", adminController.verifyUserProject);
+router.patch("/projects/donor/:id/verify", adminController.verifyDonorProject);
 
-router.get('/users', adminController.getAllUsers);
-router.patch('/users/:id/status', adminController.manageUserStatus); // <--- NEW
-router.post('/faculty-role', adminController.assignFacultyRole);
+// --- USERS & GOVERNANCE ---
+router.get("/users", adminController.getAllUsers);
+router.patch("/users/:id/status", adminController.manageUserStatus); // <--- NEW
 
-router.get('/donors', adminController.getAllDonors);
+router.get("/donors", adminController.getAllDonors);
 
 // --- CLUBS ---
-router.get('/clubs', adminController.getAllClubs); // <--- NEW
-router.patch('/clubs/:id/status', adminController.manageClubStatus); // <--- NEW
-router.get('/clubs/members/:clubId', adminController.getClubMembers);
-router.post('/clubs/members/upload', upload.single('file'), adminController.uploadClubMembers);
+router.get("/clubs", adminController.getAllClubs); // <--- NEW
+router.patch("/clubs/:id/status", adminController.manageClubStatus); // <--- NEW
+router.get("/clubs/members/:clubId", adminController.getClubMembers);
+router.post(
+  "/clubs/members/upload",
+  upload.single("file"),
+  adminController.uploadClubMembers,
+);
 
 // --- VERIFICATIONS ---
 // router.get('/club-verifications/verifications', adminController.getPendingClubVerifications);
@@ -40,44 +43,110 @@ router.post('/clubs/members/upload', upload.single('file'), adminController.uplo
 // ==========================================
 
 // Get paginated donations
-router.get('/donations', adminController.getAllDonations);
+router.get("/donations", adminController.getAllDonations);
 
 // Get pending/completed withdrawals
-router.get('/withdrawals', adminController.getWithdrawals);
+router.get("/withdrawals", adminController.getWithdrawals);
 
 // Approve/Reject a withdrawal
-router.patch('/withdrawals/:id/status', adminController.manageWithdrawal);
+router.patch("/withdrawals/:id/status", adminController.manageWithdrawal);
 
 // --------------------
 // MILESTONES
 // --------------------
-router.get('/milestones', adminController.getAllMilestones);
-router.get('/milestones/pending', adminController.getPendingMilestones);
-router.patch('/milestones/:id/verify', adminController.verifyMilestone);
+router.get("/milestones", adminController.getAllMilestones);
+router.get("/milestones/pending", adminController.getPendingMilestones);
+router.patch("/milestones/:id/verify", adminController.verifyMilestone);
 
 // --------------------
 // STUDENT VERIFICATION
 // --------------------
-router.get('/student-verifications', studentVerificationController.getAllStudentVerifications);
-router.patch('/student-verifications/:id/approve', studentVerificationController.approveStudentVerification);
-router.patch('/student-verifications/:id/reject', studentVerificationController.rejectStudentVerification);
-
+router.get(
+  "/student-verifications",
+  studentVerificationController.getAllStudentVerifications,
+);
+router.patch(
+  "/student-verifications/:id/approve",
+  studentVerificationController.approveStudentVerification,
+);
+router.patch(
+  "/student-verifications/:id/reject",
+  studentVerificationController.rejectStudentVerification,
+);
 
 // --------------------
 // AUDIT LOGS
 // --------------------
-router.get('/audit-logs', adminController.getAuditLogs);
+router.get("/audit-logs", adminController.getAuditLogs);
 
 // getAllDonors is already there, but add these:
-router.patch('/donors/:id/verify', adminController.verifyDonor);
-router.patch('/donors/:id/status', adminController.manageDonorStatus);
+router.patch("/donors/:id/verify", adminController.verifyDonor);
+router.patch("/donors/:id/status", adminController.manageDonorStatus);
 
 // --------------------
 // DONOR APPLICATIONS
 // --------------------
-router.get('/applications', adminController.getAllApplications);
-router.patch('/applications/:id/override', adminController.overrideApplicationStatus);
+router.get("/applications", adminController.getAllApplications);
+router.patch(
+  "/applications/:id/override",
+  adminController.overrideApplicationStatus,
+);
 
-router.get('/projects/:type/:id/details', adminController.getProjectFullDetails);
+router.get(
+  "/projects/:type/:id/details",
+  adminController.getProjectFullDetails,
+);
+
+// --------------------
+// MENTOR APPLICATIONS
+// --------------------
+
+const mentorController = require("../mentor/mentor.controller");
+
+router.get(
+  "/mentor-applications/stats",
+  mentorController.getMentorApplicationStats,
+);
+router.get("/mentor-applications", mentorController.getAllMentorApplications);
+router.get("/mentor-applications/:id", mentorController.getMentorApplication);
+router.patch(
+  "/mentor-applications/:id/status",
+  mentorController.updateMentorApplicationStatus,
+);
+router.patch(
+  "/mentor-applications/:id/score",
+  mentorController.scoreMentorApplication,
+);
+router.delete(
+  "/mentor-applications/:id",
+  mentorController.deleteMentorApplication,
+);
+
+// --------------------
+// MENTOR APPLICATIONS
+// --------------------
+
+router.get("/mentor-applications", mentorController.getAllMentorApplications);
+router.get(
+  "/mentor-applications/stats/overview",
+  mentorController.getMentorApplicationStats,
+);
+router.get(
+  "/mentor-applications/quality/high",
+  mentorController.getHighQualityMentors,
+);
+router.get("/mentor-applications/:id", mentorController.getMentorApplication);
+router.patch(
+  "/mentor-applications/:id",
+  mentorController.updateMentorApplicationStatus,
+); // approve/reject/hold
+router.patch(
+  "/mentor-applications/:id/score",
+  mentorController.scoreMentorApplication,
+);
+router.delete(
+  "/mentor-applications/:id",
+  mentorController.deleteMentorApplication,
+);
 
 module.exports = router;

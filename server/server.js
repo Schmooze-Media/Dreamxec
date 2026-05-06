@@ -48,7 +48,7 @@ const campaignCommentRoutes = require("./src/api/campaign-comments/campaignComme
 const seoRoutes = require("./src/api/seo/seo.routes");
 const profileRoutes = require("./src/api/profile/profile.routes");
 const mentorRoutes = require("./src/api/mentor/mentor.routes");
-const facultyRoutes = require("./src/api/faculty-verification/facultyVerification.routes")
+const facultyRoutes = require("./src/api/faculty-verification/facultyVerification.routes");
 // Passport config
 require("./src/config/passport");
 
@@ -185,7 +185,7 @@ app.use("/api/admin/club-verifications", adminClubVerificationRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/upload", uploadRoutes);
-app.use('/api/faculty-verification', facultyRoutes);
+app.use("/api/faculty-verification", facultyRoutes);
 app.use("/api/otp", otpRoutes);
 app.use("/api/student-verification", studentVerificationRoutes);
 app.use("/api/payments", require("./src/api/payments/payment.routes"));
