@@ -1,5 +1,6 @@
 import React from "react";
 import { StarDecoration } from "../icons/StarDecoration";
+import InviteFacultyCard from "../profile/InviteFacultyCard";
 
 interface PresidentDashboardProps {
   stats?: {
@@ -120,6 +121,12 @@ export default function PresidentDashboard({
             icon={<span className="text-xl">❌</span>} 
           />
         </div>
+      </div>
+
+
+
+      <div className="mt-12">
+        <InviteFacultyCard />
       </div>
 
     </div>

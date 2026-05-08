@@ -2,6 +2,8 @@ const catchAsync = require("../../utils/catchAsync");
 const AppError = require("../../utils/AppError");
 const { validateMentorApplication } = require("./mentor.validation");
 const mentorService = require("./mentor.service");
+const prisma = require("../../config/prisma");
+const { Roles } = require("../../rbac");
 
 /**
  * Submit a new mentor application
@@ -130,6 +132,25 @@ exports.updateMentorApplicationStatus = catchAsync(async (req, res, next) => {
     message: "Mentor application status updated",
     data: updatedApplication,
   });
+});
+
+/**
+ * Approve a mentor application and assign role
+ * PATCH /api/mentor/:id/approve
+ */
+exports.approveMentorApplication = catchAsync(async (req, res, next) => {
+  const app = await prisma.mentorApplication.update({
+    where: { id: req.params.id },
+    data: { status: 'APPROVED' }
+  });
+
+  // Push MENTOR role onto the matching User account
+  await prisma.user.updateMany({
+    where: { email: app.email },
+    data: { roles: { push: Roles.MENTOR } }
+  });
+
+  res.json({ success: true });
 });
 
 /**

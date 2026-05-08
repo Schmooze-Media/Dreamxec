@@ -1,11 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import TypingEffect from "../../../components/TypingEffect";
+import { can } from "../../../rbac/engine";
+import { Permissions } from "../../../rbac/permissions";
 
 export const HeroTitle = ({ user }) => {
   const navigate = useNavigate();
 
   const isLoggedIn = !!user;
-  const role = user?.role;
+  const isDonor = can(user?.roles || [], Permissions.DASHBOARD_DONOR_VIEW);
+  const isStudent = can(user?.roles || [], Permissions.DASHBOARD_STUDENT_VIEW);
 
   const pills = [
     {
@@ -17,13 +20,13 @@ export const HeroTitle = ({ user }) => {
       bg: "#fff",
     },
     {
-      label: role === "DONOR" ? "🌱 Create Impact" : "💡 Student Innovation",
-      emoji: role === "DONOR" ? "🌱" : "💡",
-      text: role === "DONOR" ? "Create Impact" : "Student Innovation",
+      label: isDonor ? "🌱 Create Impact" : "💡 Student Innovation",
+      emoji: isDonor ? "🌱" : "💡",
+      text: isDonor ? "Create Impact" : "Student Innovation",
       onClick: () => {
         if (!isLoggedIn) navigate("/login");
-        else if (role === "STUDENT") navigate("/dashboard");
-        else if (role === "DONOR") navigate("/campaigns");
+        else if (isStudent) navigate("/dashboard");
+        else if (isDonor) navigate("/campaigns");
       },
       shadow: "#0B9C2C",
       bg: "#fff",
@@ -34,8 +37,8 @@ export const HeroTitle = ({ user }) => {
       text: "Opportunity",
       onClick: () => {
         if (!isLoggedIn) navigate("/login");
-        else if (role === "STUDENT") navigate("/projects");
-        else if (role === "DONOR") navigate("/donor/dashboard");
+        else if (isStudent) navigate("/projects");
+        else if (isDonor) navigate("/donor/dashboard");
       },
       shadow: "#003366",
       bg: "#fff",

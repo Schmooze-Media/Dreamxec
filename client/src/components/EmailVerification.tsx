@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { StarDecoration } from './icons/StarDecoration';
+import { can } from '../rbac/engine';
+import { Permissions } from '../rbac/permissions';
 
 interface EmailVerificationProps {
   onVerificationSuccess: (user: any) => void;
@@ -47,9 +49,10 @@ export default function EmailVerification({ onVerificationSuccess }: EmailVerifi
 
           // Redirect to dashboard after 2 seconds
           setTimeout(() => {
-            if (data.data?.user?.role === 'DONOR') {
+            const userRoles = data.data?.user?.roles || [];
+            if (can(userRoles, Permissions.DASHBOARD_DONOR_VIEW)) {
               navigate('/donor/dashboard');
-            } else if (data.data?.user?.role === 'ADMIN') {
+            } else if (can(userRoles, Permissions.USER_MANAGE)) {
               navigate('/admin');
             } else {
               navigate('/dashboard');

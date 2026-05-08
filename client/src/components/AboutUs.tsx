@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import { can } from '../rbac/engine';
+import { Permissions } from '../rbac/permissions';
 import { FooterContent } from '../sections/Footer/components/FooterContent';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Keyboard, A11y, Autoplay } from 'swiper/modules';
@@ -36,7 +38,8 @@ const STATS = [
 
 const AboutUs = () => {
   const navigate = useNavigate();
-  const role = localStorage.getItem('role');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const isDonor = can(user?.roles || [], Permissions.DASHBOARD_DONOR_VIEW);
 
   return (
     <div className="min-h-screen pt-20" style={{ background: '#fffbf5' }}>
@@ -351,7 +354,7 @@ const AboutUs = () => {
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
             <button
-              onClick={() => navigate(role === 'DONOR' ? '/donor/dashboard' : '/dashboard')}
+              onClick={() => navigate(isDonor ? '/donor/dashboard' : '/dashboard')}
               className="px-8 py-3 font-black text-sm uppercase tracking-widest text-[#003366] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px]"
               style={{ background: '#FF7F00', border: '3px solid #fff', boxShadow: '5px 5px 0 #fff' }}
             >

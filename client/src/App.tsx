@@ -1586,7 +1586,6 @@ function AppContent() {
                                       <BrowseProjects
                                         projects={approvedProjects}
                                         currentUserId={user?.id}
-                                        role={user?.role}
                                         onApply={handleApplyToProject}
                                         userApplications={userApplications}
                                       />

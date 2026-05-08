@@ -1,6 +1,7 @@
 const express = require('express');
 const applicationController = require('./application.controller');
-const { protect, restrictTo } = require('../../middleware/auth.middleware');
+const { protect } = require('../../middleware/auth.middleware');
+const { requirePermission, Permissions } = require('../../rbac');
 const validate = require('../../middleware/validate.middleware');
 const {
   applyToDonorProjectSchema,
@@ -15,39 +16,39 @@ router.use(protect);
 // STUDENT routes (USER role)
 router.post(
   '/',
-  restrictTo('USER' , 'STUDENT_PRESIDENT'),
+  requirePermission(Permissions.DONOR_PROJECT_APPLY),
   validate(applyToDonorProjectSchema),
   applicationController.applyToDonorProject
 );
 
 router.get(
   '/my',
-  restrictTo('USER' , 'STUDENT_PRESIDENT'),
+  requirePermission(Permissions.DONOR_PROJECT_APPLY),
   applicationController.getMyApplications
 );
 
 router.delete(
   '/:applicationId',
-  restrictTo('USER' , 'STUDENT_PRESIDENT'),
+  requirePermission(Permissions.DONOR_PROJECT_APPLY),
   applicationController.withdrawApplication
 );
 
 // DONOR routes
 router.get(
   '/donor/all',
-  restrictTo('DONOR'),
+  requirePermission(Permissions.DONOR_PROJECT_APPS_VIEW),
   applicationController.getApplicationsForMyProjects
 );
 
 router.get(
   '/donor/project/:projectId',
-  restrictTo('DONOR'),
+  requirePermission(Permissions.DONOR_PROJECT_APPS_VIEW),
   applicationController.getApplicationsForProject
 );
 
 router.patch(
   '/:applicationId/status',
-  restrictTo('DONOR'),
+  requirePermission(Permissions.DONOR_PROJECT_APPS_VIEW),
   validate(updateApplicationStatusSchema),
   applicationController.updateApplicationStatus
 );

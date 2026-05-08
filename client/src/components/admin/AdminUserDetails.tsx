@@ -59,7 +59,7 @@ export default function AdminUserDetails({ userId, onClose }: Props) {
                   <div>
                     <h3 className="text-2xl font-bold text-dreamxec-navy">{user.name}</h3>
                     <p className="text-gray-600">{user.email}</p>
-                    <span className="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-xs font-bold rounded">{user.role}</span>
+                    <span className="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-xs font-bold rounded">{user.roles?.join(', ')}</span>
                   </div>
                 </div>
 

@@ -4,7 +4,7 @@ exports.validateCampaignEligibility = (req, res, next) => {
   const user = req.user;
 
   // 1. Admin Bypass (Always allowed)
-  if (user.role === 'ADMIN') {
+  if (user.roles?.includes('ADMIN')) {
     return next();
   }
 

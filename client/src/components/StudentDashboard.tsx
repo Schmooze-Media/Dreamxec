@@ -264,6 +264,14 @@ export default function StudentDashboard({
   const isPartOfClub = isClubPresident || isClubMember;
   const canCreateCampaign = studentVerified && isPartOfClub;
 
+  const getUserTitle = () => {
+    if (!user?.roles) return 'Student';
+    if (user.roles.includes('ADMIN')) return 'Admin';
+    if (user.roles.includes('STUDENT_PRESIDENT')) return 'President';
+    if (user.roles.includes('DONOR') || user.roles.includes('PREMIUM_DONOR')) return 'Donor';
+    return 'Student';
+  };
+
   const analytics = useMemo(() => {
     const normalized = campaigns.map(c => ({
       status: c.status?.toLowerCase(),
@@ -422,7 +430,7 @@ export default function StudentDashboard({
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-black text-sm text-white uppercase tracking-wide truncate">{studentName}</p>
-              <p className="text-[10px] text-orange-300 font-bold uppercase tracking-widest">Student Account</p>
+              <p className="text-[10px] text-orange-300 font-bold uppercase tracking-widest">{getUserTitle()} Account</p>
               <div className="mt-2">
                 {studentVerified ? (
                   <span

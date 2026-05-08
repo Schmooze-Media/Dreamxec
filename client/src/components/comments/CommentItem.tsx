@@ -1,10 +1,13 @@
 import { useState } from "react";
 import type { CampaignComment } from "../../types/comment";
 import ReplyForm from "./ReplyForm";
+import { can } from "../../rbac/engine";
+import { Permissions } from "../../rbac/permissions";
 
 interface CurrentUser {
   id: string;
-  role: string;
+  roles?: string[];
+  role?: string;
 }
 
 interface Props {
@@ -33,7 +36,7 @@ export default function CommentItem({
     currentUser &&
     (currentUser.id === comment.author?.id ||
       currentUser.id === campaignOwnerId ||
-      currentUser.role === "ADMIN");
+      can(currentUser?.roles || [], Permissions.USER_MANAGE));
 
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this comment?")) {

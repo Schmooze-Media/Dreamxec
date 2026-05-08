@@ -1,6 +1,7 @@
 const express = require('express');
 const projectController = require('./project.controller');
-const { protect, restrictTo } = require('../../middleware/auth.middleware');
+const { protect } = require('../../middleware/auth.middleware');
+const { requirePermission, Permissions } = require('../../rbac');
 const validate = require('../../middleware/validate.middleware');
 const {
   createProjectSchema,
@@ -23,7 +24,7 @@ router.get('/my-projects', projectController.getMyProjects);
 // Create a new project
 router.post(
   '/',
-  restrictTo('USER'),
+  requirePermission(Permissions.CAMPAIGN_CREATE),
   validate(createProjectSchema),
   projectController.createProject
 );
@@ -32,22 +33,22 @@ router.post(
 router
   .route('/:id/my-project')
   .put(
-    restrictTo('USER'),
+    requirePermission(Permissions.CAMPAIGN_OWN_EDIT),
     validate(updateProjectSchema),
     projectController.updateMyProject
   )
-  .delete(restrictTo('USER'), projectController.deleteMyProject);
+  .delete(requirePermission(Permissions.CAMPAIGN_OWN_EDIT), projectController.deleteMyProject);
 
 // ADMIN routes
 router.get(
   '/admin/all',
-  restrictTo('ADMIN'),
+  requirePermission(Permissions.CAMPAIGN_VIEW),
   projectController.getAllProjectsForAdmin
 );
 
 router.patch(
   '/:id/verify',
-  restrictTo('ADMIN'),
+  requirePermission(Permissions.CAMPAIGN_APPROVE),
   validate(verifyProjectSchema),
   projectController.verifyProject
 );

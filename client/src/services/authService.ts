@@ -11,7 +11,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT'; // Added STUDENT_PRESIDENT
+  role: 'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT' | 'ALUMNI' | 'MENTOR'; // Added STUDENT_PRESIDENT
   organizationName?: string;
   studentVerified?: boolean;
   accountStatus?: 'ACTIVE' | 'BLOCKED' | 'SUSPENDED' | 'UNDER_REVIEW';
@@ -22,7 +22,7 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role: 'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT'; // Added STUDENT_PRESIDENT
+  role: 'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT' | 'ALUMNI' | 'MENTOR'; // Added STUDENT_PRESIDENT
   organizationName?: string;
 }
 
@@ -92,7 +92,7 @@ export const resetPassword = async (token: string, password: string): Promise<Ap
 };
 
 // Google OAuth - Initiate authentication
-export const initiateGoogleAuth = (role: 'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT'): void => { // Added STUDENT_PRESIDENT
+export const initiateGoogleAuth = (role: 'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT' | 'ALUMNI' | 'MENTOR'): void => { // Added STUDENT_PRESIDENT
   const envUrl = import.meta.env.VITE_API_URL;
   const API_URL = (envUrl && envUrl !== 'undefined') ? envUrl : 'http://localhost:5000/api';
 
@@ -118,7 +118,7 @@ export const handleGoogleCallback = async (): Promise<ApiResponse<AuthResponse>>
 };
 
 // LinkedIn OAuth - Initiate authentication
-export const initiateLinkedInAuth = (role: 'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT'): void => { // Added STUDENT_PRESIDENT
+export const initiateLinkedInAuth = (role: 'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT' | 'ALUMNI' | 'MENTOR'): void => { // Added STUDENT_PRESIDENT
   const envUrl = import.meta.env.VITE_API_URL;
   const API_URL = (envUrl && envUrl !== 'undefined') ? envUrl : 'http://localhost:5000/api';
 

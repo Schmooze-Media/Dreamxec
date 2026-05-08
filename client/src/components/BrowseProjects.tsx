@@ -5,7 +5,6 @@ import { FooterContent } from '@/sections/Footer/components/FooterContent';
 interface BrowseProjectsProps {
   projects: Project[];
   imageUrl?: string;
-  role: string;
   currentUserId?: string;
   onApply: (projectId: string, coverLetter: string, skills: string[]) => Promise<void>;
   userApplications?: string[];
@@ -198,7 +197,6 @@ function ProjectCard({
 export default function BrowseProjects({
   projects,
   currentUserId: _currentUserId,
-  role,
   onApply,
   userApplications = [],
 }: BrowseProjectsProps) {

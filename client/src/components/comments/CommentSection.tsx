@@ -8,10 +8,13 @@ import {
   reportCampaignComment,
 } from "../../services/commentService";
 import type { CampaignComment } from "../../types/comment";
+import { can } from "../../rbac/engine";
+import { Permissions } from "../../rbac/permissions";
 
 interface CurrentUser {
   id: string;
-  role: string;
+  roles?: string[];
+  role?: string;
 }
 
 interface Props {
@@ -64,7 +67,7 @@ export default function CommentSection({
       author: {
         id: currentUser.id,
         name: "You",
-        type: currentUser.role === "DONOR" ? "DONOR" : "USER",
+        type: can(currentUser.roles || [], Permissions.DASHBOARD_DONOR_VIEW) ? "DONOR" : "USER",
       },
       replies: [],
     };

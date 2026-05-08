@@ -56,7 +56,7 @@ export default function AdminUsers() {
   const filteredUsers = useMemo(() => {
     return users.filter(u => {
       const matchesSearch = (u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
+      const matchesRole = roleFilter === 'ALL' || (u.roles && u.roles.includes(roleFilter));
       return matchesSearch && matchesRole;
     });
   }, [users, searchTerm, roleFilter]);
@@ -74,8 +74,8 @@ export default function AdminUsers() {
         return sortConfig.direction === 'asc' ? a.email.localeCompare(b.email) : b.email.localeCompare(a.email);
       }
       if (sortConfig.key === 'role' || sortConfig.key === 'status') {
-        const valA = sortConfig.key === 'role' ? a.role : (a.accountStatus || 'ACTIVE');
-        const valB = sortConfig.key === 'role' ? b.role : (b.accountStatus || 'ACTIVE');
+        const valA = sortConfig.key === 'role' ? (a.roles?.[0] || '') : (a.accountStatus || 'ACTIVE');
+        const valB = sortConfig.key === 'role' ? (b.roles?.[0] || '') : (b.accountStatus || 'ACTIVE');
         return sortConfig.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
       }
       // Default: Date
@@ -91,7 +91,7 @@ export default function AdminUsers() {
   const paginatedUsers = sortedUsers.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   // Ensure unique roles for the filter (e.g., STUDENT, ADMIN, etc.)
-  const availableRoles = ['ALL', ...Array.from(new Set(users.map(u => u.role)))].filter(Boolean);
+  const availableRoles = ['ALL', ...Array.from(new Set(users.flatMap(u => u.roles || [])))].filter(Boolean);
 
   return (
     <div className="flex min-h-screen bg-transparent relative">
@@ -168,7 +168,7 @@ export default function AdminUsers() {
                         </td>
                         <td className="p-5">
                           <span className="bg-white px-3 py-1.5 rounded-lg text-xs font-bold uppercase border-2 border-gray-200 tracking-wide text-gray-600 shadow-sm">
-                            {user.role}
+                            {user.roles?.join(', ') || 'USER'}
                           </span>
                         </td>
                         <td className="p-5 text-sm text-gray-600 font-mono">

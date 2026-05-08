@@ -224,7 +224,7 @@ interface AuthPageProps {
   onGoogleAuth?: (role: "student" | "donor") => void;
   onLinkedInAuth?: (role: "student" | "donor") => void;
   onForgotPassword?: (email: string) => void;
-  currentUser?: { name: string; role: UserRole } | null;
+  currentUser?: { name: string; roles?: string[]; role?: UserRole } | null;
   onHeaderLogin?: () => void;
   onLogout?: () => void;
 }

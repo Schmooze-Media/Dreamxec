@@ -1,67 +1,66 @@
 // mapper.ts
 // Utility functions to map between backend API types and frontend types
 
-import type { Campaign, Project, UserRole } from '../types';
-import type { UserProject } from './userProjectService';
-import type { DonorProject } from './donorProjectService';
+import type { Campaign, Project, UserRole } from "../types";
+import type { UserProject } from "./userProjectService";
+import type { DonorProject } from "./donorProjectService";
 
 /* =========================================================
    Shared Types
 ========================================================= */
-
-
 
 /* =========================================================
    Role Mapping
 ========================================================= */
 
 export const CAMPAIGN_STATUS = {
-  PENDING: 'pending',
-  APPROVED: 'approved',
-  REJECTED: 'rejected',
+  PENDING: "pending",
+  APPROVED: "approved",
+  REJECTED: "rejected",
 } as const;
 
 export const PROJECT_STATUS = {
-  PENDING: 'pending',
-  APPROVED: 'approved',
-  REJECTED: 'rejected',
-  COMPLETED: 'completed',
-  PAUSED: 'paused',
-  FROZEN: 'frozen',
+  PENDING: "pending",
+  APPROVED: "approved",
+  REJECTED: "rejected",
+  COMPLETED: "completed",
+  PAUSED: "paused",
+  FROZEN: "frozen",
 } as const;
 
 // Backend → Frontend
-export const mapBackendRole = (
-  backendRole: 'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT'
-): UserRole => {
-  const roleMap: Record<
-    'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT',
-    UserRole
-  > = {
-    USER: 'student',
-    DONOR: 'donor',
-    ADMIN: 'admin',
-    STUDENT_PRESIDENT: 'STUDENT_PRESIDENT',
-  };
+export type BackendRole =
+  | "USER"
+  | "DONOR"
+  | "ADMIN"
+  | "STUDENT_PRESIDENT"
+  | "ALUMNI"
+  | "MENTOR";
 
-  return roleMap[backendRole] ?? 'student';
+export const mapBackendRole = (backendRole: BackendRole): UserRole => {
+  const roleMap: Record<BackendRole, UserRole> = {
+    USER: "student",
+    DONOR: "donor",
+    ADMIN: "admin",
+    STUDENT_PRESIDENT: "STUDENT_PRESIDENT",
+    ALUMNI: "ALUMNI", // ← pass-through, no UI alias needed
+    MENTOR: "MENTOR", // ← pass-through
+  };
+  return roleMap[backendRole] ?? "student";
 };
 
-// Frontend → Backend
-export const mapFrontendRole = (
-  frontendRole: UserRole
-): 'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT' => {
-  const roleMap: Record<
-    UserRole,
-    'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT'
-  > = {
-    student: 'USER',
-    donor: 'DONOR',
-    DONOR: 'DONOR',
-    admin: 'ADMIN',
-    STUDENT_PRESIDENT: 'STUDENT_PRESIDENT',
+export const mapFrontendRole = (frontendRole: UserRole): BackendRole => {
+  const roleMap: Record<UserRole, BackendRole> = {
+    student: "USER",
+    donor: "DONOR",
+    DONOR: "DONOR",
+    admin: "ADMIN",
+    ADMIN: "ADMIN",
+    USER: "USER",
+    STUDENT_PRESIDENT: "STUDENT_PRESIDENT",
+    ALUMNI: "ALUMNI",
+    MENTOR: "MENTOR",
   };
-
   return roleMap[frontendRole];
 };
 
@@ -70,22 +69,15 @@ export const mapFrontendRole = (
 ========================================================= */
 
 export const mapBackendStatus = (
-  backendStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
-): 'pending' | 'approved' | 'rejected' => {
-  return backendStatus.toLowerCase() as
-    | 'pending'
-    | 'approved'
-    | 'rejected';
+  backendStatus: "PENDING" | "APPROVED" | "REJECTED",
+): "pending" | "approved" | "rejected" => {
+  return backendStatus.toLowerCase() as "pending" | "approved" | "rejected";
 };
 
-
 export const mapFrontendStatus = (
-  frontendStatus: 'pending' | 'approved' | 'rejected'
-): 'PENDING' | 'APPROVED' | 'REJECTED' => {
-  return frontendStatus.toUpperCase() as
-    | 'PENDING'
-    | 'APPROVED'
-    | 'REJECTED';
+  frontendStatus: "pending" | "approved" | "rejected",
+): "PENDING" | "APPROVED" | "REJECTED" => {
+  return frontendStatus.toUpperCase() as "PENDING" | "APPROVED" | "REJECTED";
 };
 
 /* =========================================================
@@ -94,7 +86,7 @@ export const mapFrontendStatus = (
 ========================================================= */
 
 export const mapUserProjectToCampaign = (
-  userProject: UserProject
+  userProject: UserProject,
 ): Campaign => {
   return {
     id: userProject.id,
@@ -155,7 +147,7 @@ export const mapUserProjectToCampaign = (
 ========================================================= */
 
 export const mapDonorProjectToProject = (
-  donorProject: DonorProject
+  donorProject: DonorProject,
 ): Project => {
   return {
     id: donorProject.id,
@@ -182,12 +174,10 @@ export const mapDonorProjectToProject = (
    🚀 clubId is sent directly (NO names)
 ========================================================= */
 
-export const mapCampaignToUserProjectData = (
-  campaign: Partial<Campaign>
-) => {
+export const mapCampaignToUserProjectData = (campaign: Partial<Campaign>) => {
   return {
-    title: campaign.title || '',
-    description: campaign.description || '',
+    title: campaign.title || "",
+    description: campaign.description || "",
     clubId: campaign.club?.id,
     goalAmount: campaign.goalAmount || 0,
     milestones: campaign.milestones || [],
@@ -198,13 +188,11 @@ export const mapCampaignToUserProjectData = (
    Project (Frontend) → CreateDonorProjectData (Backend)
 ========================================================= */
 
-export const mapProjectToDonorProjectData = (
-  project: Partial<Project>
-) => {
+export const mapProjectToDonorProjectData = (project: Partial<Project>) => {
   return {
-    title: project.title || '',
-    description: project.description || '',
-    organization: project.companyName || '',
+    title: project.title || "",
+    description: project.description || "",
+    organization: project.companyName || "",
     skillsRequired: project.skillsRequired || [],
   };
 };

@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { can } from "../../rbac/engine";
+import { Permissions } from "../../rbac/permissions";
 
 /* ─────────────────────────────────────────
    ACCORDION ITEM
@@ -221,7 +223,7 @@ export const PartnersSection = () => {
     const storedUser = localStorage.getItem("user");
     const user = storedUser ? JSON.parse(storedUser) : null;
     if (!user) navigate("/auth");
-    else if (user.role === "DONOR") navigate("/donor/dashboard");
+    else if (can(user?.roles || [], Permissions.DASHBOARD_DONOR_VIEW)) navigate("/donor/dashboard");
     else navigate("/dashboard");
   };
 

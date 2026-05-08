@@ -2,7 +2,19 @@
 // export type UserRole = "student" | "admin" | "DONOR" | "donor" | "STUDENT_PRESIDENT";
 export type AccountStatus = "ACTIVE" | "BLOCKED" | "SUSPENDED" | "UNDER_REVIEW";
 
-export type ProjectStatus = "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "PAUSED" | "FROZEN" | "pending" | "approved" | "rejected" | "completed" | "paused" | "frozen";
+export type ProjectStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "COMPLETED"
+  | "PAUSED"
+  | "FROZEN"
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "completed"
+  | "paused"
+  | "frozen";
 
 export interface PaginationMeta {
   total: number;
@@ -12,7 +24,7 @@ export interface PaginationMeta {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[],
+  data: T[];
   pagination: PaginationMeta;
 }
 
@@ -51,20 +63,24 @@ export type UserRole =
   | "student"
   | "admin"
   | "donor"
+  | "USER"
+  | "ADMIN"
   | "DONOR"
-  | "STUDENT_PRESIDENT";
+  | "STUDENT_PRESIDENT"
+  | "ALUMNI"
+  | "MENTOR";
 
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: UserRole;
+  role?: UserRole;
+  roles?: string[];
 
   accountStatus: AccountStatus;
   profileComplete: boolean;
   emailVerified: boolean;
   studentVerified: boolean;
-
   isClubPresident: boolean;
   isClubMember: boolean;
   clubVerified: boolean;
@@ -112,11 +128,7 @@ export interface MilestoneSubmission {
   createdAt: string;
 }
 
-export type MilestoneStatus =
-  | "PENDING"
-  | "SUBMITTED"
-  | "APPROVED"
-  | "REJECTED";
+export type MilestoneStatus = "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED";
 
 export interface Milestone {
   id: string;
@@ -182,8 +194,6 @@ export interface Campaign {
   userId?: string;
   slug?: string;
 
-
-
   // ✅ Milestone-based timeline
   milestones?: Milestone[];
 }
@@ -211,7 +221,10 @@ export interface Project {
   interestedUsers?: Array<{ id: string; name: string; email: string }>; // Users who applied
 
   skillsRequired: string[];
-  timeline: string | { startDate: Date | string; endDate: Date | string } | null; // DB string or parsed object
+  timeline:
+    | string
+    | { startDate: Date | string; endDate: Date | string }
+    | null; // DB string or parsed object
 
   totalBudget?: number;
   allocatedFunds?: number;
@@ -252,7 +265,6 @@ export interface Student {
   avatar?: string;
 }
 
-
 /* =========================================================
    Admin Specific Types
 ========================================================= */
@@ -285,15 +297,15 @@ export interface DashboardStats {
     slaBreaches: number;
     frozenCampaigns: number;
     pendingMilestones: number;
-  }
+  };
 }
 
 export interface AuditLog {
-  id: string,
-  action: string,
-  entityType: string,
-  entityId: string,
-  performedBy: string,
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  performedBy: string;
   details?: any;
   createdAt: string;
 }

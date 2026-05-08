@@ -1,6 +1,7 @@
 const express = require('express');
 const donorProjectController = require('./donor-project.controller');
-const { protect, restrictTo } = require('../../middleware/auth.middleware');
+const { protect } = require('../../middleware/auth.middleware');
+const { requirePermission, Permissions } = require('../../rbac');
 const validate = require('../../middleware/validate.middleware');
 const {
   createDonorProjectSchema,
@@ -16,25 +17,25 @@ router.get('/public', donorProjectController.getPublicDonorProjects);
 router.use(protect);
 
 // DONOR routes - /my must come before /:id to avoid treating 'my' as an id
-router.get('/my', restrictTo('DONOR'), donorProjectController.getMyDonorProjects);
+router.get('/my', requirePermission(Permissions.DONOR_PROJECT_CREATE), donorProjectController.getMyDonorProjects);
 
 router.post(
   '/',
-  restrictTo('DONOR'),
+  requirePermission(Permissions.DONOR_PROJECT_CREATE),
   validate(createDonorProjectSchema),
   donorProjectController.createDonorProject
 );
 
 router.put(
   '/:id',
-  restrictTo('DONOR'),
+  requirePermission(Permissions.DONOR_PROJECT_CREATE),
   validate(updateDonorProjectSchema),
   donorProjectController.updateDonorProject
 );
 
 router.delete(
   '/:id',
-  restrictTo('DONOR'),
+  requirePermission(Permissions.DONOR_PROJECT_CREATE),
   donorProjectController.deleteDonorProject
 );
 

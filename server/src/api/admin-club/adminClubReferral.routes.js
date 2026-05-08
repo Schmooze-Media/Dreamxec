@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
-const { protect, restrictTo } = require("../../middleware/auth.middleware");
+const { protect } = require("../../middleware/auth.middleware");
+const { requirePermission, Permissions } = require("../../rbac");
 const {
   listReferrals,
   getReferral,
@@ -11,7 +12,7 @@ const {
 } = require("./adminClubReferral.controller");
 
 // All admin-only
-router.use(protect, restrictTo("ADMIN"));
+router.use(protect, requirePermission(Permissions.CLUB_VERIFY));
 
 // List all referrals (with optional status filter)
 router.get("/", listReferrals);

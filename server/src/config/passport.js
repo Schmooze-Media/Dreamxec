@@ -247,7 +247,7 @@ async function processOAuthUser(providerIdKey, profile, requestedRole) {
     });
 
     // attach role for JWT usage
-    updatedDonor.role = "DONOR";
+    updatedDonor.roles = ["DONOR"];
     return updatedDonor;
   }
 
@@ -263,7 +263,7 @@ async function processOAuthUser(providerIdKey, profile, requestedRole) {
     // 🔴 CLUB MEMBER LOGIC (FIXED)
     // Using array syntax 'push' instead of 'clubId' string
     if (clubMember) {
-      data.role = "USER";
+      data.roles = { push: "USER" };
       data.isClubMember = true;
       data.clubIds = {
         push: clubMember.clubId // ✅ Correct way to update array
@@ -273,7 +273,7 @@ async function processOAuthUser(providerIdKey, profile, requestedRole) {
     // 🟢 PRESIDENT LOGIC (FIXED)
     // Using array syntax 'push' instead of 'clubId' string
     if (presidentClub) {
-      data.role = "STUDENT_PRESIDENT";
+      data.roles = { push: "STUDENT_PRESIDENT" };
       data.isClubPresident = true;
       data.clubIds = {
         push: presidentClub.id // ✅ Correct way to update array
@@ -291,12 +291,12 @@ async function processOAuthUser(providerIdKey, profile, requestedRole) {
   // -----------------------------------
   // Phase 5 — First-time OAuth User
   // -----------------------------------
-  return await prisma.user.create({
+  const newUser = await prisma.user.create({
     data: {
       email,
       name: profile.displayName,
       [providerIdKey]: providerId,
-      role, // 👈 FRONTEND ROLE IS RESPECTED HERE
+      roles: [role], // 👈 FRONTEND ROLE IS RESPECTED HERE
       isClubMember: !!clubMember,
       isClubPresident: !!presidentClub,
       clubIds: [], // Initialize empty array

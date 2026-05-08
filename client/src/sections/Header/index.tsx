@@ -5,7 +5,7 @@ import type { UserRole } from "../../types";
 import { useAuth } from "../../context/AuthContext";
 
 interface HeaderProps {
-  currentUser?: { name: string; role: UserRole } | null;
+  currentUser?: { name: string; roles?: string[]; role?: UserRole } | null;
   onLogin?: () => void;
   onLogout?: () => void;
 }

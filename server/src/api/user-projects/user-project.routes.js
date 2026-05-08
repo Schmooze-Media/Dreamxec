@@ -12,7 +12,8 @@ const {
   submitMilestone,
 } = require('./user-project.controller');
 
-const { protect, restrictTo } = require('../../middleware/auth.middleware');
+const { protect } = require('../../middleware/auth.middleware');
+const { requirePermission, Permissions } = require('../../rbac');
 const validate = require('../../middleware/validate.middleware');
 const {
   createUserProjectSchema,
@@ -37,8 +38,8 @@ const upload = multer({
 });
 
 // Student's own campaigns
-router.get('/analytics', protect, restrictTo('USER', 'STUDENT_PRESIDENT'), getStudentAnalytics);
-router.get('/my',protect, restrictTo('USER', 'STUDENT_PRESIDENT'),getMyUserProjects);
+router.get('/analytics', protect, requirePermission(Permissions.CAMPAIGN_VIEW), getStudentAnalytics);
+router.get('/my',protect, requirePermission(Permissions.CAMPAIGN_VIEW),getMyUserProjects);
 /* ---------------------------
    PUBLIC ROUTES
 ---------------------------- */
@@ -54,7 +55,7 @@ router.use(protect);
 // 🚀 CREATE CAMPAIGN
 router.post(
   '/',
-  restrictTo('USER', 'STUDENT_PRESIDENT'),           // 1. Must be a User
+  requirePermission(Permissions.CAMPAIGN_CREATE), // 1. Must have campaign create permission
   upload.fields([
     { name: "bannerFile", maxCount: 1 },
     { name: "mediaFiles", maxCount: 10 },
@@ -69,7 +70,7 @@ router.post(
 // UPDATE CAMPAIGN
 router.put(
   '/:id',
-  restrictTo('USER', 'STUDENT_PRESIDENT'),
+  requirePermission(Permissions.CAMPAIGN_OWN_EDIT),
   validateCampaignEligibility, // (Optional: Keep strict check on updates too)
   validate(updateUserProjectSchema),
   updateUserProject
@@ -78,7 +79,7 @@ router.put(
 // DELETE CAMPAIGN
 router.delete(
   '/:id',
-  restrictTo('USER', 'STUDENT_PRESIDENT'),
+  requirePermission(Permissions.CAMPAIGN_OWN_EDIT),
   validateCampaignEligibility,
   deleteUserProject
 );
@@ -86,7 +87,7 @@ router.delete(
 router.patch(
   "/milestones/:milestoneId/submit",
   protect,
-  restrictTo('USER', 'STUDENT_PRESIDENT'),
+  requirePermission(Permissions.MILESTONE_SUBMIT),
   validate(submitMilestoneSchema),
   submitMilestone
 );

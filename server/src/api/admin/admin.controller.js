@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { publishEvent } = require('../../services/eventPublisher.service');
 const EVENTS = require('../../config/events');
+const { Roles } = require("../../rbac");
 
 // All the admin stats required
 exports.getDashboardStats = catchAsync(async (req, res, next) => {
@@ -1363,4 +1364,36 @@ exports.getProjectFullDetails = catchAsync(async (req, res, next) => {
   if (!project) return next(new AppError('Project not found', 404));
 
   res.status(200).json({ status: 'success', data: { project } });
+});
+
+// ==========================================
+// ROLE ASSIGNMENT
+// ==========================================
+
+const FACULTY_ROLES = [
+  Roles.FACULTY, Roles.DEAN_ACADEMICS,
+  Roles.DEAN_STUDENT_WELFARE, Roles.DEAN_HEAD
+];
+
+exports.assignFacultyRole = catchAsync(async (req, res, next) => {
+  const { userId, roleSlug } = req.body;
+  if (!FACULTY_ROLES.includes(roleSlug)) {
+    return res.status(400).json({ error: 'Invalid faculty role' });
+  }
+  await prisma.user.update({
+    where: { id: userId },
+    data: { roles: { push: roleSlug } }
+  });
+  
+  // Audit log
+  await prisma.auditLog.create({
+    data: {
+      action: 'ROLE_ASSIGNED',
+      entity: 'User',
+      entityId: userId,
+      performedBy: req.user.id,
+      details: { role: roleSlug }
+    }
+  });
+  res.json({ success: true });
 });

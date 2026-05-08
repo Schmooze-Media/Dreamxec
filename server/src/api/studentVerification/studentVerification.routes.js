@@ -1,6 +1,7 @@
 const express = require("express");
 const multer = require("multer");
-const { protect, restrictTo } = require("../../middleware/auth.middleware");
+const { protect } = require("../../middleware/auth.middleware");
+const { requirePermission, Permissions } = require("../../rbac");
 const {
   verify,
   createOrder,
@@ -52,19 +53,19 @@ router.post(
 
 router.get(
   "/admin/all",
-  restrictTo("ADMIN"),
+  requirePermission(Permissions.WELFARE_MANAGE),
   getAllStudentVerifications
 );
 
 router.patch(
   "/admin/:id/approve",
-  restrictTo("ADMIN"),
+  requirePermission(Permissions.WELFARE_MANAGE),
   approveStudentVerification
 );
 
 router.patch(
   "/admin/:id/reject",
-  restrictTo("ADMIN"),
+  requirePermission(Permissions.WELFARE_MANAGE),
   rejectStudentVerification
 );
 

@@ -1,8 +1,9 @@
-import type { UserRole } from "../../../types";
 import { Link } from "react-router-dom";
+import { can } from "../../../rbac/engine";
+import { Permissions } from "../../../rbac/permissions";
 
 interface DesktopMenuProps {
-  currentUser?: { name: string; role: UserRole } | null;
+  currentUser?: any | null;
   onLogin?: () => void;
 }
 
@@ -34,7 +35,7 @@ export const DesktopMenu = ({ currentUser, onLogin }: DesktopMenuProps) => {
 
 
       {/* Role-specific links */}
-      {currentUser?.role === 'student' && (
+      {can(currentUser?.roles || [], Permissions.DASHBOARD_STUDENT_VIEW) && !can(currentUser?.roles || [], Permissions.CLUB_MANAGE) && (
         <>
           <a
             href="/dashboard"
@@ -51,7 +52,7 @@ export const DesktopMenu = ({ currentUser, onLogin }: DesktopMenuProps) => {
         </>
       )}
 
-      {currentUser?.role === 'STUDENT_PRESIDENT' && (
+      {can(currentUser?.roles || [], Permissions.CLUB_MANAGE) && (
         <>
           <a
             href="/dashboard"
@@ -68,7 +69,7 @@ export const DesktopMenu = ({ currentUser, onLogin }: DesktopMenuProps) => {
         </>
       )}
 
-      {currentUser?.role === 'admin' && (
+      {can(currentUser?.roles || [], Permissions.USER_MANAGE) && (
         <a
           href="/admin"
           className="text-dreamxec-navy font-bold text-lg hover:text-dreamxec-orange transition-colors font-display"
@@ -77,7 +78,7 @@ export const DesktopMenu = ({ currentUser, onLogin }: DesktopMenuProps) => {
         </a>
       )}
 
-      {currentUser?.role === 'donor' && (
+      {can(currentUser?.roles || [], Permissions.DASHBOARD_DONOR_VIEW) && (
         <a
           href="/donor/dashboard"
           className="text-dreamxec-navy font-bold text-lg hover:text-dreamxec-orange transition-colors font-display"

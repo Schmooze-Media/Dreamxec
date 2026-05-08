@@ -1,6 +1,7 @@
 const express = require('express');
 const donationController = require('./donation.controller');
-const { protect, restrictTo } = require('../../middleware/auth.middleware');
+const { protect } = require('../../middleware/auth.middleware');
+const { requirePermission, Permissions } = require('../../rbac');
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.get('/summary', protect, donationController.getDonationSummary);         
 router.get(
   "/me/eligibility",
   protect,
-  restrictTo("DONOR"),
+  requirePermission(Permissions.DONATION_MAKE),
   donationController.getMyEligibility
 );
 

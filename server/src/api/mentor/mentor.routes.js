@@ -1,6 +1,7 @@
 const express = require("express");
 const mentorController = require("./mentor.controller");
-const { protect, restrictTo } = require("../../middleware/auth.middleware");
+const { protect } = require("../../middleware/auth.middleware");
+const { requirePermission, Permissions } = require("../../rbac");
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.post("/", mentorController.submitMentorApplication);
 
 // Protect all routes below
 router.use(protect);
-router.use(restrictTo("ADMIN"));
+router.use(requirePermission(Permissions.ALL));
 
 /**
  * GET /api/mentor/stats/overview
@@ -53,6 +54,12 @@ router.get("/:id", mentorController.getMentorApplication);
  * Body: { status: "PENDING|REVIEWED|APPROVED|REJECTED", adminNotes?: string }
  */
 router.patch("/:id/status", mentorController.updateMentorApplicationStatus);
+
+/**
+ * PATCH /api/mentor/:id/approve
+ * Approve mentor application and assign role
+ */
+router.patch("/:id/approve", mentorController.approveMentorApplication);
 
 /**
  * PATCH /api/mentor/:id/score

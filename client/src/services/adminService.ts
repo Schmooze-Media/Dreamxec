@@ -1,6 +1,6 @@
-import apiRequest, { type ApiResponse } from './api';
-import type { UserProject } from './userProjectService';
-import type { DonorProject } from './donorProjectService';
+import apiRequest, { type ApiResponse } from "./api";
+import type { UserProject } from "./userProjectService";
+import type { DonorProject } from "./donorProjectService";
 import type {
   Campaign,
   Project,
@@ -8,14 +8,13 @@ import type {
   DashboardStats,
   ProjectStatus,
   AccountStatus,
-  PaginatedResponse
-} from "../types"
+  PaginatedResponse,
+} from "../types";
 
 export interface AllProjectsResponse {
-  userProjects: PaginatedResponse<Campaign>
+  userProjects: PaginatedResponse<Campaign>;
   donorProjects: PaginatedResponse<Project>;
 }
-
 
 export interface VerifyProjectData {
   status: ProjectStatus;
@@ -23,43 +22,43 @@ export interface VerifyProjectData {
 }
 
 // get dashboard stats
-export const getDashboardStats = async (): Promise<ApiResponse<DashboardStats>> => {
-  return apiRequest('/admin/stats', {
-    method: 'GET',
+export const getDashboardStats = async (): Promise<
+  ApiResponse<DashboardStats>
+> => {
+  return apiRequest("/admin/stats", {
+    method: "GET",
   });
 };
-
-
 
 // PROJECT MANAGEMENT
 
 interface ProjectQueryParams {
   page?: number;
   limit?: number;
-  status?: ProjectStatus | '';
+  status?: ProjectStatus | "";
 }
 
 // Get all projects (admin)
 export const getAllProjects = async (
-  params: ProjectQueryParams = {}
+  params: ProjectQueryParams = {},
 ): Promise<ApiResponse<AllProjectsResponse>> => {
   const query = new URLSearchParams();
-  if (params.page) query.append('page', params.page.toString());
-  if (params.limit) query.append('limit', params.limit.toString());
-  if (params.status) query.append('status', params.status);
+  if (params.page) query.append("page", params.page.toString());
+  if (params.limit) query.append("limit", params.limit.toString());
+  if (params.status) query.append("status", params.status);
 
   return apiRequest(`/admin/projects?${query.toString()}`, {
-    method: 'GET',
-  })
-}
+    method: "GET",
+  });
+};
 
 // Verify user project
 export const verifyUserProject = async (
   id: string,
-  data: VerifyProjectData
+  data: VerifyProjectData,
 ): Promise<ApiResponse<{ userProject: UserProject }>> => {
   return apiRequest(`/admin/projects/user/${id}/verify`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify(data),
   });
 };
@@ -67,10 +66,10 @@ export const verifyUserProject = async (
 // Verify donor project
 export const verifyDonorProject = async (
   id: string,
-  data: VerifyProjectData
+  data: VerifyProjectData,
 ): Promise<ApiResponse<{ donorProject: DonorProject }>> => {
   return apiRequest(`/admin/projects/donor/${id}/verify`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify(data),
   });
 };
@@ -80,46 +79,47 @@ export const verifyDonorProject = async (
 ========================================================= */
 
 // Get all users
-export const getAllUsers = async (): Promise<ApiResponse<{ users: User[] }>> => {
-  return apiRequest('/admin/users', {
-    method: 'GET',
+export const getAllUsers = async (): Promise<
+  ApiResponse<{ users: User[] }>
+> => {
+  return apiRequest("/admin/users", {
+    method: "GET",
   });
 };
 
 // Get all donors
-export const getAllDonors = async (): Promise<ApiResponse<{ donors: User[] }>> => {
-  return apiRequest('/admin/donors', {
-    method: 'GET',
+export const getAllDonors = async (): Promise<
+  ApiResponse<{ donors: User[] }>
+> => {
+  return apiRequest("/admin/donors", {
+    method: "GET",
   });
 };
 
 export const manageUserStatus = async (
   userId: string,
-  status: AccountStatus
+  status: AccountStatus,
 ): Promise<ApiResponse<{ user: User }>> => {
   return apiRequest(`/admin/users/${userId}/status`, {
-    method: 'PATCH',
-    body: JSON.stringify({ status })
-  })
-}
-
-
-// --- CLUB MANAGEMENT ---
-
-// Add this function
-export const getAllClubs = async (): Promise<ApiResponse<{ clubs: any[] }>> => {
-  return apiRequest('/admin/clubs', {
-    method: 'GET',
+    method: "PATCH",
+    body: JSON.stringify({ status }),
   });
 };
 
-// Add this function
+// --- CLUB MANAGEMENT ---
+
+export const getAllClubs = async (): Promise<ApiResponse<{ clubs: any[] }>> => {
+  return apiRequest("/admin/clubs", {
+    method: "GET",
+  });
+};
+
 export const manageClubStatus = async (
   clubId: string,
-  status: 'ACTIVE' | 'SUSPENDED'
+  status: "ACTIVE" | "SUSPENDED",
 ): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/clubs/${clubId}/status`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify({ status }),
   });
 };
@@ -129,129 +129,149 @@ export const manageClubStatus = async (
 ========================================================= */
 
 export const getClubVerifications = async (): Promise<ApiResponse<any[]>> => {
-  return apiRequest('/admin/club-verifications/verifications', {
-    method: 'GET',
+  return apiRequest("/admin/club-verifications/verifications", {
+    method: "GET",
   });
 };
 
-export const approveClubVerification = async (id: string): Promise<ApiResponse<any>> => {
+export const approveClubVerification = async (
+  id: string,
+): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/club-verifications/verifications/${id}/approve`, {
-    method: 'POST',
+    method: "POST",
   });
 };
 
-export const rejectClubVerification = async (id: string, reason: string): Promise<ApiResponse<any>> => {
+export const rejectClubVerification = async (
+  id: string,
+  reason: string,
+): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/club-verifications/verifications/${id}/reject`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ reason }),
   });
 };
-
 
 /* =========================================================
    File Uploads
 ========================================================= */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-export const uploadClubMembers = async (file: File, clubId: string, token?: string) => {
+export const uploadClubMembers = async (
+  file: File,
+  clubId: string,
+  token?: string,
+) => {
   const form = new FormData();
-  form.append('file', file);
-  form.append('clubId', clubId);
+  form.append("file", file);
+  form.append("clubId", clubId);
 
   const res = await fetch(`${API_BASE}/admin/clubs/members/upload`, {
-    method: 'POST',
+    method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: form,
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || 'Upload failed');
+    throw new Error(err.message || "Upload failed");
   }
   return res.json();
 };
-
 
 /* =========================================================
    Financials
 ========================================================= */
 
-export const getAdminDonations = async (page = 1, limit = 20): Promise<ApiResponse<any>> => {
-  return apiRequest(`/admin/donations?page=${page}&limit=${limit}`, { method: 'GET' });
+export const getAdminDonations = async (
+  page = 1,
+  limit = 20,
+): Promise<ApiResponse<any>> => {
+  return apiRequest(`/admin/donations?page=${page}&limit=${limit}`, {
+    method: "GET",
+  });
 };
 
-export const getAdminWithdrawals = async (status = 'pending'): Promise<ApiResponse<any>> => {
+export const getAdminWithdrawals = async (
+  status = "pending",
+): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/financials/withdrawals?status=${status}`, {
-    method: 'GET',
+    method: "GET",
   });
 };
 
 export const processWithdrawal = async (
   id: string,
-  status: 'approved' | 'rejected',
-  note?: string
+  status: "approved" | "rejected",
+  note?: string,
 ): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/financials/withdrawals/${id}`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify({ status, note }),
   });
 };
-
 
 /* =========================================================
    Milestones
 ========================================================= */
 
-export const getAllMilestones = async (status?: string): Promise<ApiResponse<any>> => {
-  const query = status ? `?status=${status}` : '';
+export const getAllMilestones = async (
+  status?: string,
+): Promise<ApiResponse<any>> => {
+  const query = status ? `?status=${status}` : "";
   return apiRequest(`/admin/milestones${query}`, {
-    method: 'GET',
+    method: "GET",
   });
 };
 
 export const getPendingMilestones = async (): Promise<ApiResponse<any>> => {
-  return apiRequest('/admin/milestones/pending', {
-    method: 'GET',
+  return apiRequest("/admin/milestones/pending", {
+    method: "GET",
   });
 };
 
 export const verifyMilestone = async (
   id: string,
-  status: 'APPROVED' | 'REJECTED',
-  feedback?: string
+  status: "APPROVED" | "REJECTED",
+  feedback?: string,
 ): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/milestones/${id}/verify`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify({ status, feedback }),
   });
 };
-
 
 /* =========================================================
    Student Verifications
 ========================================================= */
 
-export const getStudentVerifications = async (status?: string): Promise<ApiResponse<any>> => {
-  const query = status ? `?status=${status}` : '';
+export const getStudentVerifications = async (
+  status?: string,
+): Promise<ApiResponse<any>> => {
+  const query = status ? `?status=${status}` : "";
   return apiRequest(`/admin/student-verifications${query}`, {
-    method: 'GET',
+    method: "GET",
   });
 };
 
-export const approveStudentVerification = async (id: string): Promise<ApiResponse<any>> => {
+export const approveStudentVerification = async (
+  id: string,
+): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/student-verifications/${id}/approve`, {
-    method: 'PATCH',
+    method: "PATCH",
   });
 };
 
-export const rejectStudentVerification = async (id: string, reason?: string): Promise<ApiResponse<any>> => {
+export const rejectStudentVerification = async (
+  id: string,
+  reason?: string,
+): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/student-verifications/${id}/reject`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify({ reason }),
   });
 };
-
 
 /* =========================================================
    Audit Logs
@@ -261,20 +281,19 @@ export const getAuditLogs = async (
   page = 1,
   limit = 20,
   type?: string,
-  search?: string
+  search?: string,
 ): Promise<ApiResponse<any>> => {
   const params = new URLSearchParams({
     page: page.toString(),
-    limit: limit.toString()
+    limit: limit.toString(),
   });
-  if (type) params.append('type', type);
-  if (search) params.append('search', search);
+  if (type) params.append("type", type);
+  if (search) params.append("search", search);
 
   return apiRequest(`/admin/audit-logs?${params.toString()}`, {
-    method: 'GET',
+    method: "GET",
   });
 };
-
 
 /* =========================================================
    Donor Governance
@@ -282,45 +301,53 @@ export const getAuditLogs = async (
 
 export const toggleDonorVerification = async (
   id: string,
-  verified: boolean
+  verified: boolean,
 ): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/donors/${id}/verify`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify({ verified }),
   });
 };
 
 export const manageDonorStatus = async (
   id: string,
-  status: 'ACTIVE' | 'BLOCKED' | 'SUSPENDED'
+  status: "ACTIVE" | "BLOCKED" | "SUSPENDED",
 ): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/donors/${id}/status`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify({ status }),
   });
 };
-
 
 /* =========================================================
    Admin Notes & Details
 ========================================================= */
 
-export const getEntityNotes = async (type: string, id: string): Promise<ApiResponse<any>> => {
+export const getEntityNotes = async (
+  type: string,
+  id: string,
+): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/notes/${type}/${id}`, {
-    method: 'GET',
+    method: "GET",
   });
 };
 
-export const createEntityNote = async (type: string, id: string, content: string): Promise<ApiResponse<any>> => {
+export const createEntityNote = async (
+  type: string,
+  id: string,
+  content: string,
+): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/notes/${type}/${id}`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ content }),
   });
 };
 
-export const getUserFullDetails = async (id: string): Promise<ApiResponse<any>> => {
+export const getUserFullDetails = async (
+  id: string,
+): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/users/${id}/details`, {
-    method: 'GET',
+    method: "GET",
   });
 };
 
@@ -329,60 +356,110 @@ export const getUserFullDetails = async (id: string): Promise<ApiResponse<any>> 
 ========================================================= */
 
 export const getAdminApplications = async (): Promise<ApiResponse<any>> => {
-  return apiRequest('/admin/applications', {
-    method: 'GET',
+  return apiRequest("/admin/applications", {
+    method: "GET",
   });
 };
 
 export const overrideApplicationStatus = async (
   id: string,
-  status: 'ACCEPTED' | 'REJECTED' | 'PENDING',
-  reason?: string
+  status: "ACCEPTED" | "REJECTED" | "PENDING",
+  reason?: string,
 ): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/applications/${id}/override`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify({ status, reason }),
   });
 };
-
 
 /* =========================================================
    Advanced Campaign Details
 ========================================================= */
 
 export const getProjectFullDetails = async (
-  type: 'user' | 'donor',
-  id: string
+  type: "user" | "donor",
+  id: string,
 ): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/projects/${type}/${id}/details`, {
-    method: 'GET',
+    method: "GET",
   });
 };
-
 
 /* =========================================================
    Club Referrals
 ========================================================= */
 
-/**
- * Fetch all club referrals (pending, approved, rejected)
- */
 export const getClubReferrals = async (): Promise<ApiResponse<any>> => {
-  return apiRequest('/admin/referrals', {
-    method: 'GET',
+  return apiRequest("/admin/referrals", {
+    method: "GET",
   });
 };
 
-/**
- * Update the status of a club referral (Approve or Reject)
- */
 export const updateReferralStatus = async (
   id: string,
-  status: 'APPROVED' | 'REJECTED',
-  notes?: string
+  status: "APPROVED" | "REJECTED",
+  notes?: string,
 ): Promise<ApiResponse<any>> => {
   return apiRequest(`/admin/referrals/${id}/status`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify({ status, notes }),
   });
-};  
+};
+
+/* =========================================================
+   Mentor Applications (Phase 5)
+========================================================= */
+
+export type MentorApplicationStatus =
+  | "PENDING"
+  | "REVIEWED"
+  | "APPROVED"
+  | "REJECTED";
+
+export interface MentorApplicationsParams {
+  status?: MentorApplicationStatus;
+  skip?: number;
+  take?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+/** GET /api/mentor — list with optional status filter + pagination */
+export const getMentorApplications = async (
+  params: MentorApplicationsParams = {},
+): Promise<ApiResponse<any>> => {
+  const query = new URLSearchParams();
+  if (params.status) query.append("status", params.status);
+  if (params.skip != null) query.append("skip", String(params.skip));
+  if (params.take != null) query.append("take", String(params.take));
+  if (params.sortBy) query.append("sortBy", params.sortBy);
+  if (params.sortOrder) query.append("sortOrder", params.sortOrder);
+
+  return apiRequest(`/mentor?${query.toString()}`, { method: "GET" });
+};
+
+/** GET /api/mentor/stats/overview — returns { PENDING, APPROVED, REJECTED, REVIEWED } counts */
+export const getMentorApplicationStats = async (): Promise<
+  ApiResponse<any>
+> => {
+  return apiRequest("/mentor/stats/overview", { method: "GET" });
+};
+
+/** GET /api/mentor/:id — single application with all 13 answers */
+export const getMentorApplicationById = async (
+  id: string,
+): Promise<ApiResponse<any>> => {
+  return apiRequest(`/mentor/${id}`, { method: "GET" });
+};
+
+/** PATCH /api/mentor/:id/status — approve / reject (with reason) / hold */
+export const updateMentorApplicationStatus = async (
+  id: string,
+  status: MentorApplicationStatus,
+  adminNotes?: string,
+): Promise<ApiResponse<any>> => {
+  return apiRequest(`/mentor/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, adminNotes }),
+  });
+};

@@ -51,7 +51,8 @@ const sendEmail = async ({ email, subject, message, html }) => {
   } catch (error) {
     console.error("Error sending email:");
     console.error(error.response?.body || error);
-    throw new Error("Email could not be sent.");
+    console.log("FALLBACK (Email Failed) - Message content:", message);
+    // Don't throw an error here so the API flow doesn't break if credits are exceeded.
   }
 };
 

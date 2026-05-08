@@ -10,7 +10,7 @@ const ensureClubVerified = (req, res, next) => {
   const user = req.user;
   if (!user) return next(new AppError('You must be logged in', 401));
 
-  if (user.role === 'ADMIN') return next();
+  if (user.roles?.includes('ADMIN')) return next();
 
   if ((user.isClubPresident || user.isClubMember) && user.clubVerified) {
     return next();
@@ -45,7 +45,7 @@ const resolveCampaignClub = async (req, res, next) => {
   }
 
   // ✅ ADMIN can always proceed
-  if (user.role === 'ADMIN') {
+  if (user.roles?.includes('ADMIN')) {
     req.validatedClubId = club.id;
     return next();
   }
@@ -79,7 +79,7 @@ const validateCampaignEligibility = (req, res, next) => {
     return next(new AppError('You must be logged in.', 401));
   }
 
-  if (user.role === 'ADMIN') return next();
+  if (user.roles?.includes('ADMIN')) return next();
 
   if (!user.studentVerified) {
     return next(

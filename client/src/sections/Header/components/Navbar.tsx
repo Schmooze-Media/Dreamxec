@@ -7,7 +7,7 @@
 // import type { UserRole } from "../../../types";
 
 // interface NavbarProps {
-//   currentUser?: { name: string; role: UserRole } | null;
+//   currentUser?: { name: string; role?: UserRole; roles?: string[] } | null;
 //   onLogin?: () => void;
 //   onLogout?: () => void;
 // }
@@ -287,7 +287,7 @@ import type { UserRole } from "../../../types";
 import { getProfile } from "../../../services/profileService";
 
 interface NavbarProps {
-  currentUser?: { name: string; role: UserRole } | null;
+  currentUser?: { name: string; role?: UserRole; roles?: string[] } | null;
   onLogin?: () => void;
   onLogout?: () => void;
 }
