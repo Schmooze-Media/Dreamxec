@@ -78,15 +78,16 @@ export interface User {
   roles?: string[];
 
   accountStatus: AccountStatus;
-
+  profileComplete: boolean;
   emailVerified: boolean;
   studentVerified: boolean;
-  profileComplete?: boolean;
   isClubPresident: boolean;
   isClubMember: boolean;
   clubVerified: boolean;
 
   clubIds: string[];
+
+  profilePicture?: string;
 
   createdAt: string;
   updatedAt: string;

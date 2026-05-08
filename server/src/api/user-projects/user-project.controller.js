@@ -1,7 +1,7 @@
 const prisma = require('../../config/prisma');
 const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/AppError');
-const uploadToCloudinary = require('../../utils/uploadToCloudinary');
+const uploadToS3 = require('../../utils/uploadToS3');
 const { publishEvent } = require('../../services/eventPublisher.service');
 const EVENTS = require('../../config/events');
 const generateUniqueSlug = require("../../utils/generateSlug");
@@ -146,8 +146,8 @@ exports.createUserProject = catchAsync(async (req, res, next) => {
 
   /* ---------- Banner ---------- */
   if (req.files?.bannerFile?.[0]) {
-    uploads.imageUrl = await uploadToCloudinary(
-      req.files.bannerFile[0].path,
+    uploads.imageUrl = await uploadToS3(
+      req.files.bannerFile[0],
       "dreamxec/campaigns/images"
     );
   }
@@ -160,7 +160,7 @@ exports.createUserProject = catchAsync(async (req, res, next) => {
           ? "dreamxec/campaigns/images"
           : "dreamxec/campaigns/others";
 
-        return uploadToCloudinary(file.path, folder);
+        return uploadToS3(file, folder);
       })
     );
   }
@@ -186,8 +186,8 @@ exports.createUserProject = catchAsync(async (req, res, next) => {
 
     const uploadedImages = await Promise.all(
       teamImages.map(file =>
-        uploadToCloudinary(
-          file.path,
+        uploadToS3(
+          file,
           "dreamxec/team-members"
         )
       )

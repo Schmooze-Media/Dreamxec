@@ -1,50 +1,109 @@
-import { useState, useEffect } from 'react';
-import { StarDecoration } from './icons/StarDecoration';
-import { Header } from '../sections/Header';
-import imageIcon from '../assets/image.png';
-import image1Icon from '../assets/image1.png';
-import imageCopyIcon from '../assets/imagecopy.png';
-import { UserRole } from '../types';
-import { FooterContent } from '../sections/Footer/components/FooterContent';
+import { useState, useEffect } from "react";
+import { StarDecoration } from "./icons/StarDecoration";
+import { Header } from "../sections/Header";
+import imageIcon from "../assets/image.png";
+import image1Icon from "../assets/image1.png";
+import imageCopyIcon from "../assets/imagecopy.png";
+import { UserRole } from "../types";
+import { FooterContent } from "../sections/Footer/components/FooterContent";
+
+const INDIAN_COLLEGES_API_BASE = import.meta.env.VITE_API_URL + "/colleges";
+const OTHER_COLLEGE_LABEL = "Other";
+
+interface CollegeOption {
+  institution_name: string;
+  aicte_id?: string;
+}
+
+interface CollegeApiItem {
+  institution_name?: string;
+  name?: string;
+  aicte_id?: string | number;
+  id?: string | number;
+}
+
+interface StateApiItem {
+  name?: string;
+  slug?: string;
+}
 
 /* ─────────────────────────────────────────────
    SIMPLE SVG ICONS
 ───────────────────────────────────────────── */
 const UserIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+  >
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
     <circle cx="12" cy="7" r="4" />
   </svg>
 );
 const MailIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+  >
     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
     <polyline points="22,6 12,13 2,6" />
   </svg>
 );
 const LockIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+  >
     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
   </svg>
 );
 const BuildingIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+  >
     <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
     <path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M8 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01" />
   </svg>
 );
 const GoogleIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+    <path
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      fill="#4285F4"
+    />
+    <path
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      fill="#34A853"
+    />
+    <path
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+      fill="#FBBC05"
+    />
+    <path
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      fill="#EA4335"
+    />
   </svg>
 );
 const LinkedInIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" fill="#0A66C2" />
+    <path
+      d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
+      fill="#0A66C2"
+    />
   </svg>
 );
 
@@ -59,22 +118,29 @@ interface NeoInputProps {
   onBlur?: () => void;
   placeholder: string;
   required?: boolean;
-  state?: 'default' | 'success' | 'error';
+  state?: "default" | "success" | "error";
 }
 
-const NeoInput = ({ icon, type, value, onChange, onBlur, placeholder, required, state = 'default' }: NeoInputProps) => {
+const NeoInput = ({
+  icon,
+  type,
+  value,
+  onChange,
+  onBlur,
+  placeholder,
+  required,
+  state = "default",
+}: NeoInputProps) => {
   const borderColor =
-    state === 'success' ? '#16a34a' :
-    state === 'error'   ? '#dc2626' :
-                          '#003366';
+    state === "success" ? "#16a34a" : state === "error" ? "#dc2626" : "#003366";
   const shadowColor =
-    state === 'success' ? '#16a34a' :
-    state === 'error'   ? '#dc2626' :
-                          '#FF7F00';
+    state === "success" ? "#16a34a" : state === "error" ? "#dc2626" : "#FF7F00";
 
   return (
     <div className="relative">
-      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-dreamxec-navy opacity-60">{icon}</div>
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-dreamxec-navy opacity-60">
+        {icon}
+      </div>
       <input
         type={type}
         value={value}
@@ -95,16 +161,47 @@ const NeoInput = ({ icon, type, value, onChange, onBlur, placeholder, required, 
 /* ─────────────────────────────────────────────
    PASSWORD RULE ROW
 ───────────────────────────────────────────── */
-const PasswordRule = ({ met, label, touched, hasValue }: { met: boolean; label: string; touched: boolean; hasValue: boolean }) => (
-  <div className={`flex items-center gap-1.5 text-xs font-bold ${
-    !touched && !hasValue ? 'text-gray-400' : met ? 'text-green-600' : 'text-red-500'
-  }`}>
+const PasswordRule = ({
+  met,
+  label,
+  touched,
+  hasValue,
+}: {
+  met: boolean;
+  label: string;
+  touched: boolean;
+  hasValue: boolean;
+}) => (
+  <div
+    className={`flex items-center gap-1.5 text-xs font-bold ${
+      !touched && !hasValue
+        ? "text-gray-400"
+        : met
+          ? "text-green-600"
+          : "text-red-500"
+    }`}
+  >
     {met ? (
-      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+      <svg
+        className="w-3.5 h-3.5 flex-shrink-0"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={3}
+          d="M5 13l4 4L19 7"
+        />
       </svg>
     ) : (
-      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-3.5 h-3.5 flex-shrink-0"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <circle cx="12" cy="12" r="10" strokeWidth={2.5} />
       </svg>
     )}
@@ -116,10 +213,16 @@ const PasswordRule = ({ met, label, touched, hasValue }: { met: boolean; label: 
    PROPS
 ───────────────────────────────────────────── */
 interface AuthPageProps {
-  onLogin: (email: string, password: string, role: 'student' | 'donor') => void;
-  onSignup: (name: string, email: string, password: string, role: 'student' | 'donor', institution?: string) => void;
-  onGoogleAuth?: (role: 'student' | 'donor') => void;
-  onLinkedInAuth?: (role: 'student' | 'donor') => void;
+  onLogin: (email: string, password: string, role: "student" | "donor") => void;
+  onSignup: (
+    name: string,
+    email: string,
+    password: string,
+    role: "student" | "donor",
+    institution?: string,
+  ) => void;
+  onGoogleAuth?: (role: "student" | "donor") => void;
+  onLinkedInAuth?: (role: "student" | "donor") => void;
   onForgotPassword?: (email: string) => void;
   currentUser?: { name: string; roles?: string[]; role?: UserRole } | null;
   onHeaderLogin?: () => void;
@@ -129,91 +232,379 @@ interface AuthPageProps {
 /* ─────────────────────────────────────────────
    MAIN COMPONENT
 ───────────────────────────────────────────── */
-export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAuth, onForgotPassword, currentUser, onHeaderLogin, onLogout }: AuthPageProps) {
+export default function AuthPage({
+  onLogin,
+  onSignup,
+  onGoogleAuth,
+  onLinkedInAuth,
+  onForgotPassword,
+  currentUser,
+  onHeaderLogin,
+  onLogout,
+}: AuthPageProps) {
   const [isSignup, setIsSignup] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [role, setRole] = useState<'student' | 'donor'>('student');
+  const [role, setRole] = useState<"student" | "donor">("student");
   const [showBackgroundImages, setShowBackgroundImages] = useState(false);
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [institution, setInstitution] = useState('');
-  const [error, setError] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [institution, setInstitution] = useState("");
+  const [selectedState, setSelectedState] = useState("");
+  const [states, setStates] = useState<string[]>([]);
+  const [statesLoading, setStatesLoading] = useState(false);
+  const [statesError, setStatesError] = useState("");
+  const [institutionQuery, setInstitutionQuery] = useState("");
+  const [selectedCollege, setSelectedCollege] = useState<CollegeOption | null>(
+    null,
+  );
+  const [collegeResults, setCollegeResults] = useState<CollegeOption[]>([]);
+  const [collegeLoading, setCollegeLoading] = useState(false);
+  const [collegeError, setCollegeError] = useState("");
+  const [showCollegeDropdown, setShowCollegeDropdown] = useState(false);
+  const [useCustomCollege, setUseCustomCollege] = useState(false);
+  const [customCollegeName, setCustomCollegeName] = useState("");
+  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
   const [passwordTouched, setPasswordTouched] = useState(false);
 
   const pv = {
-    minLength:      password.length >= 8,
-    hasAlphabet:    /[a-zA-Z]/.test(password),
-    hasNumber:      /[0-9]/.test(password),
+    minLength: password.length >= 8,
+    hasAlphabet: /[a-zA-Z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
     hasSpecialChar: /[!@#$%^&*(),.?":{}|<>_\-+=[\]\\;'/`~]/.test(password),
   };
-  const isPasswordValid = pv.minLength && pv.hasAlphabet && pv.hasNumber && pv.hasSpecialChar;
+  const isPasswordValid =
+    pv.minLength && pv.hasAlphabet && pv.hasNumber && pv.hasSpecialChar;
+  const trimmedCustomCollegeName = customCollegeName.trim();
+  const isCustomCollegeValid =
+    trimmedCustomCollegeName.length >= 3 &&
+    trimmedCustomCollegeName.length <= 120;
 
-  const resetForm = () => { setName(''); setEmail(''); setPassword(''); setConfirmPassword(''); setInstitution(''); setPasswordTouched(false); };
+  const resetForm = () => {
+    setName("");
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setInstitution("");
+    setSelectedState("");
+    setInstitutionQuery("");
+    setSelectedCollege(null);
+    setCollegeResults([]);
+    setCollegeError("");
+    setShowCollegeDropdown(false);
+    setUseCustomCollege(false);
+    setCustomCollegeName("");
+    setPasswordTouched(false);
+  };
 
   useEffect(() => {
     const check = () => setShowBackgroundImages(window.innerWidth > 1360);
     check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadStates = async () => {
+      setStatesLoading(true);
+      setStatesError("");
+      try {
+        const response = await fetch(`${INDIAN_COLLEGES_API_BASE}/states`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch states (${response.status})`);
+        }
+
+        const payload: unknown = await response.json();
+        const rawStates: unknown[] =
+          payload &&
+          typeof payload === "object" &&
+          Array.isArray((payload as { data?: unknown[] }).data)
+            ? (payload as { data: unknown[] }).data
+            : Array.isArray(payload)
+              ? (payload as unknown[])
+              : payload &&
+                  typeof payload === "object" &&
+                  Array.isArray((payload as { states?: unknown[] }).states)
+                ? (payload as { states: unknown[] }).states
+                : [];
+
+        const stateList = rawStates
+          .map((item) => {
+            if (typeof item === "string") {
+              return item.trim();
+            }
+
+            if (item && typeof item === "object") {
+              const obj = item as StateApiItem;
+              if (typeof obj.name === "string") {
+                return obj.name.trim();
+              }
+              if (typeof obj.slug === "string") {
+                return obj.slug.trim();
+              }
+            }
+
+            return "";
+          })
+          .filter((value): value is string => Boolean(value));
+
+        if (isMounted) {
+          setStates(stateList);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setStatesError(
+            err instanceof Error ? err.message : "Unable to load states",
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setStatesLoading(false);
+        }
+      }
+    };
+
+    loadStates();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isSignup || role !== "student") {
+      return;
+    }
+
+    if (
+      useCustomCollege ||
+      !selectedState ||
+      institutionQuery.trim().length < 3
+    ) {
+      setCollegeResults([]);
+      setCollegeLoading(false);
+      setCollegeError("");
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      setCollegeLoading(true);
+      setCollegeError("");
+      try {
+        const params = new URLSearchParams({
+          state: selectedState,
+          q: institutionQuery.trim(),
+          limit: "15",
+        });
+
+        const response = await fetch(
+          `${INDIAN_COLLEGES_API_BASE}/search?${params.toString()}`,
+          {
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(`Search failed (${response.status})`);
+        }
+
+        const payload: unknown = await response.json();
+        let rawResults: CollegeApiItem[] = [];
+        if (Array.isArray(payload)) {
+          rawResults = payload;
+        } else if (payload && typeof payload === "object") {
+          const p = payload as {
+            data?: CollegeApiItem[];
+            results?: CollegeApiItem[];
+          };
+          if (Array.isArray(p.results)) {
+            rawResults = p.results;
+          } else if (Array.isArray(p.data)) {
+            rawResults = p.data;
+          }
+        }
+
+        const normalizedResults: CollegeOption[] = rawResults
+          .filter((item) => item.name || item.institution_name)
+          .map((item) => ({
+            institution_name: (item.name || item.institution_name) as string,
+            aicte_id:
+              item.id || item.aicte_id
+                ? String(item.id || item.aicte_id)
+                : undefined,
+          }));
+
+        setCollegeResults(normalizedResults);
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          setCollegeError(
+            err instanceof Error ? err.message : "Unable to fetch institutions",
+          );
+          setCollegeResults([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setCollegeLoading(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [institutionQuery, selectedState, isSignup, role, useCustomCollege]);
+
   const handleGoogleAuth = async () => {
-    setError(''); setIsSubmitting(true);
-    try { if (onGoogleAuth) await onGoogleAuth(role); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Google authentication failed'); }
-    finally { setIsSubmitting(false); }
+    setError("");
+    setIsSubmitting(true);
+    try {
+      if (onGoogleAuth) await onGoogleAuth(role);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Google authentication failed",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleLinkedInAuth = async () => {
-    setError(''); setIsSubmitting(true);
-    try { if (onLinkedInAuth) await onLinkedInAuth(role); }
-    catch (err) { setError(err instanceof Error ? err.message : 'LinkedIn authentication failed'); }
-    finally { setIsSubmitting(false); }
+    setError("");
+    setIsSubmitting(true);
+    try {
+      if (onLinkedInAuth) await onLinkedInAuth(role);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "LinkedIn authentication failed",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setError(''); setIsSubmitting(true);
+    e.preventDefault();
+    setError("");
+    setIsSubmitting(true);
     try {
       if (isForgotPassword) {
-        if (!email.trim()) { setError('Please enter your email address'); setIsSubmitting(false); return; }
-        if (onForgotPassword) { await onForgotPassword(email); alert('Password reset link sent to your email!'); setIsForgotPassword(false); setEmail(''); }
+        if (!email.trim()) {
+          setError("Please enter your email address");
+          setIsSubmitting(false);
+          return;
+        }
+        if (onForgotPassword) {
+          await onForgotPassword(email);
+          alert("Password reset link sent to your email!");
+          setIsForgotPassword(false);
+          setEmail("");
+        }
       } else if (isSignup) {
-        if (password !== confirmPassword) { setError('Passwords do not match'); setIsSubmitting(false); return; }
-        if (!isPasswordValid) { setError('Password must be at least 8 characters and include alphabets, numbers, and a special character'); setIsSubmitting(false); return; }
-        await onSignup(name, email, password, role, institution);
-        resetForm(); setSuccessMessage('🎉 Account created successfully! Please sign in.'); setError('');
-        setTimeout(() => { setIsSignup(false); setSuccessMessage(''); }, 2500);
+        if (password !== confirmPassword) {
+          setError("Passwords do not match");
+          setIsSubmitting(false);
+          return;
+        }
+        if (!isPasswordValid) {
+          setError(
+            "Password must be at least 8 characters and include alphabets, numbers, and a special character",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+        if (role === "student") {
+          if (!selectedState) {
+            setError("Please select your state");
+            setIsSubmitting(false);
+            return;
+          }
+          if (!selectedCollege && !useCustomCollege) {
+            setError(
+              "Please select your institution from the list or choose Other",
+            );
+            setIsSubmitting(false);
+            return;
+          }
+          if (useCustomCollege && !isCustomCollegeValid) {
+            setError("Please enter a valid college name (3-120 characters)");
+            setIsSubmitting(false);
+            return;
+          }
+        }
+        const resolvedInstitution =
+          role === "student"
+            ? useCustomCollege
+              ? trimmedCustomCollegeName
+              : selectedCollege?.institution_name || institution
+            : institution.trim();
+        await onSignup(name, email, password, role, resolvedInstitution);
+        resetForm();
+        setSuccessMessage("🎉 Account created successfully! Please sign in.");
+        setError("");
+        setTimeout(() => {
+          setIsSignup(false);
+          setSuccessMessage("");
+        }, 2500);
       } else {
         await onLogin(email, password, role);
       }
-    } catch (err) { setError(err instanceof Error ? err.message : 'Authentication failed'); }
-    finally { setIsSubmitting(false); }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Authentication failed");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormValid = isForgotPassword
     ? !!email.trim()
     : isSignup
-      ? !!(name.trim() && email.trim() && isPasswordValid && password === confirmPassword && institution.trim())
+      ? role === "student"
+        ? !!(
+            name.trim() &&
+            email.trim() &&
+            isPasswordValid &&
+            password === confirmPassword &&
+            selectedState &&
+            ((selectedCollege && institution.trim()) ||
+              (useCustomCollege && isCustomCollegeValid))
+          )
+        : !!(
+            name.trim() &&
+            email.trim() &&
+            isPasswordValid &&
+            password === confirmPassword &&
+            institution.trim()
+          )
       : !!(email.trim() && password);
 
-  const pageTitle = isForgotPassword ? 'Reset Password' : isSignup ? 'Join DreamXec' : 'Welcome Back';
-  const pageSubtitle = isForgotPassword
-    ? 'Enter your email to receive a reset link'
+  const pageTitle = isForgotPassword
+    ? "Reset Password"
     : isSignup
-      ? 'Create an account to start fundraising'
-      : 'Sign in to your account';
+      ? "Join DreamXec"
+      : "Welcome Back";
+  const pageSubtitle = isForgotPassword
+    ? "Enter your email to receive a reset link"
+    : isSignup
+      ? "Create an account to start fundraising"
+      : "Sign in to your account";
 
   return (
     <>
-      <Header currentUser={currentUser} onLogin={onHeaderLogin} onLogout={onLogout} />
+      <Header
+        currentUser={currentUser}
+        onLogin={onHeaderLogin}
+        onLogout={onLogout}
+      />
 
       <div className="min-h-screen bg-dreamxec-cream relative overflow-hidden flex items-center justify-center py-6 sm:py-8 px-3 sm:px-4">
-
         {/* Decorative raw shapes */}
         <div className="hidden lg:block absolute top-20 left-8 pointer-events-none opacity-15">
           <div className="w-14 h-14 border-4 border-dreamxec-orange rotate-12" />
@@ -229,29 +620,66 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
         {showBackgroundImages && (
           <>
             <div className="absolute top-[12%] left-[2%] -z-20 opacity-70 animate-float-slow pointer-events-none">
-              <img src={imageIcon} alt="" className="w-56 lg:w-64 h-auto object-contain" style={{ animationDelay: '0s', filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.1))', maxWidth: '280px' }} />
+              <img
+                src={imageIcon}
+                alt=""
+                className="w-56 lg:w-64 h-auto object-contain"
+                style={{
+                  animationDelay: "0s",
+                  filter: "drop-shadow(0 0 6px rgba(0,0,0,0.1))",
+                  maxWidth: "280px",
+                }}
+              />
             </div>
             <div className="absolute bottom-[8%] left-[3%] -z-20 opacity-65 animate-float-fast pointer-events-none">
-              <img src={image1Icon} alt="" className="w-60 lg:w-68 h-auto object-contain" style={{ animationDelay: '2s', filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.1))', maxWidth: '300px' }} />
+              <img
+                src={image1Icon}
+                alt=""
+                className="w-60 lg:w-68 h-auto object-contain"
+                style={{
+                  animationDelay: "2s",
+                  filter: "drop-shadow(0 0 6px rgba(0,0,0,0.1))",
+                  maxWidth: "300px",
+                }}
+              />
             </div>
             <div className="absolute top-[12%] right-[2%] -z-20 opacity-70 animate-float-slow pointer-events-none">
-              <img src={imageCopyIcon} alt="" className="w-56 lg:w-64 h-auto object-contain" style={{ animationDelay: '1.5s', filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.1))', maxWidth: '280px' }} />
+              <img
+                src={imageCopyIcon}
+                alt=""
+                className="w-56 lg:w-64 h-auto object-contain"
+                style={{
+                  animationDelay: "1.5s",
+                  filter: "drop-shadow(0 0 6px rgba(0,0,0,0.1))",
+                  maxWidth: "280px",
+                }}
+              />
             </div>
             <div className="absolute bottom-[8%] right-[3%] -z-20 opacity-65 animate-float-fast pointer-events-none">
-              <img src={imageIcon} alt="" className="w-60 lg:w-68 h-auto object-contain" style={{ animationDelay: '3s', filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.1))', maxWidth: '300px' }} />
+              <img
+                src={imageIcon}
+                alt=""
+                className="w-60 lg:w-68 h-auto object-contain"
+                style={{
+                  animationDelay: "3s",
+                  filter: "drop-shadow(0 0 6px rgba(0,0,0,0.1))",
+                  maxWidth: "300px",
+                }}
+              />
             </div>
           </>
         )}
 
         {/* ── MAIN CARD ── */}
         <div className="w-full max-w-2xl relative z-50 my-4">
-
           {/* Stacked shadow layers for depth */}
           <div
             className="bg-white relative"
-            style={{ border: '4px solid #003366', boxShadow: '8px 8px 0 #FF7F00' }}
+            style={{
+              border: "4px solid #003366",
+              boxShadow: "8px 8px 0 #FF7F00",
+            }}
           >
-
             {/* Top tricolor bar */}
             <div className="flex h-2">
               <div className="flex-1 bg-[#FF7F00]" />
@@ -260,7 +688,6 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
             </div>
 
             <div className="p-5 sm:p-7 md:p-9">
-
               {/* ── Header ── */}
               <div className="text-center mb-6 sm:mb-7">
                 <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
@@ -269,22 +696,27 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
                   </h1>
                   <div
                     className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-dreamxec-orange flex-shrink-0"
-                    style={{ border: '2px solid #003366' }}
+                    style={{ border: "2px solid #003366" }}
                   >
                     <span className="text-white font-black text-base">★</span>
                   </div>
                 </div>
-                <p className="text-dreamxec-navy/70 text-sm sm:text-base font-bold">{pageSubtitle}</p>
+                <p className="text-dreamxec-navy/70 text-sm sm:text-base font-bold">
+                  {pageSubtitle}
+                </p>
               </div>
 
               {/* ── Role Toggle ── */}
               {!isForgotPassword && (
                 <div className="mb-5 sm:mb-6">
-                  <p className="text-center text-xs font-black text-dreamxec-navy uppercase tracking-widest mb-3">I am a:</p>
+                  <p className="text-center text-xs font-black text-dreamxec-navy uppercase tracking-widest mb-3">
+                    I am a:
+                  </p>
                   <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto">
-                    {(['student', 'donor'] as const).map(r => {
+                    {(["student", "donor"] as const).map((r) => {
                       const active = role === r;
-                      const activeColor = r === 'student' ? '#FF7F00' : '#0B9C2C';
+                      const activeColor =
+                        r === "student" ? "#FF7F00" : "#0B9C2C";
                       return (
                         <button
                           key={r}
@@ -292,14 +724,16 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
                           onClick={() => setRole(r)}
                           className="py-2.5 font-black uppercase tracking-wider text-sm transition-all"
                           style={{
-                            border: '3px solid #003366',
-                            background: active ? activeColor : '#fff',
-                            color: active ? '#fff' : '#003366',
-                            boxShadow: active ? `4px 4px 0 #003366` : '2px 2px 0 #003366',
-                            transform: active ? 'translate(-1px,-1px)' : 'none',
+                            border: "3px solid #003366",
+                            background: active ? activeColor : "#fff",
+                            color: active ? "#fff" : "#003366",
+                            boxShadow: active
+                              ? `4px 4px 0 #003366`
+                              : "2px 2px 0 #003366",
+                            transform: active ? "translate(-1px,-1px)" : "none",
                           }}
                         >
-                          {r === 'student' ? '🎓 Student' : '💼 Donor'}
+                          {r === "student" ? "🎓 Student" : "💼 Donor"}
                         </button>
                       );
                     })}
@@ -313,7 +747,9 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
                   {/* Divider */}
                   <div className="flex items-center gap-3 mb-4">
                     <div className="flex-1 h-0.5 bg-dreamxec-navy/20" />
-                    <span className="text-[10px] sm:text-xs font-black text-dreamxec-navy/50 uppercase tracking-widest">Continue with</span>
+                    <span className="text-[10px] sm:text-xs font-black text-dreamxec-navy/50 uppercase tracking-widest">
+                      Continue with
+                    </span>
                     <div className="flex-1 h-0.5 bg-dreamxec-navy/20" />
                   </div>
 
@@ -324,7 +760,10 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
                         onClick={handleGoogleAuth}
                         disabled={isSubmitting}
                         className="flex items-center justify-center gap-2 py-2.5 font-black text-xs sm:text-sm text-dreamxec-navy uppercase tracking-wide bg-white transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] disabled:opacity-50"
-                        style={{ border: '3px solid #003366', boxShadow: '3px 3px 0 #003366' }}
+                        style={{
+                          border: "3px solid #003366",
+                          boxShadow: "3px 3px 0 #003366",
+                        }}
                       >
                         <GoogleIcon className="w-4 h-4" />
                         Google
@@ -336,7 +775,10 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
                         onClick={handleLinkedInAuth}
                         disabled={isSubmitting}
                         className="flex items-center justify-center gap-2 py-2.5 font-black text-xs sm:text-sm text-dreamxec-navy uppercase tracking-wide bg-white transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] disabled:opacity-50"
-                        style={{ border: '3px solid #003366', boxShadow: '3px 3px 0 #0A66C2' }}
+                        style={{
+                          border: "3px solid #003366",
+                          boxShadow: "3px 3px 0 #0A66C2",
+                        }}
                       >
                         <LinkedInIcon className="w-4 h-4" />
                         LinkedIn
@@ -346,7 +788,9 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
 
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-0.5 bg-dreamxec-navy/20" />
-                    <span className="text-[10px] sm:text-xs font-black text-dreamxec-navy/50 uppercase tracking-widest">Or use email</span>
+                    <span className="text-[10px] sm:text-xs font-black text-dreamxec-navy/50 uppercase tracking-widest">
+                      Or use email
+                    </span>
                     <div className="flex-1 h-0.5 bg-dreamxec-navy/20" />
                   </div>
                 </div>
@@ -356,10 +800,23 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
               {successMessage && (
                 <div
                   className="mb-4 p-3 flex items-center gap-2 bg-green-50 text-green-800 text-sm font-bold"
-                  style={{ border: '3px solid #16a34a', boxShadow: '3px 3px 0 #16a34a' }}
+                  style={{
+                    border: "3px solid #16a34a",
+                    boxShadow: "3px 3px 0 #16a34a",
+                  }}
                 >
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-4 h-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                   {successMessage}
                 </div>
@@ -369,10 +826,23 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
               {error && (
                 <div
                   className="mb-4 p-3 flex items-center gap-2 bg-red-50 text-red-700 text-sm font-bold"
-                  style={{ border: '3px solid #dc2626', boxShadow: '3px 3px 0 #dc2626' }}
+                  style={{
+                    border: "3px solid #dc2626",
+                    boxShadow: "3px 3px 0 #dc2626",
+                  }}
                 >
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="w-4 h-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                   {error}
                 </div>
@@ -381,7 +851,6 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
               {/* ── FORM ── */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
                   {/* Name */}
                   {isSignup && (
                     <div className="sm:col-span-1">
@@ -390,44 +859,316 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
                       </label>
                       <NeoInput
                         icon={<UserIcon className="w-4 h-4" />}
-                        type="text" value={name}
-                        onChange={e => setName(e.target.value)}
-                        placeholder="Your full name" required
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your full name"
+                        required
                       />
                     </div>
                   )}
 
                   {/* Email */}
-                  <div className={isSignup ? 'sm:col-span-1' : 'sm:col-span-2'}>
+                  <div className={isSignup ? "sm:col-span-1" : "sm:col-span-2"}>
                     <label className="block text-xs font-black text-dreamxec-navy uppercase tracking-widest mb-2">
                       Email Address <span className="text-red-600">*</span>
                     </label>
                     <NeoInput
                       icon={<MailIcon className="w-4 h-4" />}
-                      type="email" value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      placeholder="your@email.com" required
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      required
                     />
                   </div>
 
                   {/* Institution */}
-                  {isSignup && (role === 'student' || role === 'donor') && (
+                  {isSignup && role === "student" && (
+                    <>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-black text-dreamxec-navy uppercase tracking-widest mb-2">
+                          State <span className="text-red-600">*</span>
+                        </label>
+                        <div className="relative">
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-dreamxec-navy opacity-60">
+                            <BuildingIcon className="w-4 h-4" />
+                          </div>
+                          <select
+                            value={selectedState}
+                            onChange={(e) => {
+                              const nextState = e.target.value;
+                              setSelectedState(nextState);
+                              setInstitution("");
+                              setInstitutionQuery("");
+                              setSelectedCollege(null);
+                              setCollegeResults([]);
+                              setCollegeError("");
+                              setShowCollegeDropdown(false);
+                              setUseCustomCollege(false);
+                              setCustomCollegeName("");
+                            }}
+                            required
+                            disabled={statesLoading}
+                            className="w-full pl-10 pr-3 py-2.5 sm:py-3 text-sm font-medium text-dreamxec-navy bg-white focus:outline-none transition-all appearance-none"
+                            style={{
+                              border: "3px solid #003366",
+                              boxShadow: "3px 3px 0 #FF7F00",
+                            }}
+                          >
+                            <option value="">
+                              {statesLoading
+                                ? "Loading states..."
+                                : "Select your state"}
+                            </option>
+                            {states.map((stateName, index) => (
+                              <option
+                                key={`${stateName}-${index}`}
+                                value={stateName}
+                              >
+                                {stateName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        {statesError && (
+                          <p className="mt-1.5 text-xs font-bold text-red-600">
+                            Could not load states: {statesError}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="sm:col-span-2 relative">
+                        <label className="block text-xs font-black text-dreamxec-navy uppercase tracking-widest mb-2">
+                          Institution/College{" "}
+                          <span className="text-red-600">*</span>
+                        </label>
+                        <NeoInput
+                          icon={<BuildingIcon className="w-4 h-4" />}
+                          type="text"
+                          value={institutionQuery}
+                          onChange={(e) => {
+                            const nextQuery = e.target.value;
+                            setInstitutionQuery(nextQuery);
+                            setShowCollegeDropdown(true);
+                            setUseCustomCollege(false);
+                            setCustomCollegeName("");
+                            if (
+                              !selectedCollege ||
+                              nextQuery !== selectedCollege.institution_name
+                            ) {
+                              setSelectedCollege(null);
+                              setInstitution("");
+                            }
+                            if (!nextQuery.trim()) {
+                              setCollegeResults([]);
+                              setCollegeError("");
+                            }
+                          }}
+                          onBlur={() => {
+                            window.setTimeout(
+                              () => setShowCollegeDropdown(false),
+                              150,
+                            );
+                          }}
+                          placeholder={
+                            selectedState
+                              ? "Type at least 3 letters to search your college"
+                              : "Select state first"
+                          }
+                          required
+                          state={
+                            institutionQuery.length > 0
+                              ? selectedCollege ||
+                                (useCustomCollege && isCustomCollegeValid)
+                                ? "success"
+                                : "error"
+                              : "default"
+                          }
+                        />
+
+                        {showCollegeDropdown &&
+                          selectedState &&
+                          institutionQuery.trim().length >= 3 && (
+                            <div
+                              className="absolute left-0 right-0 mt-2 z-20 bg-white max-h-64 overflow-y-auto"
+                              style={{
+                                border: "3px solid #003366",
+                                boxShadow: "4px 4px 0 #FF7F00",
+                              }}
+                            >
+                              {collegeLoading && (
+                                <div className="px-3 py-2.5 text-sm font-bold text-dreamxec-navy/70">
+                                  Searching colleges...
+                                </div>
+                              )}
+
+                              {!collegeLoading && collegeError && (
+                                <div className="px-3 py-2.5 text-sm font-bold text-red-600">
+                                  Error: {collegeError}
+                                </div>
+                              )}
+
+                              {!collegeLoading &&
+                                !collegeError &&
+                                collegeResults.length === 0 && (
+                                  <div className="px-3 py-2.5 text-sm font-bold text-dreamxec-navy/70">
+                                    No colleges found for this query.
+                                  </div>
+                                )}
+
+                              {!collegeLoading && !collegeError && (
+                                <button
+                                  type="button"
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  onClick={() => {
+                                    setUseCustomCollege(true);
+                                    setSelectedCollege(null);
+                                    setInstitutionQuery(OTHER_COLLEGE_LABEL);
+                                    setInstitution("");
+                                    setShowCollegeDropdown(false);
+                                    setError("");
+                                  }}
+                                  className="w-full text-left px-3 py-2.5 border-b border-dreamxec-navy/10 hover:bg-dreamxec-orange/10 transition-colors"
+                                >
+                                  <div className="text-sm font-bold text-dreamxec-navy">
+                                    Other
+                                  </div>
+                                  <div className="text-xs font-semibold text-dreamxec-navy/60">
+                                    My college is not listed
+                                  </div>
+                                </button>
+                              )}
+
+                              {!collegeLoading &&
+                                !collegeError &&
+                                collegeResults.map((college) => (
+                                  <button
+                                    key={`${college.aicte_id ?? college.institution_name}-${college.institution_name}`}
+                                    type="button"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => {
+                                      setUseCustomCollege(false);
+                                      setCustomCollegeName("");
+                                      setSelectedCollege(college);
+                                      setInstitutionQuery(
+                                        college.institution_name,
+                                      );
+                                      setInstitution(college.institution_name);
+                                      setShowCollegeDropdown(false);
+                                      setError("");
+                                    }}
+                                    className="w-full text-left px-3 py-2.5 border-b border-dreamxec-navy/10 hover:bg-dreamxec-orange/10 transition-colors"
+                                  >
+                                    <div className="text-sm font-bold text-dreamxec-navy">
+                                      {college.institution_name}
+                                    </div>
+                                    {college.aicte_id && (
+                                      <div className="text-xs font-semibold text-dreamxec-navy/60">
+                                        AICTE ID: {college.aicte_id}
+                                      </div>
+                                    )}
+                                  </button>
+                                ))}
+                            </div>
+                          )}
+
+                        {useCustomCollege && (
+                          <div className="mt-3">
+                            <label className="block text-xs font-black text-dreamxec-navy uppercase tracking-widest mb-2">
+                              Enter College Name{" "}
+                              <span className="text-red-600">*</span>
+                            </label>
+                            <NeoInput
+                              icon={<BuildingIcon className="w-4 h-4" />}
+                              type="text"
+                              value={customCollegeName}
+                              onChange={(e) => {
+                                const nextCustomValue = e.target.value;
+                                setUseCustomCollege(true);
+                                setInstitutionQuery(OTHER_COLLEGE_LABEL);
+                                setCustomCollegeName(nextCustomValue);
+                                setInstitution(nextCustomValue.trim());
+                              }}
+                              placeholder="Type your college name"
+                              required
+                              state={
+                                customCollegeName.length === 0
+                                  ? "default"
+                                  : isCustomCollegeValid
+                                    ? "success"
+                                    : "error"
+                              }
+                            />
+                            {customCollegeName.length > 0 &&
+                              !isCustomCollegeValid && (
+                                <p className="mt-1.5 text-xs font-bold text-red-600">
+                                  College name must be between 3 and 120
+                                  characters.
+                                </p>
+                              )}
+                          </div>
+                        )}
+
+                        {!selectedState && (
+                          <p className="mt-1.5 text-xs font-bold text-dreamxec-navy/60">
+                            Choose your state before searching for institutions.
+                          </p>
+                        )}
+                        {selectedState &&
+                          institutionQuery.trim().length > 0 &&
+                          institutionQuery.trim().length < 3 && (
+                            <p className="mt-1.5 text-xs font-bold text-dreamxec-navy/60">
+                              Type at least 3 characters to search.
+                            </p>
+                          )}
+                        {selectedCollege && (
+                          <p className="mt-1.5 text-xs font-bold text-green-700">
+                            Selected: {selectedCollege.institution_name} (AICTE
+                            ID: {selectedCollege.aicte_id})
+                          </p>
+                        )}
+                        {useCustomCollege && isCustomCollegeValid && (
+                          <p className="mt-1.5 text-xs font-bold text-green-700">
+                            Using custom college: {trimmedCustomCollegeName}
+                          </p>
+                        )}
+                        {selectedState &&
+                          institutionQuery.trim().length >= 3 &&
+                          !selectedCollege &&
+                          !useCustomCollege &&
+                          !collegeLoading &&
+                          !collegeError && (
+                            <p className="mt-1.5 text-xs font-bold text-red-600">
+                              Please select an institution from the suggestions.
+                            </p>
+                          )}
+                      </div>
+                    </>
+                  )}
+
+                  {isSignup && role === "donor" && (
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-black text-dreamxec-navy uppercase tracking-widest mb-2">
-                        {role === 'student' ? 'Institution/College' : 'Organization/Company'} <span className="text-red-600">*</span>
+                        Organization/Company{" "}
+                        <span className="text-red-600">*</span>
                       </label>
                       <NeoInput
                         icon={<BuildingIcon className="w-4 h-4" />}
-                        type="text" value={institution}
-                        onChange={e => setInstitution(e.target.value)}
-                        placeholder={role === 'student' ? 'Your institution name' : 'Your organization name'} required
+                        type="text"
+                        value={institution}
+                        onChange={(e) => setInstitution(e.target.value)}
+                        placeholder="Your organization name"
+                        required
                       />
                     </div>
                   )}
 
                   {/* Password */}
                   {!isForgotPassword && (
-                    <div className={isSignup ? 'sm:col-span-1' : 'sm:col-span-2'}>
+                    <div
+                      className={isSignup ? "sm:col-span-1" : "sm:col-span-2"}
+                    >
                       <div className="flex items-center justify-between mb-2">
                         <label className="block text-xs font-black text-dreamxec-navy uppercase tracking-widest">
                           Password <span className="text-red-600">*</span>
@@ -435,7 +1176,10 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
                         {!isSignup && onForgotPassword && (
                           <button
                             type="button"
-                            onClick={() => { setIsForgotPassword(true); setError(''); }}
+                            onClick={() => {
+                              setIsForgotPassword(true);
+                              setError("");
+                            }}
                             className="text-[10px] sm:text-xs font-black text-dreamxec-orange hover:text-dreamxec-green transition-colors uppercase tracking-wide underline"
                           >
                             Forgot?
@@ -444,24 +1188,56 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
                       </div>
                       <NeoInput
                         icon={<LockIcon className="w-4 h-4" />}
-                        type="password" value={password}
-                        onChange={e => setPassword(e.target.value)}
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         onBlur={() => isSignup && setPasswordTouched(true)}
-                        placeholder={isSignup ? 'Create strong password' : 'Your password'} required
+                        placeholder={
+                          isSignup ? "Create strong password" : "Your password"
+                        }
+                        required
                         state={
-                          isSignup && passwordTouched && !isPasswordValid ? 'error' :
-                          isSignup && passwordTouched && isPasswordValid  ? 'success' : 'default'
+                          isSignup && passwordTouched && !isPasswordValid
+                            ? "error"
+                            : isSignup && passwordTouched && isPasswordValid
+                              ? "success"
+                              : "default"
                         }
                       />
                       {/* Password rules */}
                       {isSignup && (
-                        <div className="mt-2.5 p-2.5 bg-gray-50" style={{ border: '2px dashed #003366' }}>
-                          <p className="text-[10px] font-black text-dreamxec-navy/60 uppercase tracking-widest mb-1.5">Must include:</p>
+                        <div
+                          className="mt-2.5 p-2.5 bg-gray-50"
+                          style={{ border: "2px dashed #003366" }}
+                        >
+                          <p className="text-[10px] font-black text-dreamxec-navy/60 uppercase tracking-widest mb-1.5">
+                            Must include:
+                          </p>
                           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                            <PasswordRule met={pv.minLength}      label="8+ chars"        touched={passwordTouched} hasValue={!!password} />
-                            <PasswordRule met={pv.hasAlphabet}    label="1+ letter"        touched={passwordTouched} hasValue={!!password} />
-                            <PasswordRule met={pv.hasNumber}      label="1+ number"        touched={passwordTouched} hasValue={!!password} />
-                            <PasswordRule met={pv.hasSpecialChar} label="1+ special (!@#)" touched={passwordTouched} hasValue={!!password} />
+                            <PasswordRule
+                              met={pv.minLength}
+                              label="8+ chars"
+                              touched={passwordTouched}
+                              hasValue={!!password}
+                            />
+                            <PasswordRule
+                              met={pv.hasAlphabet}
+                              label="1+ letter"
+                              touched={passwordTouched}
+                              hasValue={!!password}
+                            />
+                            <PasswordRule
+                              met={pv.hasNumber}
+                              label="1+ number"
+                              touched={passwordTouched}
+                              hasValue={!!password}
+                            />
+                            <PasswordRule
+                              met={pv.hasSpecialChar}
+                              label="1+ special (!@#)"
+                              touched={passwordTouched}
+                              hasValue={!!password}
+                            />
                           </div>
                         </div>
                       )}
@@ -476,20 +1252,57 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
                       </label>
                       <NeoInput
                         icon={<LockIcon className="w-4 h-4" />}
-                        type="password" value={confirmPassword}
-                        onChange={e => setConfirmPassword(e.target.value)}
-                        placeholder="Re-enter password" required
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-enter password"
+                        required
                         state={
-                          confirmPassword && password !== confirmPassword ? 'error' :
-                          confirmPassword && password === confirmPassword ? 'success' : 'default'
+                          confirmPassword && password !== confirmPassword
+                            ? "error"
+                            : confirmPassword && password === confirmPassword
+                              ? "success"
+                              : "default"
                         }
                       />
                       {confirmPassword && (
-                        <div className={`mt-1.5 flex items-center gap-1.5 text-xs font-bold ${password === confirmPassword ? 'text-green-600' : 'text-red-500'}`}>
+                        <div
+                          className={`mt-1.5 flex items-center gap-1.5 text-xs font-bold ${password === confirmPassword ? "text-green-600" : "text-red-500"}`}
+                        >
                           {password === confirmPassword ? (
-                            <><svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg><span>Passwords match</span></>
+                            <>
+                              <svg
+                                className="w-3.5 h-3.5 flex-shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={3}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              <span>Passwords match</span>
+                            </>
                           ) : (
-                            <><svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg><span>Do not match</span></>
+                            <>
+                              <svg
+                                className="w-3.5 h-3.5 flex-shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={3}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                              <span>Do not match</span>
+                            </>
                           )}
                         </div>
                       )}
@@ -504,16 +1317,29 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
                     disabled={!isFormValid || isSubmitting}
                     className="w-full py-3 sm:py-3.5 font-black text-white uppercase tracking-widest text-sm sm:text-base transition-all"
                     style={{
-                      background: !isFormValid || isSubmitting
-                        ? '#9ca3af'
-                        : 'linear-gradient(135deg, #0B9C2C 0%, #16a34a 100%)',
-                      border: '3px solid #003366',
-                      boxShadow: !isFormValid || isSubmitting ? 'none' : '5px 5px 0 #003366',
-                      cursor: !isFormValid || isSubmitting ? 'not-allowed' : 'pointer',
+                      background:
+                        !isFormValid || isSubmitting
+                          ? "#9ca3af"
+                          : "linear-gradient(135deg, #0B9C2C 0%, #16a34a 100%)",
+                      border: "3px solid #003366",
+                      boxShadow:
+                        !isFormValid || isSubmitting
+                          ? "none"
+                          : "5px 5px 0 #003366",
+                      cursor:
+                        !isFormValid || isSubmitting
+                          ? "not-allowed"
+                          : "pointer",
                       opacity: isSubmitting ? 0.75 : 1,
                     }}
                   >
-                    {isSubmitting ? '⏳ Please wait...' : isForgotPassword ? 'Send Reset Link' : isSignup ? 'Create Account →' : 'Sign In →'}
+                    {isSubmitting
+                      ? "⏳ Please wait..."
+                      : isForgotPassword
+                        ? "Send Reset Link"
+                        : isSignup
+                          ? "Create Account →"
+                          : "Sign In →"}
                   </button>
                 </div>
               </form>
@@ -522,10 +1348,14 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
               <div className="mt-5 text-center">
                 {isForgotPassword ? (
                   <p className="text-dreamxec-navy text-sm font-bold">
-                    Remember your password?{' '}
+                    Remember your password?{" "}
                     <button
                       type="button"
-                      onClick={() => { setIsForgotPassword(false); setError(''); setEmail(''); }}
+                      onClick={() => {
+                        setIsForgotPassword(false);
+                        setError("");
+                        setEmail("");
+                      }}
                       className="text-dreamxec-orange hover:text-dreamxec-green transition-colors underline font-black"
                     >
                       Back to Sign In
@@ -533,13 +1363,20 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
                   </p>
                 ) : (
                   <p className="text-dreamxec-navy text-sm font-bold">
-                    {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
+                    {isSignup
+                      ? "Already have an account?"
+                      : "Don't have an account?"}{" "}
                     <button
                       type="button"
-                      onClick={() => { setIsSignup(!isSignup); setError(''); setSuccessMessage(''); resetForm(); }}
+                      onClick={() => {
+                        setIsSignup(!isSignup);
+                        setError("");
+                        setSuccessMessage("");
+                        resetForm();
+                      }}
                       className="text-dreamxec-orange hover:text-dreamxec-green transition-colors underline font-black"
                     >
-                      {isSignup ? 'Sign In' : 'Sign Up'}
+                      {isSignup ? "Sign In" : "Sign Up"}
                     </button>
                   </p>
                 )}
@@ -554,9 +1391,9 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
 
               {/* Footer note */}
               <p className="text-center text-xs font-bold text-dreamxec-navy/50 uppercase tracking-wide">
-                {role === 'student'
-                  ? '🎓 Create and manage fundraising campaigns'
-                  : '💼 Post projects and find talented students'}
+                {role === "student"
+                  ? "🎓 Create and manage fundraising campaigns"
+                  : "💼 Post projects and find talented students"}
               </p>
             </div>
           </div>
@@ -564,18 +1401,24 @@ export default function AuthPage({ onLogin, onSignup, onGoogleAuth, onLinkedInAu
           {/* ── Info strip below card ── */}
           <div
             className="mt-3 flex items-center gap-3 p-3 sm:p-4 bg-white"
-            style={{ border: '3px solid #003366', boxShadow: '5px 5px 0 #FF7F00' }}
+            style={{
+              border: "3px solid #003366",
+              boxShadow: "5px 5px 0 #FF7F00",
+            }}
           >
             <div
               className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0 bg-dreamxec-orange"
-              style={{ border: '2px solid #003366' }}
+              style={{ border: "2px solid #003366" }}
             >
               <span className="text-white font-black text-base">💡</span>
             </div>
             <div>
-              <p className="text-xs sm:text-sm font-black text-dreamxec-navy uppercase tracking-wide">Secure &amp; Trusted</p>
+              <p className="text-xs sm:text-sm font-black text-dreamxec-navy uppercase tracking-wide">
+                Secure &amp; Trusted
+              </p>
               <p className="text-[10px] sm:text-xs text-dreamxec-navy/60 font-medium mt-0.5">
-                Industry-standard security. Join thousands of students making a difference!
+                Industry-standard security. Join thousands of students making a
+                difference!
               </p>
             </div>
           </div>

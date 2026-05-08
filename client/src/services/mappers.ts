@@ -96,11 +96,11 @@ export const mapUserProjectToCampaign = (
     clubId: userProject.clubId,
     club: userProject.club
       ? {
-          id: userProject.club.id,
-          name: userProject.club.name,
-          college: userProject.club.college,
-          slug: userProject.club.slug,
-        }
+        id: userProject.club.id,
+        name: userProject.club.name,
+        college: userProject.club.college,
+        slug: userProject.club.slug,
+      }
       : undefined,
 
     goalAmount: userProject.goalAmount,

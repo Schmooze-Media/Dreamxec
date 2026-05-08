@@ -1,4 +1,4 @@
-const uploadToCloudinary = require("../../utils/uploadToCloudinary");
+const uploadToS3 = require("../../utils/uploadToS3");
 const prisma = require("../../config/prisma");
 
 exports.referClub = async (req, res) => {
@@ -46,7 +46,7 @@ exports.referClub = async (req, res) => {
         let folder = `dreamxec/club-referrals/${referral.id}`;
         // Verify mime type if strictness is needed, but uploadToCloudinary handles generic uploads.
         
-        const url = await uploadToCloudinary(req.file.path, folder);
+        const url = await uploadToS3(req.file, folder);
         console.log("✅ Evidence Uploaded:", url);
 
         // 3. Update record with URL

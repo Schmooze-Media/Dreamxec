@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { uploadProfilePicture } from '../services/profileService';
 import { VerificationModal } from './VerificationModal';
 import { RestrictionModal } from './RestictionModal';
 import type { Campaign, User } from '../types';
@@ -249,6 +250,9 @@ export default function StudentDashboard({
   const [selectedTab, setSelectedTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [profilePic, setProfilePic] = useState<string | null>(user?.profilePicture || null);
+  const [isUploadingPic, setIsUploadingPic] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [presidentTab, setPresidentTab] = useState<PresidentTab>('dashboard');
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
@@ -332,6 +336,25 @@ export default function StudentDashboard({
     return '';
   };
 
+  const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    setIsUploadingPic(true);
+    try {
+      const response = await uploadProfilePicture(file);
+      if (response.success && response.data?.profilePicture) {
+        setProfilePic(response.data.profilePicture);
+      } else {
+        alert(response.message || 'Failed to upload profile picture.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error occurred while uploading.');
+    } finally {
+      setIsUploadingPic(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex overflow-hidden" style={{ background: '#fffbf5', fontFamily: "'Space Grotesk', sans-serif" }}>
 
@@ -379,10 +402,31 @@ export default function StudentDashboard({
         <div className="px-5 py-5" style={{ borderBottom: '3px solid rgba(255,127,0,0.4)' }}>
           <div className="flex items-start gap-3">
             <div
-              className="w-12 h-12 flex items-center justify-center font-black text-xl flex-shrink-0"
+              className="relative w-12 h-12 flex items-center justify-center font-black text-xl flex-shrink-0 cursor-pointer overflow-hidden group"
               style={{ background: '#FF7F00', color: '#003366', border: '3px solid #fff', boxShadow: '3px 3px 0 #0B9C2C' }}
+              onClick={() => fileInputRef.current?.click()}
             >
-              {studentName?.charAt(0) || 'S'}
+              {profilePic ? (
+                <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                studentName?.charAt(0) || 'S'
+              )}
+              {/* Overlay for hover */}
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                 {isUploadingPic ? (
+                    <span className="text-[10px] text-white">...</span>
+                 ) : (
+                    <span className="text-[10px] text-white font-bold">Edit</span>
+                 )}
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleProfileImageChange}
+                disabled={isUploadingPic}
+                className="hidden"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-black text-sm text-white uppercase tracking-wide truncate">{studentName}</p>

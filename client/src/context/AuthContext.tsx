@@ -18,18 +18,12 @@ import {
 import { mapBackendRole, mapFrontendRole } from "../services/mappers";
 import { getToken } from "../services/api";
 
-type BackendRoleType =
-  | "USER"
-  | "DONOR"
-  | "ADMIN"
-  | "STUDENT_PRESIDENT"
-  | "ALUMNI"
-  | "MENTOR";
+type BackendRoleType = "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR";
 
 interface BackendUser {
   id: string;
   email: string;
-  role?: BackendRoleType;
+  role: BackendRoleType;
   emailVerified?: boolean;
   clubIds?: string[];
   createdAt?: string;
@@ -152,11 +146,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     async (
       email: string,
       password: string,
-      role,
+      _role: "student" | "donor",
     ): Promise<BackendUser | undefined> => {
       try {
         const response = await apiLogin({ email, password });
-        console.log(response);
         if (response.data?.user) {
           const backendUser = response.data.user as BackendUser;
           setUser(createUserData(backendUser));
@@ -176,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       name: string,
       email: string,
       password: string,
-      role,
+      role: "student" | "donor",
       institution?: string,
     ): Promise<
       { requiresVerification?: boolean; user?: BackendUser } | undefined
@@ -186,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           name,
           email,
           password,
-          role,
+          role: mapFrontendRole(role),
           organizationName: institution,
         });
 

@@ -5,6 +5,13 @@ type Props = {
   campaign: HeroCampaign;
 };
 
+const optimizeCloudinaryUrl = (url?: string, width = 600) => {
+  if (!url) return '';
+  if (!url.includes('cloudinary.com')) return url;
+  if (url.includes('f_auto') || url.includes('q_auto')) return url;
+  return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width},c_fill/`);
+};
+
 export const CampaignCard = ({ campaign }: Props) => {
   const navigate = useNavigate();
 
@@ -52,8 +59,12 @@ export const CampaignCard = ({ campaign }: Props) => {
       {/* Image */}
       <div className="h-40 sm:h-48 w-full flex-shrink-0 overflow-hidden bg-gray-100">
         <img
-          src={campaign.image}
+          src={optimizeCloudinaryUrl(campaign.image, 600)}
           alt={campaign.title}
+          loading="lazy"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/assets/dx-logo-2.png"; // Fallback
+          }}
           className="w-full h-full object-cover"
         />
       </div>

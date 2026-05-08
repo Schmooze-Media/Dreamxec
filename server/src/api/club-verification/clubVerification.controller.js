@@ -1,5 +1,5 @@
 const prisma = require("../../config/prisma");
-const uploadToCloudinary = require("../../utils/uploadToCloudinary");
+const uploadToS3 = require("../../utils/uploadToS3");
 const { publishEvent } = require('../../services/eventPublisher.service');
 const EVENTS = require('../../config/events');
 
@@ -28,7 +28,7 @@ async function submitClubVerification(req, res) {
     // DOCUMENT UPLOAD 
     let docUrl = null;
     if (req.file) {
-      docUrl = await uploadToCloudinary(req.file.path, "dreamxec/club-verification");
+      docUrl = await uploadToS3(req.file, "dreamxec/club-verification");
     }
 
     // Alumni Parsing

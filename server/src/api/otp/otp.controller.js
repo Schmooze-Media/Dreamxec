@@ -1,10 +1,9 @@
 const otpGenerator = require("otp-generator");
 const crypto = require("crypto");
 const { sendWhatsAppMessage } = require("../../services/whatsapp.service");
-const sendEmail = require("../../services/email.service");
 const redis = require("../../services/redis.service");
 const { publishEvent } = require("../../services/eventPublisher.service");
-const EVENTS = require("../../config/events");
+const events=require("../../config/events");
 
 /* ───────────────── CONSTANTS ───────────────── */
 const OTP_EXPIRY = 300;              // 5 minutes
@@ -76,7 +75,7 @@ const generateOtp = async (req, res) => {
       // Suspicious Activity Event (Rate Limit Hit)
       if (await redis.get(rateLimitKey) >= MAX_REQUESTS && !await redis.get(`suspicious:${value}`)) {
          await redis.set(`suspicious:${value}`, "1", "EX", 3600); // 1 hour debounce
-         await publishEvent(EVENTS.SUSPICIOUS_ACTIVITY, {
+         await publishEvent(events.SUSPICIOUS_ACTIVITY, {
             type: 'OTP_RATE_LIMIT',
             value: value,
             reason: 'Max OTP generation requests exceeded'
@@ -120,11 +119,10 @@ const generateOtp = async (req, res) => {
     /* 📧 EMAIL OTP */
     if (email) {
       const otp = await generateAndStoreOtp("email", email);
-      await sendEmail({
+      await publishEvent(events.EMAIL_OTP_REQUEST,{
         email,
-        subject: "DreamXec - Your Verification OTP",
-        message: `Your DreamXec OTP is ${otp}. Valid for 5 minutes.`,
-      });
+otp:otp      });
+
     }
 
     /* 📱 WHATSAPP OTP */
@@ -188,7 +186,7 @@ const verifyOtp = async (req, res) => {
         .exec();
 
         // Publish Suspicious Activity
-        await publishEvent(EVENTS.SUSPICIOUS_ACTIVITY, {
+        await publishEvent(events.SUSPICIOUS_ACTIVITY, {
             type: 'OTP_VERIFY_LOCK',
             value: value,
             reason: 'Max OTP verification attempts exceeded - Account Locked'

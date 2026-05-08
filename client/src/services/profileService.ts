@@ -118,3 +118,9 @@ export const activaterole = async (role: "ALUMNI") => {
 export const suppressUpgradeCard = async () => {
   return apiRequest("/users/suppress-upgrade-card", { method: "PATCH" });
 };
+
+export interface ProfilePictureResponse {
+    profilePicture: string;
+    profile: ProfileResponse['profile'];
+}
+

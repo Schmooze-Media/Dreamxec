@@ -5,6 +5,16 @@ interface CampaignCardProps {
   href: string;
 }
 
+//cloudinary optimisation
+const optimizeCloudinaryUrl = (url?: string, width = 400) => {
+  if (!url) return '';
+  if (!url.includes('cloudinary.com')) return url;
+
+  //prevent double-transforming
+  if (url.includes('f_auto') || url.includes('q_auto')) return url;
+  return url.replace('/upload', `/upload/f_auto,q_auto,w_${width},c_fill/`)
+}
+
 export default function CampaignCard({ campaign, href }: CampaignCardProps) {
   const currentAmount = campaign.currentAmount ?? 0;
   const goalAmount = campaign.goalAmount ?? 0;
@@ -65,9 +75,13 @@ export default function CampaignCard({ campaign, href }: CampaignCardProps) {
       >
         {campaign.imageUrl ? (
           <img
-            src={campaign.imageUrl}
+            src={optimizeCloudinaryUrl(campaign.imageUrl, 400)}
             alt={campaign.title}
-            style={{ width: '100%', height: '100%', objectFit: 'fill', display: 'block' }}
+            loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/assets/dx-logo-2.png"; // Fallback
+            }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           />
         ) : (
           <div
@@ -82,7 +96,7 @@ export default function CampaignCard({ campaign, href }: CampaignCardProps) {
               fontSize: '52px',
             }}
           >
-            
+
           </div>
         )}
 
@@ -139,19 +153,19 @@ export default function CampaignCard({ campaign, href }: CampaignCardProps) {
           >
             {campaign.title}
           </h3>
-        <p
-  style={{
-    margin: 0,
-    fontSize: '12px',
-    color: '#555',
-    fontWeight: 500,
-    borderLeft: '3px solid #FF7F00',
-    paddingLeft: '7px',
-  }}
->
-  <span style={{ display: 'block' }}>{campaign.club?.college || 'DreamXec Academy'}</span>
-  <span style={{ display: 'block' }}>{campaign.club?.name || 'DreamXec Club'}</span>
-</p>
+          <p
+            style={{
+              margin: 0,
+              fontSize: '12px',
+              color: '#555',
+              fontWeight: 500,
+              borderLeft: '3px solid #FF7F00',
+              paddingLeft: '7px',
+            }}
+          >
+            <span style={{ display: 'block' }}>{campaign.club?.college || 'DreamXec Academy'}</span>
+            <span style={{ display: 'block' }}>{campaign.club?.name || 'DreamXec Club'}</span>
+          </p>
         </div>
 
         {/* Progress */}

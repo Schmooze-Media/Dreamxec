@@ -48,7 +48,8 @@ const campaignCommentRoutes = require("./src/api/campaign-comments/campaignComme
 const seoRoutes = require("./src/api/seo/seo.routes");
 const profileRoutes = require("./src/api/profile/profile.routes");
 const mentorRoutes = require("./src/api/mentor/mentor.routes");
-const facultyRoutes = require("./src/api/faculty-verification/facultyVerification.routes");
+const collegesRoutes = require("./src/api/colleges/colleges.routes");
+
 // Passport config
 require("./src/config/passport");
 
@@ -65,7 +66,11 @@ app.use(compression());
 if (process.env.NODE_ENV === "production") {
   app.use(morgan("combined"));
 } else {
-  app.use(morgan("dev"));
+  app.use(
+    morgan("dev", {
+      skip: (req, res) => req.method === "OPTIONS" || res.statusCode === 304,
+    }),
+  );
 }
 
 // --------------------------------------------
@@ -185,13 +190,13 @@ app.use("/api/admin/club-verifications", adminClubVerificationRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/upload", uploadRoutes);
-app.use("/api/faculty-verification", facultyRoutes);
 app.use("/api/otp", otpRoutes);
 app.use("/api/student-verification", studentVerificationRoutes);
 app.use("/api/payments", require("./src/api/payments/payment.routes"));
 app.use("/api", campaignCommentRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/mentor", mentorRoutes);
+app.use("/api/colleges", collegesRoutes);
 app.use("/", seoRoutes);
 app.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My first Sentry error!");

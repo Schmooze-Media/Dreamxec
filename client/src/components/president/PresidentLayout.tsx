@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { StarDecoration } from "../icons/StarDecoration";
-import { usePermission } from "../../rbac/usePermission";
-import { Permissions } from "../../rbac/permissions";
 
 // Icons
 const Icons = {
@@ -22,18 +20,13 @@ export default function PresidentLayout({ children }: { children: React.ReactNod
   const { handleLogout: contextLogout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { can } = usePermission();
-
   const navItems = [
     { label: "Dashboard", path: "/president", icon: <Icons.Dashboard /> },
     { label: "Members", path: "/president/members", icon: <Icons.Users /> },
     { label: "Campaigns", path: "/president/campaigns", icon: <Icons.Campaigns /> },
-    { label: "Upload CSV", path: "/president/upload", icon: <Icons.Upload /> },
+    { label: "Upload CSV", path: "/president/upload-members", icon: <Icons.Upload /> },
+    { label: "Add Member", path: "/president/add-member", icon: <Icons.UserAdd /> },
   ];
-
-  if (can(Permissions.CLUB_MEMBER_MANAGE)) {
-    navItems.push({ label: "Add Member", path: "/president/add-member", icon: <Icons.UserAdd /> });
-  }
 
   const handleLogout = async () => {
     contextLogout();
