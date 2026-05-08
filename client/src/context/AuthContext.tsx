@@ -54,6 +54,11 @@ interface AuthContextType {
     password: string,
     role: "student" | "donor",
     institution?: string,
+    institutionMeta?: {
+      institutionName: string;
+      aicteId?: string;
+      state?: string;
+    },
   ) => Promise<
     { requiresVerification?: boolean; user?: BackendUser } | undefined
   >;
@@ -171,6 +176,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       password: string,
       role: "student" | "donor",
       institution?: string,
+      institutionMeta?: {
+        institutionName: string;
+        aicteId?: string;
+        state?: string;
+      },
     ): Promise<
       { requiresVerification?: boolean; user?: BackendUser } | undefined
     > => {
@@ -181,6 +191,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           password,
           role: mapFrontendRole(role),
           organizationName: institution,
+          institutionName: institutionMeta?.institutionName,
+          institutionAicteId: institutionMeta?.aicteId,
+          institutionState: institutionMeta?.state,
         });
 
         if (

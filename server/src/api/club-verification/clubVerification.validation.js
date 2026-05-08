@@ -6,6 +6,8 @@ const clubVerificationSchema = zod.object({
     // EXISTING FIELDS (UNCHANGED)
     // -----------------------
     collegeName: zod.string().min(1, "College name is required"),
+    collegeAicteId: zod.string().min(1, "College AICTE ID is required"),
+    collegeState: zod.string().min(1, "College state is required"),
     studentEmail: zod.string().email("Invalid student email"),
     studentPhone: zod.string().min(5, "Invalid student phone"),
     presidentName: zod.string().min(1, "President name is required"),
@@ -21,35 +23,41 @@ const clubVerificationSchema = zod.object({
       .string()
       .min(30, "Club description must be at least 30 characters"),
     clubInstagram: zod.string().url("Invalid Instagram URL"),
-    clubLinkedIn: zod.string().url("Invalid LinkedIn URL").optional().or(zod.literal("")),
-    clubYouTube: zod.string().url("Invalid YouTube URL").optional().or(zod.literal("")),
+    clubLinkedIn: zod
+      .string()
+      .url("Invalid LinkedIn URL")
+      .optional()
+      .or(zod.literal("")),
+    clubYouTube: zod
+      .string()
+      .url("Invalid YouTube URL")
+      .optional()
+      .or(zod.literal("")),
 
     // -----------------------
     // ALUMNI (STRINGIFIED JSON)
     // -----------------------
-    alumni: zod
-      .string()
-      .refine((val) => {
-        try {
-          const parsed = JSON.parse(val);
-          return (
-            Array.isArray(parsed) &&
-            parsed.length >= 1 &&
-            parsed.every(
-              (a) =>
-                typeof a.name === "string" &&
-                a.name.length > 0 &&
-                typeof a.phone === "string" &&
-                a.phone.length >= 5 &&
-                (a.socialProfile === undefined ||
-                  a.socialProfile === "" ||
-                  /^https?:\/\//.test(a.socialProfile))
-            )
-          );
-        } catch {
-          return false;
-        }
-      }, "Invalid alumni data"),
+    alumni: zod.string().refine((val) => {
+      try {
+        const parsed = JSON.parse(val);
+        return (
+          Array.isArray(parsed) &&
+          parsed.length >= 1 &&
+          parsed.every(
+            (a) =>
+              typeof a.name === "string" &&
+              a.name.length > 0 &&
+              typeof a.phone === "string" &&
+              a.phone.length >= 5 &&
+              (a.socialProfile === undefined ||
+                a.socialProfile === "" ||
+                /^https?:\/\//.test(a.socialProfile)),
+          )
+        );
+      } catch {
+        return false;
+      }
+    }, "Invalid alumni data"),
   }),
 });
 

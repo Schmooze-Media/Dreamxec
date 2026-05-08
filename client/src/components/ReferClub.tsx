@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { Header } from '../sections/Header';
+import { Header } from "../sections/Header";
 import { FooterContent } from "../sections/Footer/components/FooterContent";
 import { useAuth } from "@/context/AuthContext";
-
+import CollegeAutocomplete, {
+  type CollegeSelection,
+} from "./CollegeAutocomplete";
 
 /* -------------------- Reusable Input -------------------- */
 type InputProps = {
@@ -14,9 +16,7 @@ type InputProps = {
 
 const Input = ({ label, error, ...props }: InputProps) => (
   <div>
-    <label className="block font-bold text-dreamxec-navy mb-2">
-      {label}
-    </label>
+    <label className="block font-bold text-dreamxec-navy mb-2">{label}</label>
     <input
       {...props}
       className={`
@@ -26,12 +26,9 @@ const Input = ({ label, error, ...props }: InputProps) => (
         focus:outline-none focus:ring-2 focus:ring-dreamxec-orange
       `}
     />
-    {error && (
-      <p className="text-sm text-red-500 mt-1">{error}</p>
-    )}
+    {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
   </div>
 );
-
 
 /* -------------------- Main Component -------------------- */
 export default function ReferClub() {
@@ -40,10 +37,14 @@ export default function ReferClub() {
 
   const [loading, setLoading] = useState(false);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [selectedCollege, setSelectedCollege] =
+    useState<CollegeSelection | null>(null);
 
   const [form, setForm] = useState({
     clubName: "",
     collegeName: "",
+    collegeAicteId: "",
+    collegeState: "",
     presidentEmail: "",
     presidentPhone: "",
     presidentName: "",
@@ -57,7 +58,7 @@ export default function ReferClub() {
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const {user, loading: authLoading} = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const location = useLocation();
 
   /* -------------------- Validation -------------------- */
@@ -65,7 +66,9 @@ export default function ReferClub() {
     if (!value) return "";
 
     if (name === "instagram") {
-      return /^(https?:\/\/)?(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/.test(value)
+      return /^(https?:\/\/)?(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/.test(
+        value,
+      )
         ? ""
         : "Enter a valid Instagram profile URL";
     }
@@ -98,6 +101,15 @@ export default function ReferClub() {
   /* -------------------- Submit -------------------- */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!selectedCollege) {
+      alert("Please select a college from the list.");
+      return;
+    }
+    if (!selectedCollege.aicte_id) {
+      alert("Selected college is missing AICTE ID. Please choose another.");
+      return;
+    }
 
     const newErrors: any = {};
     ["instagram", "linkedIn", "portfolio"].forEach((field) => {
@@ -146,103 +158,185 @@ export default function ReferClub() {
   /* -------------------- UI -------------------- */
   return (
     <>
-    <Header />
-    <div className="min-h-screen bg-dreamxec-cream/80 py-16 px-4">
-      <div className="max-w-4xl mx-auto">
+      <Header />
+      <div className="min-h-screen bg-dreamxec-cream/80 py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-display font-bold text-dreamxec-navy">
+              Refer Your Club
+            </h1>
+            <p className="mt-3 text-lg text-dreamxec-navy/70">
+              Help DreamXec verify and onboard student clubs
+            </p>
+          </div>
 
-        {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-display font-bold text-dreamxec-navy">
-            Refer Your Club
-          </h1>
-          <p className="mt-3 text-lg text-dreamxec-navy/70">
-            Help DreamXec verify and onboard student clubs
-          </p>
-        </div>
+          <form
+            onSubmit={handleSubmit}
+            className="card-pastel rounded-3xl border-2 border-dreamxec-navy p-8 space-y-10"
+          >
+            {/* Club Info */}
+            <section>
+              <h2 className="text-xl font-bold text-dreamxec-navy mb-6">
+                Club Information
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block font-bold text-dreamxec-navy mb-2">
+                    College Name
+                  </label>
+                  <CollegeAutocomplete
+                    value={form.collegeName}
+                    onChange={(val) =>
+                      setForm((prev) => ({ ...prev, collegeName: val }))
+                    }
+                    onSelect={(selection) => {
+                      setSelectedCollege(selection);
+                      setForm((prev) => ({
+                        ...prev,
+                        collegeName: selection?.institution_name || "",
+                        collegeAicteId: selection?.aicte_id || "",
+                        collegeState: selection?.state || "",
+                      }));
+                    }}
+                    placeholder="Search your college"
+                  />
+                </div>
+                <Input
+                  label="Club Name"
+                  name="clubName"
+                  value={form.clubName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </section>
 
-        <form
-          onSubmit={handleSubmit}
-          className="card-pastel rounded-3xl border-2 border-dreamxec-navy p-8 space-y-10"
-        >
+            {/* President */}
+            <section>
+              <h2 className="text-xl font-bold text-dreamxec-navy mb-6">
+                Club President Details
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <Input
+                  label="President Name"
+                  name="presidentName"
+                  value={form.presidentName}
+                  onChange={handleChange}
+                  required
+                />
+                <Input
+                  label="President Phone"
+                  name="presidentPhone"
+                  value={form.presidentPhone}
+                  onChange={handleChange}
+                  required
+                />
+                <Input
+                  label="President College Email"
+                  type="email"
+                  name="presidentEmail"
+                  value={form.presidentEmail}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </section>
 
-          {/* Club Info */}
-          <section>
-            <h2 className="text-xl font-bold text-dreamxec-navy mb-6">
-              Club Information
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Input label="College Name" name="collegeName" value={form.collegeName} onChange={handleChange} required />
-              <Input label="Club Name" name="clubName" value={form.clubName} onChange={handleChange} required />
-            </div>
-          </section>
+            {/* Faculty */}
+            <section>
+              <h2 className="text-xl font-bold text-dreamxec-navy mb-6">
+                Faculty In-Charge Details
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <Input
+                  label="Faculty Name"
+                  name="ficName"
+                  value={form.ficName}
+                  onChange={handleChange}
+                  required
+                />
+                <Input
+                  label="Faculty Phone"
+                  name="ficPhone"
+                  value={form.ficPhone}
+                  onChange={handleChange}
+                  required
+                />
+                <Input
+                  label="Faculty Email"
+                  type="email"
+                  name="ficEmail"
+                  value={form.ficEmail}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </section>
 
-          {/* President */}
-          <section>
-            <h2 className="text-xl font-bold text-dreamxec-navy mb-6">
-              Club President Details
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Input label="President Name" name="presidentName" value={form.presidentName} onChange={handleChange} required />
-              <Input label="President Phone" name="presidentPhone" value={form.presidentPhone} onChange={handleChange} required />
-              <Input label="President College Email" type="email" name="presidentEmail" value={form.presidentEmail} onChange={handleChange} required />
-            </div>
-          </section>
+            {/* Links */}
+            <section>
+              <h2 className="text-xl font-bold text-dreamxec-navy mb-6">
+                Online Presence
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <Input
+                  label="Instagram"
+                  name="instagram"
+                  value={form.instagram}
+                  onChange={handleChange}
+                  error={errors.instagram}
+                  required
+                />
+                <Input
+                  label="LinkedIn"
+                  name="linkedIn"
+                  value={form.linkedIn}
+                  onChange={handleChange}
+                  error={errors.linkedIn}
+                  required
+                />
+                <Input
+                  label="Portfolio / Website"
+                  name="portfolio"
+                  value={form.portfolio}
+                  onChange={handleChange}
+                  error={errors.portfolio}
+                  required
+                />
+              </div>
+            </section>
 
-          {/* Faculty */}
-          <section>
-            <h2 className="text-xl font-bold text-dreamxec-navy mb-6">
-              Faculty In-Charge Details
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Input label="Faculty Name" name="ficName" value={form.ficName} onChange={handleChange} required />
-              <Input label="Faculty Phone" name="ficPhone" value={form.ficPhone} onChange={handleChange} required />
-              <Input label="Faculty Email" type="email" name="ficEmail" value={form.ficEmail} onChange={handleChange} required />
-            </div>
-          </section>
+            {/* Document */}
+            <section>
+              <label className="block font-bold text-dreamxec-navy mb-2">
+                Proof Document (optional)
+              </label>
+              <input
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
+                className="w-full p-3 bg-white border-2 border-dreamxec-navy rounded-lg"
+              />
+            </section>
 
-          {/* Links */}
-          <section>
-            <h2 className="text-xl font-bold text-dreamxec-navy mb-6">
-              Online Presence
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Input label="Instagram" name="instagram" value={form.instagram} onChange={handleChange} error={errors.instagram} required />
-              <Input label="LinkedIn" name="linkedIn" value={form.linkedIn} onChange={handleChange} error={errors.linkedIn} required />
-              <Input label="Portfolio / Website" name="portfolio" value={form.portfolio} onChange={handleChange} error={errors.portfolio} required />
-            </div>
-          </section>
-
-          {/* Document */}
-          <section>
-            <label className="block font-bold text-dreamxec-navy mb-2">
-              Proof Document (optional)
-            </label>
-            <input
-              type="file"
-              accept="image/*,application/pdf"
-              onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
-              className="w-full p-3 bg-white border-2 border-dreamxec-navy rounded-lg"
-            />
-          </section>
-
-          {/* CTA */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="
+            {/* CTA */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="
               w-full bg-dreamxec-orange text-white
               font-bold text-lg py-4 rounded-full
               border-2 border-dreamxec-navy
               hover:opacity-90 transition
             "
-          >
-            {loading ? "Submitting…" : "Submit Club Referral"}
-          </button>
-
-        </form>
+            >
+              {loading ? "Submitting…" : "Submit Club Referral"}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
-    <FooterContent />
+      <FooterContent />
     </>
   );
 }

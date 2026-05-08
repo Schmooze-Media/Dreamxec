@@ -6,26 +6,9 @@ import image1Icon from "../assets/image1.png";
 import imageCopyIcon from "../assets/imagecopy.png";
 import { UserRole } from "../types";
 import { FooterContent } from "../sections/Footer/components/FooterContent";
-
-const INDIAN_COLLEGES_API_BASE = import.meta.env.VITE_API_URL + "/colleges";
-const OTHER_COLLEGE_LABEL = "Other";
-
-interface CollegeOption {
-  institution_name: string;
-  aicte_id?: string;
-}
-
-interface CollegeApiItem {
-  institution_name?: string;
-  name?: string;
-  aicte_id?: string | number;
-  id?: string | number;
-}
-
-interface StateApiItem {
-  name?: string;
-  slug?: string;
-}
+import CollegeAutocomplete, {
+  type CollegeSelection,
+} from "./CollegeAutocomplete";
 
 /* ─────────────────────────────────────────────
    SIMPLE SVG ICONS
@@ -220,6 +203,11 @@ interface AuthPageProps {
     password: string,
     role: "student" | "donor",
     institution?: string,
+    institutionMeta?: {
+      institutionName: string;
+      aicteId?: string;
+      state?: string;
+    },
   ) => void;
   onGoogleAuth?: (role: "student" | "donor") => void;
   onLinkedInAuth?: (role: "student" | "donor") => void;
@@ -252,20 +240,8 @@ export default function AuthPage({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [institution, setInstitution] = useState("");
-  const [selectedState, setSelectedState] = useState("");
-  const [states, setStates] = useState<string[]>([]);
-  const [statesLoading, setStatesLoading] = useState(false);
-  const [statesError, setStatesError] = useState("");
-  const [institutionQuery, setInstitutionQuery] = useState("");
-  const [selectedCollege, setSelectedCollege] = useState<CollegeOption | null>(
-    null,
-  );
-  const [collegeResults, setCollegeResults] = useState<CollegeOption[]>([]);
-  const [collegeLoading, setCollegeLoading] = useState(false);
-  const [collegeError, setCollegeError] = useState("");
-  const [showCollegeDropdown, setShowCollegeDropdown] = useState(false);
-  const [useCustomCollege, setUseCustomCollege] = useState(false);
-  const [customCollegeName, setCustomCollegeName] = useState("");
+  const [selectedInstitution, setSelectedInstitution] =
+    useState<CollegeSelection | null>(null);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -279,10 +255,6 @@ export default function AuthPage({
   };
   const isPasswordValid =
     pv.minLength && pv.hasAlphabet && pv.hasNumber && pv.hasSpecialChar;
-  const trimmedCustomCollegeName = customCollegeName.trim();
-  const isCustomCollegeValid =
-    trimmedCustomCollegeName.length >= 3 &&
-    trimmedCustomCollegeName.length <= 120;
 
   const resetForm = () => {
     setName("");
@@ -290,14 +262,7 @@ export default function AuthPage({
     setPassword("");
     setConfirmPassword("");
     setInstitution("");
-    setSelectedState("");
-    setInstitutionQuery("");
-    setSelectedCollege(null);
-    setCollegeResults([]);
-    setCollegeError("");
-    setShowCollegeDropdown(false);
-    setUseCustomCollege(false);
-    setCustomCollegeName("");
+    setSelectedInstitution(null);
     setPasswordTouched(false);
   };
 
@@ -307,160 +272,6 @@ export default function AuthPage({
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadStates = async () => {
-      setStatesLoading(true);
-      setStatesError("");
-      try {
-        const response = await fetch(`${INDIAN_COLLEGES_API_BASE}/states`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch states (${response.status})`);
-        }
-
-        const payload: unknown = await response.json();
-        const rawStates: unknown[] =
-          payload &&
-          typeof payload === "object" &&
-          Array.isArray((payload as { data?: unknown[] }).data)
-            ? (payload as { data: unknown[] }).data
-            : Array.isArray(payload)
-              ? (payload as unknown[])
-              : payload &&
-                  typeof payload === "object" &&
-                  Array.isArray((payload as { states?: unknown[] }).states)
-                ? (payload as { states: unknown[] }).states
-                : [];
-
-        const stateList = rawStates
-          .map((item) => {
-            if (typeof item === "string") {
-              return item.trim();
-            }
-
-            if (item && typeof item === "object") {
-              const obj = item as StateApiItem;
-              if (typeof obj.name === "string") {
-                return obj.name.trim();
-              }
-              if (typeof obj.slug === "string") {
-                return obj.slug.trim();
-              }
-            }
-
-            return "";
-          })
-          .filter((value): value is string => Boolean(value));
-
-        if (isMounted) {
-          setStates(stateList);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setStatesError(
-            err instanceof Error ? err.message : "Unable to load states",
-          );
-        }
-      } finally {
-        if (isMounted) {
-          setStatesLoading(false);
-        }
-      }
-    };
-
-    loadStates();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isSignup || role !== "student") {
-      return;
-    }
-
-    if (
-      useCustomCollege ||
-      !selectedState ||
-      institutionQuery.trim().length < 3
-    ) {
-      setCollegeResults([]);
-      setCollegeLoading(false);
-      setCollegeError("");
-      return;
-    }
-
-    const controller = new AbortController();
-    const timeout = window.setTimeout(async () => {
-      setCollegeLoading(true);
-      setCollegeError("");
-      try {
-        const params = new URLSearchParams({
-          state: selectedState,
-          q: institutionQuery.trim(),
-          limit: "15",
-        });
-
-        const response = await fetch(
-          `${INDIAN_COLLEGES_API_BASE}/search?${params.toString()}`,
-          {
-            signal: controller.signal,
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error(`Search failed (${response.status})`);
-        }
-
-        const payload: unknown = await response.json();
-        let rawResults: CollegeApiItem[] = [];
-        if (Array.isArray(payload)) {
-          rawResults = payload;
-        } else if (payload && typeof payload === "object") {
-          const p = payload as {
-            data?: CollegeApiItem[];
-            results?: CollegeApiItem[];
-          };
-          if (Array.isArray(p.results)) {
-            rawResults = p.results;
-          } else if (Array.isArray(p.data)) {
-            rawResults = p.data;
-          }
-        }
-
-        const normalizedResults: CollegeOption[] = rawResults
-          .filter((item) => item.name || item.institution_name)
-          .map((item) => ({
-            institution_name: (item.name || item.institution_name) as string,
-            aicte_id:
-              item.id || item.aicte_id
-                ? String(item.id || item.aicte_id)
-                : undefined,
-          }));
-
-        setCollegeResults(normalizedResults);
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          setCollegeError(
-            err instanceof Error ? err.message : "Unable to fetch institutions",
-          );
-          setCollegeResults([]);
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setCollegeLoading(false);
-        }
-      }
-    }, 300);
-
-    return () => {
-      window.clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [institutionQuery, selectedState, isSignup, role, useCustomCollege]);
 
   const handleGoogleAuth = async () => {
     setError("");
@@ -520,32 +331,30 @@ export default function AuthPage({
           setIsSubmitting(false);
           return;
         }
-        if (role === "student") {
-          if (!selectedState) {
-            setError("Please select your state");
-            setIsSubmitting(false);
-            return;
-          }
-          if (!selectedCollege && !useCustomCollege) {
-            setError(
-              "Please select your institution from the list or choose Other",
-            );
-            setIsSubmitting(false);
-            return;
-          }
-          if (useCustomCollege && !isCustomCollegeValid) {
-            setError("Please enter a valid college name (3-120 characters)");
-            setIsSubmitting(false);
-            return;
-          }
+        if (role === "student" && !selectedInstitution) {
+          setError("Please select your institution");
+          setIsSubmitting(false);
+          return;
         }
-        const resolvedInstitution =
-          role === "student"
-            ? useCustomCollege
-              ? trimmedCustomCollegeName
-              : selectedCollege?.institution_name || institution
-            : institution.trim();
-        await onSignup(name, email, password, role, resolvedInstitution);
+        if (role === "student" && !selectedInstitution?.aicte_id) {
+          setError("Please select an institution with a valid AICTE ID");
+          setIsSubmitting(false);
+          return;
+        }
+        await onSignup(
+          name,
+          email,
+          password,
+          role,
+          selectedInstitution?.institution_name || institution.trim(),
+          selectedInstitution
+            ? {
+                institutionName: selectedInstitution.institution_name,
+                aicteId: selectedInstitution.aicte_id,
+                state: selectedInstitution.state,
+              }
+            : undefined,
+        );
         resetForm();
         setSuccessMessage("🎉 Account created successfully! Please sign in.");
         setError("");
@@ -566,23 +375,13 @@ export default function AuthPage({
   const isFormValid = isForgotPassword
     ? !!email.trim()
     : isSignup
-      ? role === "student"
-        ? !!(
-            name.trim() &&
-            email.trim() &&
-            isPasswordValid &&
-            password === confirmPassword &&
-            selectedState &&
-            ((selectedCollege && institution.trim()) ||
-              (useCustomCollege && isCustomCollegeValid))
-          )
-        : !!(
-            name.trim() &&
-            email.trim() &&
-            isPasswordValid &&
-            password === confirmPassword &&
-            institution.trim()
-          )
+      ? !!(
+          name.trim() &&
+          email.trim() &&
+          isPasswordValid &&
+          password === confirmPassword &&
+          (role === "student" ? !!selectedInstitution : institution.trim())
+        )
       : !!(email.trim() && password);
 
   const pageTitle = isForgotPassword
@@ -885,266 +684,14 @@ export default function AuthPage({
 
                   {/* Institution */}
                   {isSignup && role === "student" && (
-                    <>
-                      <div className="sm:col-span-2">
-                        <label className="block text-xs font-black text-dreamxec-navy uppercase tracking-widest mb-2">
-                          State <span className="text-red-600">*</span>
-                        </label>
-                        <div className="relative">
-                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-dreamxec-navy opacity-60">
-                            <BuildingIcon className="w-4 h-4" />
-                          </div>
-                          <select
-                            value={selectedState}
-                            onChange={(e) => {
-                              const nextState = e.target.value;
-                              setSelectedState(nextState);
-                              setInstitution("");
-                              setInstitutionQuery("");
-                              setSelectedCollege(null);
-                              setCollegeResults([]);
-                              setCollegeError("");
-                              setShowCollegeDropdown(false);
-                              setUseCustomCollege(false);
-                              setCustomCollegeName("");
-                            }}
-                            required
-                            disabled={statesLoading}
-                            className="w-full pl-10 pr-3 py-2.5 sm:py-3 text-sm font-medium text-dreamxec-navy bg-white focus:outline-none transition-all appearance-none"
-                            style={{
-                              border: "3px solid #003366",
-                              boxShadow: "3px 3px 0 #FF7F00",
-                            }}
-                          >
-                            <option value="">
-                              {statesLoading
-                                ? "Loading states..."
-                                : "Select your state"}
-                            </option>
-                            {states.map((stateName, index) => (
-                              <option
-                                key={`${stateName}-${index}`}
-                                value={stateName}
-                              >
-                                {stateName}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        {statesError && (
-                          <p className="mt-1.5 text-xs font-bold text-red-600">
-                            Could not load states: {statesError}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="sm:col-span-2 relative">
-                        <label className="block text-xs font-black text-dreamxec-navy uppercase tracking-widest mb-2">
-                          Institution/College{" "}
-                          <span className="text-red-600">*</span>
-                        </label>
-                        <NeoInput
-                          icon={<BuildingIcon className="w-4 h-4" />}
-                          type="text"
-                          value={institutionQuery}
-                          onChange={(e) => {
-                            const nextQuery = e.target.value;
-                            setInstitutionQuery(nextQuery);
-                            setShowCollegeDropdown(true);
-                            setUseCustomCollege(false);
-                            setCustomCollegeName("");
-                            if (
-                              !selectedCollege ||
-                              nextQuery !== selectedCollege.institution_name
-                            ) {
-                              setSelectedCollege(null);
-                              setInstitution("");
-                            }
-                            if (!nextQuery.trim()) {
-                              setCollegeResults([]);
-                              setCollegeError("");
-                            }
-                          }}
-                          onBlur={() => {
-                            window.setTimeout(
-                              () => setShowCollegeDropdown(false),
-                              150,
-                            );
-                          }}
-                          placeholder={
-                            selectedState
-                              ? "Type at least 3 letters to search your college"
-                              : "Select state first"
-                          }
-                          required
-                          state={
-                            institutionQuery.length > 0
-                              ? selectedCollege ||
-                                (useCustomCollege && isCustomCollegeValid)
-                                ? "success"
-                                : "error"
-                              : "default"
-                          }
-                        />
-
-                        {showCollegeDropdown &&
-                          selectedState &&
-                          institutionQuery.trim().length >= 3 && (
-                            <div
-                              className="absolute left-0 right-0 mt-2 z-20 bg-white max-h-64 overflow-y-auto"
-                              style={{
-                                border: "3px solid #003366",
-                                boxShadow: "4px 4px 0 #FF7F00",
-                              }}
-                            >
-                              {collegeLoading && (
-                                <div className="px-3 py-2.5 text-sm font-bold text-dreamxec-navy/70">
-                                  Searching colleges...
-                                </div>
-                              )}
-
-                              {!collegeLoading && collegeError && (
-                                <div className="px-3 py-2.5 text-sm font-bold text-red-600">
-                                  Error: {collegeError}
-                                </div>
-                              )}
-
-                              {!collegeLoading &&
-                                !collegeError &&
-                                collegeResults.length === 0 && (
-                                  <div className="px-3 py-2.5 text-sm font-bold text-dreamxec-navy/70">
-                                    No colleges found for this query.
-                                  </div>
-                                )}
-
-                              {!collegeLoading && !collegeError && (
-                                <button
-                                  type="button"
-                                  onMouseDown={(e) => e.preventDefault()}
-                                  onClick={() => {
-                                    setUseCustomCollege(true);
-                                    setSelectedCollege(null);
-                                    setInstitutionQuery(OTHER_COLLEGE_LABEL);
-                                    setInstitution("");
-                                    setShowCollegeDropdown(false);
-                                    setError("");
-                                  }}
-                                  className="w-full text-left px-3 py-2.5 border-b border-dreamxec-navy/10 hover:bg-dreamxec-orange/10 transition-colors"
-                                >
-                                  <div className="text-sm font-bold text-dreamxec-navy">
-                                    Other
-                                  </div>
-                                  <div className="text-xs font-semibold text-dreamxec-navy/60">
-                                    My college is not listed
-                                  </div>
-                                </button>
-                              )}
-
-                              {!collegeLoading &&
-                                !collegeError &&
-                                collegeResults.map((college) => (
-                                  <button
-                                    key={`${college.aicte_id ?? college.institution_name}-${college.institution_name}`}
-                                    type="button"
-                                    onMouseDown={(e) => e.preventDefault()}
-                                    onClick={() => {
-                                      setUseCustomCollege(false);
-                                      setCustomCollegeName("");
-                                      setSelectedCollege(college);
-                                      setInstitutionQuery(
-                                        college.institution_name,
-                                      );
-                                      setInstitution(college.institution_name);
-                                      setShowCollegeDropdown(false);
-                                      setError("");
-                                    }}
-                                    className="w-full text-left px-3 py-2.5 border-b border-dreamxec-navy/10 hover:bg-dreamxec-orange/10 transition-colors"
-                                  >
-                                    <div className="text-sm font-bold text-dreamxec-navy">
-                                      {college.institution_name}
-                                    </div>
-                                    {college.aicte_id && (
-                                      <div className="text-xs font-semibold text-dreamxec-navy/60">
-                                        AICTE ID: {college.aicte_id}
-                                      </div>
-                                    )}
-                                  </button>
-                                ))}
-                            </div>
-                          )}
-
-                        {useCustomCollege && (
-                          <div className="mt-3">
-                            <label className="block text-xs font-black text-dreamxec-navy uppercase tracking-widest mb-2">
-                              Enter College Name{" "}
-                              <span className="text-red-600">*</span>
-                            </label>
-                            <NeoInput
-                              icon={<BuildingIcon className="w-4 h-4" />}
-                              type="text"
-                              value={customCollegeName}
-                              onChange={(e) => {
-                                const nextCustomValue = e.target.value;
-                                setUseCustomCollege(true);
-                                setInstitutionQuery(OTHER_COLLEGE_LABEL);
-                                setCustomCollegeName(nextCustomValue);
-                                setInstitution(nextCustomValue.trim());
-                              }}
-                              placeholder="Type your college name"
-                              required
-                              state={
-                                customCollegeName.length === 0
-                                  ? "default"
-                                  : isCustomCollegeValid
-                                    ? "success"
-                                    : "error"
-                              }
-                            />
-                            {customCollegeName.length > 0 &&
-                              !isCustomCollegeValid && (
-                                <p className="mt-1.5 text-xs font-bold text-red-600">
-                                  College name must be between 3 and 120
-                                  characters.
-                                </p>
-                              )}
-                          </div>
-                        )}
-
-                        {!selectedState && (
-                          <p className="mt-1.5 text-xs font-bold text-dreamxec-navy/60">
-                            Choose your state before searching for institutions.
-                          </p>
-                        )}
-                        {selectedState &&
-                          institutionQuery.trim().length > 0 &&
-                          institutionQuery.trim().length < 3 && (
-                            <p className="mt-1.5 text-xs font-bold text-dreamxec-navy/60">
-                              Type at least 3 characters to search.
-                            </p>
-                          )}
-                        {selectedCollege && (
-                          <p className="mt-1.5 text-xs font-bold text-green-700">
-                            Selected: {selectedCollege.institution_name} (AICTE
-                            ID: {selectedCollege.aicte_id})
-                          </p>
-                        )}
-                        {useCustomCollege && isCustomCollegeValid && (
-                          <p className="mt-1.5 text-xs font-bold text-green-700">
-                            Using custom college: {trimmedCustomCollegeName}
-                          </p>
-                        )}
-                        {selectedState &&
-                          institutionQuery.trim().length >= 3 &&
-                          !selectedCollege &&
-                          !useCustomCollege &&
-                          !collegeLoading &&
-                          !collegeError && (
-                            <p className="mt-1.5 text-xs font-bold text-red-600">
-                              Please select an institution from the suggestions.
-                            </p>
-                          )}
-                      </div>
-                    </>
+                    <div className="sm:col-span-2">
+                      <CollegeAutocomplete
+                        value={institution}
+                        onChange={setInstitution}
+                        onSelect={setSelectedInstitution}
+                        placeholder="Search and select your college"
+                      />
+                    </div>
                   )}
 
                   {isSignup && role === "donor" && (
