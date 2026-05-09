@@ -1,5 +1,8 @@
-import { useState } from 'react';
-import { submitMentorApplication, MentorApplicationData } from '../services/mentorService';
+import { useState } from "react";
+import {
+  submitMentorApplication,
+  MentorApplicationData,
+} from "../services/mentorService";
 
 /* ─────────────────────────────────────────
    TYPES
@@ -447,46 +450,770 @@ const CSS = `
    COUNTRY → STATE/CITY DATA
 ───────────────────────────────────────── */
 const COUNTRIES_STATES: Record<string, string[]> = {
-  "India": ["Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Delhi (NCT)", "Jammu & Kashmir", "Ladakh", "Chandigarh", "Puducherry"],
-  "United States": ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming", "Washington D.C."],
+  India: [
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+    "Delhi (NCT)",
+    "Jammu & Kashmir",
+    "Ladakh",
+    "Chandigarh",
+    "Puducherry",
+  ],
+  "United States": [
+    "Alabama",
+    "Alaska",
+    "Arizona",
+    "Arkansas",
+    "California",
+    "Colorado",
+    "Connecticut",
+    "Delaware",
+    "Florida",
+    "Georgia",
+    "Hawaii",
+    "Idaho",
+    "Illinois",
+    "Indiana",
+    "Iowa",
+    "Kansas",
+    "Kentucky",
+    "Louisiana",
+    "Maine",
+    "Maryland",
+    "Massachusetts",
+    "Michigan",
+    "Minnesota",
+    "Mississippi",
+    "Missouri",
+    "Montana",
+    "Nebraska",
+    "Nevada",
+    "New Hampshire",
+    "New Jersey",
+    "New Mexico",
+    "New York",
+    "North Carolina",
+    "North Dakota",
+    "Ohio",
+    "Oklahoma",
+    "Oregon",
+    "Pennsylvania",
+    "Rhode Island",
+    "South Carolina",
+    "South Dakota",
+    "Tennessee",
+    "Texas",
+    "Utah",
+    "Vermont",
+    "Virginia",
+    "Washington",
+    "West Virginia",
+    "Wisconsin",
+    "Wyoming",
+    "Washington D.C.",
+  ],
   "United Kingdom": ["England", "Scotland", "Wales", "Northern Ireland"],
-  "Canada": ["Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador", "Northwest Territories", "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan", "Yukon"],
-  "Australia": ["Australian Capital Territory", "New South Wales", "Northern Territory", "Queensland", "South Australia", "Tasmania", "Victoria", "Western Australia"],
-  "Germany": ["Baden-Württemberg", "Bavaria", "Berlin", "Brandenburg", "Bremen", "Hamburg", "Hesse", "Lower Saxony", "Mecklenburg-Vorpommern", "North Rhine-Westphalia", "Rhineland-Palatinate", "Saarland", "Saxony", "Saxony-Anhalt", "Schleswig-Holstein", "Thuringia"],
-  "France": ["Auvergne-Rhône-Alpes", "Bourgogne-Franche-Comté", "Brittany", "Centre-Val de Loire", "Corsica", "Grand Est", "Hauts-de-France", "Île-de-France", "Normandy", "Nouvelle-Aquitaine", "Occitanie", "Pays de la Loire", "Provence-Alpes-Côte d'Azur"],
-  "China": ["Anhui", "Beijing", "Chongqing", "Fujian", "Gansu", "Guangdong", "Guangxi", "Guizhou", "Hainan", "Hebei", "Heilongjiang", "Henan", "Hong Kong", "Hubei", "Hunan", "Inner Mongolia", "Jiangsu", "Jiangxi", "Jilin", "Liaoning", "Macau", "Ningxia", "Qinghai", "Shaanxi", "Shandong", "Shanghai", "Shanxi", "Sichuan", "Tianjin", "Tibet", "Xinjiang", "Yunnan", "Zhejiang"],
-  "Japan": ["Aichi", "Akita", "Aomori", "Chiba", "Ehime", "Fukui", "Fukuoka", "Fukushima", "Gifu", "Gunma", "Hiroshima", "Hokkaido", "Hyogo", "Ibaraki", "Ishikawa", "Iwate", "Kagawa", "Kagoshima", "Kanagawa", "Kochi", "Kumamoto", "Kyoto", "Mie", "Miyagi", "Miyazaki", "Nagano", "Nagasaki", "Nara", "Niigata", "Oita", "Okayama", "Okinawa", "Osaka", "Saga", "Saitama", "Shiga", "Shimane", "Shizuoka", "Tochigi", "Tokushima", "Tokyo", "Tottori", "Toyama", "Wakayama", "Yamagata", "Yamaguchi", "Yamanashi"],
-  "Brazil": ["Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", "Distrito Federal", "Espírito Santo", "Goiás", "Maranhão", "Mato Grosso", "Mato Grosso do Sul", "Minas Gerais", "Pará", "Paraíba", "Paraná", "Pernambuco", "Piauí", "Rio de Janeiro", "Rio Grande do Norte", "Rio Grande do Sul", "Rondônia", "Roraima", "Santa Catarina", "São Paulo", "Sergipe", "Tocantins"],
-  "Singapore": ["Central Region", "East Region", "North Region", "North-East Region", "West Region"],
-  "United Arab Emirates": ["Abu Dhabi", "Dubai", "Sharjah", "Ajman", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"],
-  "Saudi Arabia": ["Riyadh", "Makkah", "Madinah", "Eastern Province", "Asir", "Tabuk", "Hail", "Northern Borders", "Jazan", "Najran", "Al Bahah", "Al Jawf", "Qassim"],
-  "South Africa": ["Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo", "Mpumalanga", "Northern Cape", "North West", "Western Cape"],
-  "Nigeria": ["Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT - Abuja", "Gombe", "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"],
-  "Kenya": ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret", "Thika", "Malindi", "Kitale", "Garissa", "Kakamega"],
-  "Pakistan": ["Balochistan", "Khyber Pakhtunkhwa", "Punjab", "Sindh", "Azad Kashmir", "Gilgit-Baltistan", "Islamabad Capital Territory"],
-  "Bangladesh": ["Dhaka", "Chittagong", "Rajshahi", "Khulna", "Barisal", "Sylhet", "Rangpur", "Mymensingh"],
-  "Sri Lanka": ["Central", "Eastern", "Northern", "North Central", "North Western", "Sabaragamuwa", "Southern", "Uva", "Western"],
-  "Nepal": ["Bagmati", "Gandaki", "Karnali", "Lumbini", "Madhesh", "Province No. 1", "Sudurpashchim"],
-  "Indonesia": ["Aceh", "Bali", "Bangka Belitung", "Banten", "Bengkulu", "Central Java", "Central Kalimantan", "Central Sulawesi", "East Java", "East Kalimantan", "East Nusa Tenggara", "Gorontalo", "Jakarta", "Jambi", "Lampung", "Maluku", "North Kalimantan", "North Maluku", "North Sulawesi", "North Sumatra", "Papua", "Riau", "Riau Islands", "South Kalimantan", "South Sulawesi", "South Sumatra", "Southeast Sulawesi", "West Java", "West Kalimantan", "West Nusa Tenggara", "West Papua", "West Sulawesi", "West Sumatra", "Yogyakarta"],
-  "Malaysia": ["Johor", "Kedah", "Kelantan", "Kuala Lumpur", "Labuan", "Melaka", "Negeri Sembilan", "Pahang", "Penang", "Perak", "Perlis", "Putrajaya", "Sabah", "Sarawak", "Selangor", "Terengganu"],
-  "Philippines": ["Luzon", "Visayas", "Mindanao", "Metro Manila", "Cebu", "Davao"],
-  "South Korea": ["Seoul", "Busan", "Daegu", "Incheon", "Gwangju", "Daejeon", "Ulsan", "Sejong", "Gyeonggi", "Gangwon", "North Chungcheong", "South Chungcheong", "North Jeolla", "South Jeolla", "North Gyeongsang", "South Gyeongsang", "Jeju"],
-  "Taiwan": ["Taipei", "New Taipei", "Taoyuan", "Taichung", "Tainan", "Kaohsiung", "Keelung", "Hsinchu", "Chiayi", "Yilan", "Hualien", "Taitung", "Penghu", "Kinmen", "Matsu"],
-  "New Zealand": ["Auckland", "Bay of Plenty", "Canterbury", "Gisborne", "Hawke's Bay", "Manawatu-Wanganui", "Marlborough", "Nelson", "Northland", "Otago", "Southland", "Taranaki", "Tasman", "Waikato", "Wellington", "West Coast"],
-  "Ireland": ["Connacht", "Leinster", "Munster", "Ulster"],
-  "Netherlands": ["Drenthe", "Flevoland", "Friesland", "Gelderland", "Groningen", "Limburg", "North Brabant", "North Holland", "Overijssel", "South Holland", "Utrecht", "Zeeland"],
-  "Sweden": ["Blekinge", "Dalarna", "Gävleborg", "Gotland", "Halland", "Jämtland", "Jönköping", "Kalmar", "Kronoberg", "Norrbotten", "Örebro", "Östergötland", "Skåne", "Södermanland", "Stockholm", "Uppsala", "Värmland", "Västerbotten", "Västernorrland", "Västmanland", "Västra Götaland"],
-  "Switzerland": ["Aargau", "Appenzell Ausserrhoden", "Appenzell Innerrhoden", "Basel-Landschaft", "Basel-Stadt", "Bern", "Fribourg", "Geneva", "Glarus", "Graubünden", "Jura", "Lucerne", "Neuchâtel", "Nidwalden", "Obwalden", "Schaffhausen", "Schwyz", "Solothurn", "St. Gallen", "Thurgau", "Ticino", "Uri", "Valais", "Vaud", "Zug", "Zurich"],
-  "Israel": ["Central", "Haifa", "Jerusalem", "Northern", "Southern", "Tel Aviv"],
-  "Turkey": ["Adana", "Ankara", "Antalya", "Bursa", "Eskisehir", "Gaziantep", "Istanbul", "Izmir", "Kayseri", "Konya", "Mersin", "Trabzon"],
-  "Russia": ["Moscow", "Saint Petersburg", "Novosibirsk", "Yekaterinburg", "Kazan", "Nizhny Novgorod", "Chelyabinsk", "Samara", "Omsk", "Rostov-on-Don", "Ufa", "Krasnoyarsk", "Voronezh", "Perm", "Volgograd"],
-  "Mexico": ["Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas", "Chihuahua", "Coahuila", "Colima", "Durango", "Guanajuato", "Guerrero", "Hidalgo", "Jalisco", "Mexico City", "Mexico State", "Michoacán", "Morelos", "Nayarit", "Nuevo León", "Oaxaca", "Puebla", "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa", "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán", "Zacatecas"],
-  "Argentina": ["Buenos Aires", "Catamarca", "Chaco", "Chubut", "Córdoba", "Corrientes", "Entre Ríos", "Formosa", "Jujuy", "La Pampa", "La Rioja", "Mendoza", "Misiones", "Neuquén", "Río Negro", "Salta", "San Juan", "San Luis", "Santa Cruz", "Santa Fe", "Santiago del Estero", "Tierra del Fuego", "Tucumán"],
-  "Colombia": ["Amazonas", "Antioquia", "Arauca", "Atlántico", "Bogotá D.C.", "Bolívar", "Boyacá", "Caldas", "Caquetá", "Casanare", "Cauca", "Cesar", "Chocó", "Córdoba", "Cundinamarca", "Guainía", "Guaviare", "Huila", "La Guajira", "Magdalena", "Meta", "Nariño", "Norte de Santander", "Putumayo", "Quindío", "Risaralda", "San Andrés", "Santander", "Sucre", "Tolima", "Valle del Cauca", "Vaupés", "Vichada"],
-  "Egypt": ["Alexandria", "Aswan", "Asyut", "Beheira", "Beni Suef", "Cairo", "Dakahlia", "Damietta", "Faiyum", "Gharbia", "Giza", "Ismailia", "Kafr el-Sheikh", "Luxor", "Matruh", "Minya", "Monufia", "New Valley", "North Sinai", "Port Said", "Qalyubia", "Qena", "Red Sea", "Sharqia", "Sohag", "South Sinai", "Suez"],
-  "Ethiopia": ["Addis Ababa", "Afar", "Amhara", "Benishangul-Gumuz", "Dire Dawa", "Gambela", "Harari", "Oromia", "Sidama", "Somali", "South Ethiopia", "Southwest Ethiopia", "Tigray", "Central Ethiopia"],
-  "Ghana": ["Ahafo", "Ashanti", "Bono", "Bono East", "Central", "Eastern", "Greater Accra", "North East", "Northern", "Oti", "Savannah", "Upper East", "Upper West", "Volta", "Western", "Western North"],
-  "Other": ["Please specify your region"],
+  Canada: [
+    "Alberta",
+    "British Columbia",
+    "Manitoba",
+    "New Brunswick",
+    "Newfoundland and Labrador",
+    "Northwest Territories",
+    "Nova Scotia",
+    "Nunavut",
+    "Ontario",
+    "Prince Edward Island",
+    "Quebec",
+    "Saskatchewan",
+    "Yukon",
+  ],
+  Australia: [
+    "Australian Capital Territory",
+    "New South Wales",
+    "Northern Territory",
+    "Queensland",
+    "South Australia",
+    "Tasmania",
+    "Victoria",
+    "Western Australia",
+  ],
+  Germany: [
+    "Baden-Württemberg",
+    "Bavaria",
+    "Berlin",
+    "Brandenburg",
+    "Bremen",
+    "Hamburg",
+    "Hesse",
+    "Lower Saxony",
+    "Mecklenburg-Vorpommern",
+    "North Rhine-Westphalia",
+    "Rhineland-Palatinate",
+    "Saarland",
+    "Saxony",
+    "Saxony-Anhalt",
+    "Schleswig-Holstein",
+    "Thuringia",
+  ],
+  France: [
+    "Auvergne-Rhône-Alpes",
+    "Bourgogne-Franche-Comté",
+    "Brittany",
+    "Centre-Val de Loire",
+    "Corsica",
+    "Grand Est",
+    "Hauts-de-France",
+    "Île-de-France",
+    "Normandy",
+    "Nouvelle-Aquitaine",
+    "Occitanie",
+    "Pays de la Loire",
+    "Provence-Alpes-Côte d'Azur",
+  ],
+  China: [
+    "Anhui",
+    "Beijing",
+    "Chongqing",
+    "Fujian",
+    "Gansu",
+    "Guangdong",
+    "Guangxi",
+    "Guizhou",
+    "Hainan",
+    "Hebei",
+    "Heilongjiang",
+    "Henan",
+    "Hong Kong",
+    "Hubei",
+    "Hunan",
+    "Inner Mongolia",
+    "Jiangsu",
+    "Jiangxi",
+    "Jilin",
+    "Liaoning",
+    "Macau",
+    "Ningxia",
+    "Qinghai",
+    "Shaanxi",
+    "Shandong",
+    "Shanghai",
+    "Shanxi",
+    "Sichuan",
+    "Tianjin",
+    "Tibet",
+    "Xinjiang",
+    "Yunnan",
+    "Zhejiang",
+  ],
+  Japan: [
+    "Aichi",
+    "Akita",
+    "Aomori",
+    "Chiba",
+    "Ehime",
+    "Fukui",
+    "Fukuoka",
+    "Fukushima",
+    "Gifu",
+    "Gunma",
+    "Hiroshima",
+    "Hokkaido",
+    "Hyogo",
+    "Ibaraki",
+    "Ishikawa",
+    "Iwate",
+    "Kagawa",
+    "Kagoshima",
+    "Kanagawa",
+    "Kochi",
+    "Kumamoto",
+    "Kyoto",
+    "Mie",
+    "Miyagi",
+    "Miyazaki",
+    "Nagano",
+    "Nagasaki",
+    "Nara",
+    "Niigata",
+    "Oita",
+    "Okayama",
+    "Okinawa",
+    "Osaka",
+    "Saga",
+    "Saitama",
+    "Shiga",
+    "Shimane",
+    "Shizuoka",
+    "Tochigi",
+    "Tokushima",
+    "Tokyo",
+    "Tottori",
+    "Toyama",
+    "Wakayama",
+    "Yamagata",
+    "Yamaguchi",
+    "Yamanashi",
+  ],
+  Brazil: [
+    "Acre",
+    "Alagoas",
+    "Amapá",
+    "Amazonas",
+    "Bahia",
+    "Ceará",
+    "Distrito Federal",
+    "Espírito Santo",
+    "Goiás",
+    "Maranhão",
+    "Mato Grosso",
+    "Mato Grosso do Sul",
+    "Minas Gerais",
+    "Pará",
+    "Paraíba",
+    "Paraná",
+    "Pernambuco",
+    "Piauí",
+    "Rio de Janeiro",
+    "Rio Grande do Norte",
+    "Rio Grande do Sul",
+    "Rondônia",
+    "Roraima",
+    "Santa Catarina",
+    "São Paulo",
+    "Sergipe",
+    "Tocantins",
+  ],
+  Singapore: [
+    "Central Region",
+    "East Region",
+    "North Region",
+    "North-East Region",
+    "West Region",
+  ],
+  "United Arab Emirates": [
+    "Abu Dhabi",
+    "Dubai",
+    "Sharjah",
+    "Ajman",
+    "Umm Al Quwain",
+    "Ras Al Khaimah",
+    "Fujairah",
+  ],
+  "Saudi Arabia": [
+    "Riyadh",
+    "Makkah",
+    "Madinah",
+    "Eastern Province",
+    "Asir",
+    "Tabuk",
+    "Hail",
+    "Northern Borders",
+    "Jazan",
+    "Najran",
+    "Al Bahah",
+    "Al Jawf",
+    "Qassim",
+  ],
+  "South Africa": [
+    "Eastern Cape",
+    "Free State",
+    "Gauteng",
+    "KwaZulu-Natal",
+    "Limpopo",
+    "Mpumalanga",
+    "Northern Cape",
+    "North West",
+    "Western Cape",
+  ],
+  Nigeria: [
+    "Abia",
+    "Adamawa",
+    "Akwa Ibom",
+    "Anambra",
+    "Bauchi",
+    "Bayelsa",
+    "Benue",
+    "Borno",
+    "Cross River",
+    "Delta",
+    "Ebonyi",
+    "Edo",
+    "Ekiti",
+    "Enugu",
+    "FCT - Abuja",
+    "Gombe",
+    "Imo",
+    "Jigawa",
+    "Kaduna",
+    "Kano",
+    "Katsina",
+    "Kebbi",
+    "Kogi",
+    "Kwara",
+    "Lagos",
+    "Nasarawa",
+    "Niger",
+    "Ogun",
+    "Ondo",
+    "Osun",
+    "Oyo",
+    "Plateau",
+    "Rivers",
+    "Sokoto",
+    "Taraba",
+    "Yobe",
+    "Zamfara",
+  ],
+  Kenya: [
+    "Nairobi",
+    "Mombasa",
+    "Kisumu",
+    "Nakuru",
+    "Eldoret",
+    "Thika",
+    "Malindi",
+    "Kitale",
+    "Garissa",
+    "Kakamega",
+  ],
+  Pakistan: [
+    "Balochistan",
+    "Khyber Pakhtunkhwa",
+    "Punjab",
+    "Sindh",
+    "Azad Kashmir",
+    "Gilgit-Baltistan",
+    "Islamabad Capital Territory",
+  ],
+  Bangladesh: [
+    "Dhaka",
+    "Chittagong",
+    "Rajshahi",
+    "Khulna",
+    "Barisal",
+    "Sylhet",
+    "Rangpur",
+    "Mymensingh",
+  ],
+  "Sri Lanka": [
+    "Central",
+    "Eastern",
+    "Northern",
+    "North Central",
+    "North Western",
+    "Sabaragamuwa",
+    "Southern",
+    "Uva",
+    "Western",
+  ],
+  Nepal: [
+    "Bagmati",
+    "Gandaki",
+    "Karnali",
+    "Lumbini",
+    "Madhesh",
+    "Province No. 1",
+    "Sudurpashchim",
+  ],
+  Indonesia: [
+    "Aceh",
+    "Bali",
+    "Bangka Belitung",
+    "Banten",
+    "Bengkulu",
+    "Central Java",
+    "Central Kalimantan",
+    "Central Sulawesi",
+    "East Java",
+    "East Kalimantan",
+    "East Nusa Tenggara",
+    "Gorontalo",
+    "Jakarta",
+    "Jambi",
+    "Lampung",
+    "Maluku",
+    "North Kalimantan",
+    "North Maluku",
+    "North Sulawesi",
+    "North Sumatra",
+    "Papua",
+    "Riau",
+    "Riau Islands",
+    "South Kalimantan",
+    "South Sulawesi",
+    "South Sumatra",
+    "Southeast Sulawesi",
+    "West Java",
+    "West Kalimantan",
+    "West Nusa Tenggara",
+    "West Papua",
+    "West Sulawesi",
+    "West Sumatra",
+    "Yogyakarta",
+  ],
+  Malaysia: [
+    "Johor",
+    "Kedah",
+    "Kelantan",
+    "Kuala Lumpur",
+    "Labuan",
+    "Melaka",
+    "Negeri Sembilan",
+    "Pahang",
+    "Penang",
+    "Perak",
+    "Perlis",
+    "Putrajaya",
+    "Sabah",
+    "Sarawak",
+    "Selangor",
+    "Terengganu",
+  ],
+  Philippines: [
+    "Luzon",
+    "Visayas",
+    "Mindanao",
+    "Metro Manila",
+    "Cebu",
+    "Davao",
+  ],
+  "South Korea": [
+    "Seoul",
+    "Busan",
+    "Daegu",
+    "Incheon",
+    "Gwangju",
+    "Daejeon",
+    "Ulsan",
+    "Sejong",
+    "Gyeonggi",
+    "Gangwon",
+    "North Chungcheong",
+    "South Chungcheong",
+    "North Jeolla",
+    "South Jeolla",
+    "North Gyeongsang",
+    "South Gyeongsang",
+    "Jeju",
+  ],
+  Taiwan: [
+    "Taipei",
+    "New Taipei",
+    "Taoyuan",
+    "Taichung",
+    "Tainan",
+    "Kaohsiung",
+    "Keelung",
+    "Hsinchu",
+    "Chiayi",
+    "Yilan",
+    "Hualien",
+    "Taitung",
+    "Penghu",
+    "Kinmen",
+    "Matsu",
+  ],
+  "New Zealand": [
+    "Auckland",
+    "Bay of Plenty",
+    "Canterbury",
+    "Gisborne",
+    "Hawke's Bay",
+    "Manawatu-Wanganui",
+    "Marlborough",
+    "Nelson",
+    "Northland",
+    "Otago",
+    "Southland",
+    "Taranaki",
+    "Tasman",
+    "Waikato",
+    "Wellington",
+    "West Coast",
+  ],
+  Ireland: ["Connacht", "Leinster", "Munster", "Ulster"],
+  Netherlands: [
+    "Drenthe",
+    "Flevoland",
+    "Friesland",
+    "Gelderland",
+    "Groningen",
+    "Limburg",
+    "North Brabant",
+    "North Holland",
+    "Overijssel",
+    "South Holland",
+    "Utrecht",
+    "Zeeland",
+  ],
+  Sweden: [
+    "Blekinge",
+    "Dalarna",
+    "Gävleborg",
+    "Gotland",
+    "Halland",
+    "Jämtland",
+    "Jönköping",
+    "Kalmar",
+    "Kronoberg",
+    "Norrbotten",
+    "Örebro",
+    "Östergötland",
+    "Skåne",
+    "Södermanland",
+    "Stockholm",
+    "Uppsala",
+    "Värmland",
+    "Västerbotten",
+    "Västernorrland",
+    "Västmanland",
+    "Västra Götaland",
+  ],
+  Switzerland: [
+    "Aargau",
+    "Appenzell Ausserrhoden",
+    "Appenzell Innerrhoden",
+    "Basel-Landschaft",
+    "Basel-Stadt",
+    "Bern",
+    "Fribourg",
+    "Geneva",
+    "Glarus",
+    "Graubünden",
+    "Jura",
+    "Lucerne",
+    "Neuchâtel",
+    "Nidwalden",
+    "Obwalden",
+    "Schaffhausen",
+    "Schwyz",
+    "Solothurn",
+    "St. Gallen",
+    "Thurgau",
+    "Ticino",
+    "Uri",
+    "Valais",
+    "Vaud",
+    "Zug",
+    "Zurich",
+  ],
+  Israel: ["Central", "Haifa", "Jerusalem", "Northern", "Southern", "Tel Aviv"],
+  Turkey: [
+    "Adana",
+    "Ankara",
+    "Antalya",
+    "Bursa",
+    "Eskisehir",
+    "Gaziantep",
+    "Istanbul",
+    "Izmir",
+    "Kayseri",
+    "Konya",
+    "Mersin",
+    "Trabzon",
+  ],
+  Russia: [
+    "Moscow",
+    "Saint Petersburg",
+    "Novosibirsk",
+    "Yekaterinburg",
+    "Kazan",
+    "Nizhny Novgorod",
+    "Chelyabinsk",
+    "Samara",
+    "Omsk",
+    "Rostov-on-Don",
+    "Ufa",
+    "Krasnoyarsk",
+    "Voronezh",
+    "Perm",
+    "Volgograd",
+  ],
+  Mexico: [
+    "Aguascalientes",
+    "Baja California",
+    "Baja California Sur",
+    "Campeche",
+    "Chiapas",
+    "Chihuahua",
+    "Coahuila",
+    "Colima",
+    "Durango",
+    "Guanajuato",
+    "Guerrero",
+    "Hidalgo",
+    "Jalisco",
+    "Mexico City",
+    "Mexico State",
+    "Michoacán",
+    "Morelos",
+    "Nayarit",
+    "Nuevo León",
+    "Oaxaca",
+    "Puebla",
+    "Querétaro",
+    "Quintana Roo",
+    "San Luis Potosí",
+    "Sinaloa",
+    "Sonora",
+    "Tabasco",
+    "Tamaulipas",
+    "Tlaxcala",
+    "Veracruz",
+    "Yucatán",
+    "Zacatecas",
+  ],
+  Argentina: [
+    "Buenos Aires",
+    "Catamarca",
+    "Chaco",
+    "Chubut",
+    "Córdoba",
+    "Corrientes",
+    "Entre Ríos",
+    "Formosa",
+    "Jujuy",
+    "La Pampa",
+    "La Rioja",
+    "Mendoza",
+    "Misiones",
+    "Neuquén",
+    "Río Negro",
+    "Salta",
+    "San Juan",
+    "San Luis",
+    "Santa Cruz",
+    "Santa Fe",
+    "Santiago del Estero",
+    "Tierra del Fuego",
+    "Tucumán",
+  ],
+  Colombia: [
+    "Amazonas",
+    "Antioquia",
+    "Arauca",
+    "Atlántico",
+    "Bogotá D.C.",
+    "Bolívar",
+    "Boyacá",
+    "Caldas",
+    "Caquetá",
+    "Casanare",
+    "Cauca",
+    "Cesar",
+    "Chocó",
+    "Córdoba",
+    "Cundinamarca",
+    "Guainía",
+    "Guaviare",
+    "Huila",
+    "La Guajira",
+    "Magdalena",
+    "Meta",
+    "Nariño",
+    "Norte de Santander",
+    "Putumayo",
+    "Quindío",
+    "Risaralda",
+    "San Andrés",
+    "Santander",
+    "Sucre",
+    "Tolima",
+    "Valle del Cauca",
+    "Vaupés",
+    "Vichada",
+  ],
+  Egypt: [
+    "Alexandria",
+    "Aswan",
+    "Asyut",
+    "Beheira",
+    "Beni Suef",
+    "Cairo",
+    "Dakahlia",
+    "Damietta",
+    "Faiyum",
+    "Gharbia",
+    "Giza",
+    "Ismailia",
+    "Kafr el-Sheikh",
+    "Luxor",
+    "Matruh",
+    "Minya",
+    "Monufia",
+    "New Valley",
+    "North Sinai",
+    "Port Said",
+    "Qalyubia",
+    "Qena",
+    "Red Sea",
+    "Sharqia",
+    "Sohag",
+    "South Sinai",
+    "Suez",
+  ],
+  Ethiopia: [
+    "Addis Ababa",
+    "Afar",
+    "Amhara",
+    "Benishangul-Gumuz",
+    "Dire Dawa",
+    "Gambela",
+    "Harari",
+    "Oromia",
+    "Sidama",
+    "Somali",
+    "South Ethiopia",
+    "Southwest Ethiopia",
+    "Tigray",
+    "Central Ethiopia",
+  ],
+  Ghana: [
+    "Ahafo",
+    "Ashanti",
+    "Bono",
+    "Bono East",
+    "Central",
+    "Eastern",
+    "Greater Accra",
+    "North East",
+    "Northern",
+    "Oti",
+    "Savannah",
+    "Upper East",
+    "Upper West",
+    "Volta",
+    "Western",
+    "Western North",
+  ],
+  Other: ["Please specify your region"],
 };
 
 const COUNTRY_LIST = Object.keys(COUNTRIES_STATES).sort();
@@ -495,29 +1222,29 @@ const COUNTRY_LIST = Object.keys(COUNTRIES_STATES).sort();
    EXPERTISE DATA
 ───────────────────────────────────────── */
 const STEM_OPTIONS = [
-  'Artificial Intelligence & Machine Learning',
-  'Software Engineering & Development',
-  'Data Science & Analytics',
-  'Cybersecurity & Information Security',
-  'Blockchain & Web3',
-  'Robotics & Embedded Systems',
-  'Biotech & Life Sciences',
-  'Environmental Science & Sustainability',
-  'Mathematics & Statistics',
-  'Electronics & Electrical Engineering',
+  "Artificial Intelligence & Machine Learning",
+  "Software Engineering & Development",
+  "Data Science & Analytics",
+  "Cybersecurity & Information Security",
+  "Blockchain & Web3",
+  "Robotics & Embedded Systems",
+  "Biotech & Life Sciences",
+  "Environmental Science & Sustainability",
+  "Mathematics & Statistics",
+  "Electronics & Electrical Engineering",
 ];
 
 const NON_STEM_OPTIONS = [
-  'Product Management & Strategy',
-  'Startup Building & Entrepreneurship',
-  'Finance, VC & Investment',
-  'Marketing & Growth',
-  'Design & User Experience',
-  'Law, Policy & Governance',
-  'Social Impact & Development',
-  'Education & Pedagogy',
-  'Writing, Media & Communication',
-  'Business Operations & Management',
+  "Product Management & Strategy",
+  "Startup Building & Entrepreneurship",
+  "Finance, VC & Investment",
+  "Marketing & Growth",
+  "Design & User Experience",
+  "Law, Policy & Governance",
+  "Social Impact & Development",
+  "Education & Pedagogy",
+  "Writing, Media & Communication",
+  "Business Operations & Management",
 ];
 
 /* ─────────────────────────────────────────
@@ -530,14 +1257,23 @@ interface SectionProps {
   children: React.ReactNode;
 }
 
-const Section: React.FC<SectionProps> = ({ num, title, elite = false, children }) => (
-  <div className={`mf-section${elite ? ' mf-section-elite' : ''}`}>
+const Section: React.FC<SectionProps> = ({
+  num,
+  title,
+  elite = false,
+  children,
+}) => (
+  <div className={`mf-section${elite ? " mf-section-elite" : ""}`}>
     <div className="mf-section-head">
-      <span className={`mf-section-num${elite ? ' mf-section-num-green' : ''}`}>{num}</span>
+      <span className={`mf-section-num${elite ? " mf-section-num-green" : ""}`}>
+        {num}
+      </span>
       <h2 className="mf-section-title">{title}</h2>
     </div>
     <div className="mf-section-body">{children}</div>
-    <div className={`mf-section-accent${elite ? ' mf-section-accent-green' : ''}`} />
+    <div
+      className={`mf-section-accent${elite ? " mf-section-accent-green" : ""}`}
+    />
   </div>
 );
 
@@ -550,10 +1286,18 @@ interface SmallCheckboxProps {
   onChange: (checked: boolean) => void;
 }
 
-const SmallCheckbox: React.FC<SmallCheckboxProps> = ({ label, checked, onChange }) => (
-  <label className={`mf-check-label-sm${checked ? ' checked' : ''}`}>
-    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-    <span className="mf-check-box-sm">{checked ? '✓' : ''}</span>
+const SmallCheckbox: React.FC<SmallCheckboxProps> = ({
+  label,
+  checked,
+  onChange,
+}) => (
+  <label className={`mf-check-label-sm${checked ? " checked" : ""}`}>
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+    />
+    <span className="mf-check-box-sm">{checked ? "✓" : ""}</span>
     {label}
   </label>
 );
@@ -568,9 +1312,13 @@ interface CheckboxProps {
 }
 
 const Checkbox: React.FC<CheckboxProps> = ({ label, checked, onChange }) => (
-  <label className={`mf-check-label${checked ? ' checked' : ''}`}>
-    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-    <span className="mf-check-box">{checked ? '✓' : ''}</span>
+  <label className={`mf-check-label${checked ? " checked" : ""}`}>
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+    />
+    <span className="mf-check-box">{checked ? "✓" : ""}</span>
     {label}
   </label>
 );
@@ -612,172 +1360,262 @@ interface ExtendedFormData extends MentorApplicationData {
 ───────────────────────────────────────── */
 export const MentorshipLeadForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [submitMessage, setSubmitMessage] = useState('');
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+  const [submitMessage, setSubmitMessage] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
 
   const [formData, setFormData] = useState<ExtendedFormData>({
-    name: '', email: '', linkedin: '', role: '', organization: '',
-    country: '', city: '', yearsOfExperience: 0,
+    name: "",
+    email: "",
+    linkedin: "",
+    role: "",
+    organization: "",
+    country: "",
+    city: "",
+    yearsOfExperience: 0,
     expertiseAreas: [],
-    stemExpertise: [], nonStemExpertise: [],
-    otherExpertiseEnabled: false, otherExpertiseText: '',
-    achievement: '', mentoringExperience: 'No', mentoringDescription: '',
-    projectsOrResearch: '', mentorshipIntent: '', scenarioResponse: '',
-    mentorshipTools: '',
-    monthlyCommitment: '2-3 hours', mentorshipFormat: [], studentPreference: [],
-    portfolioLinks: '', innovationImpactView: '', studentMistakeObservation: '',
-    thirtyDayBuildPlan: '', publicMentorFeature: false, mentorReferral: '',
-    stateProvince: '',
+    stemExpertise: [],
+    nonStemExpertise: [],
+    otherExpertiseEnabled: false,
+    otherExpertiseText: "",
+    achievement: "",
+    mentoringExperience: "No",
+    mentoringDescription: "",
+    projectsOrResearch: "",
+    mentorshipIntent: "",
+    scenarioResponse: "",
+    mentorshipTools: "",
+    monthlyCommitment: "2-3 hours",
+    mentorshipFormat: [],
+    studentPreference: [],
+    portfolioLinks: "",
+    innovationImpactView: "",
+    studentMistakeObservation: "",
+    thirtyDayBuildPlan: "",
+    publicMentorFeature: false,
+    mentorReferral: "",
+    stateProvince: "",
   });
 
   /* ── Progress ── */
   const filledFields = [
-    formData.name, formData.email, formData.linkedin, formData.role,
-    formData.organization, formData.country, formData.city,
-    String(formData.yearsOfExperience || ''),
-    formData.achievement, formData.mentorshipIntent, formData.scenarioResponse,
-    formData.mentorshipTools, formData.innovationImpactView,
-    formData.studentMistakeObservation, formData.portfolioLinks, formData.mentorReferral,
+    formData.name,
+    formData.email,
+    formData.linkedin,
+    formData.role,
+    formData.organization,
+    formData.country,
+    formData.city,
+    String(formData.yearsOfExperience || ""),
+    formData.achievement,
+    formData.mentorshipIntent,
+    formData.scenarioResponse,
+    formData.mentorshipTools,
+    formData.innovationImpactView,
+    formData.studentMistakeObservation,
+    formData.portfolioLinks,
+    formData.mentorReferral,
     formData.projectsOrResearch,
-    (formData.stemExpertise.length + formData.nonStemExpertise.length > 0 ||
-      (formData.otherExpertiseEnabled && formData.otherExpertiseText.trim())) ? 'x' : '',
-    formData.mentorshipFormat.length > 0 ? 'x' : '',
-    formData.studentPreference.length > 0 ? 'x' : '',
+    formData.stemExpertise.length + formData.nonStemExpertise.length > 0 ||
+    (formData.otherExpertiseEnabled && formData.otherExpertiseText.trim())
+      ? "x"
+      : "",
+    formData.mentorshipFormat.length > 0 ? "x" : "",
+    formData.studentPreference.length > 0 ? "x" : "",
   ].filter(Boolean).length;
   const progress = Math.min(100, Math.round((filledFields / 20) * 100));
 
   /* ── Handlers ── */
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value, type } = e.target;
-    if (type === 'checkbox') {
+    if (type === "checkbox") {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData((prev) => ({ ...prev, [name]: checked }));
-    } else if (type === 'number') {
+    } else if (type === "number") {
       setFormData((prev) => ({ ...prev, [name]: parseInt(value) || 0 }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleStemChange = (value: string, checked: boolean) =>
     setFormData((prev) => ({
       ...prev,
-      stemExpertise: checked ? [...prev.stemExpertise, value] : prev.stemExpertise.filter((i) => i !== value),
+      stemExpertise: checked
+        ? [...prev.stemExpertise, value]
+        : prev.stemExpertise.filter((i) => i !== value),
     }));
 
   const handleNonStemChange = (value: string, checked: boolean) =>
     setFormData((prev) => ({
       ...prev,
-      nonStemExpertise: checked ? [...prev.nonStemExpertise, value] : prev.nonStemExpertise.filter((i) => i !== value),
+      nonStemExpertise: checked
+        ? [...prev.nonStemExpertise, value]
+        : prev.nonStemExpertise.filter((i) => i !== value),
     }));
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData((prev) => ({ ...prev, country: e.target.value, stateProvince: '', city: '' }));
+    setFormData((prev) => ({
+      ...prev,
+      country: e.target.value,
+      stateProvince: "",
+      city: "",
+    }));
   };
 
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData((prev) => ({ ...prev, stateProvince: e.target.value, city: '' }));
+    setFormData((prev) => ({
+      ...prev,
+      stateProvince: e.target.value,
+      city: "",
+    }));
   };
 
   const handleArrayChange = (
-    fieldName: 'mentorshipFormat' | 'studentPreference',
+    fieldName: "mentorshipFormat" | "studentPreference",
     value: string,
-    checked: boolean
+    checked: boolean,
   ) => {
     setFormData((prev) => {
       const arr = prev[fieldName] || [];
-      return { ...prev, [fieldName]: checked ? [...arr, value] : arr.filter((i) => i !== value) } as typeof prev;
+      return {
+        ...prev,
+        [fieldName]: checked ? [...arr, value] : arr.filter((i) => i !== value),
+      } as typeof prev;
     });
   };
 
-  const handleMentoringExperienceChange = (value: 'Yes' | 'No') =>
+  const handleMentoringExperienceChange = (value: "Yes" | "No") =>
     setFormData((prev) => ({
       ...prev,
       mentoringExperience: value,
-      mentoringDescription: value === 'No' ? '' : prev.mentoringDescription,
+      mentoringDescription: value === "No" ? "" : prev.mentoringDescription,
     }));
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitStatus('idle');
-    setSubmitMessage('');
+    setSubmitStatus("idle");
+    setSubmitMessage("");
 
     const combinedExpertise = [
       ...formData.stemExpertise,
       ...formData.nonStemExpertise,
       ...(formData.otherExpertiseEnabled && formData.otherExpertiseText.trim()
-        ? [`Other: ${formData.otherExpertiseText.trim()}`] : []),
+        ? [`Other: ${formData.otherExpertiseText.trim()}`]
+        : []),
     ];
 
     try {
-      await submitMentorApplication({ ...formData, expertiseAreas: combinedExpertise });
-      setSubmitStatus('success');
+      await submitMentorApplication({
+        ...formData,
+        expertiseAreas: combinedExpertise,
+      });
+      setSubmitStatus("success");
       setSubmitMessage(
-        `Your application has been submitted! We'll review it and get back to you at ${formData.email} within 5–7 business days.`
+        `Your application has been submitted! We'll review it and get back to you at ${formData.email} within 5–7 business days.`,
       );
       setTimeout(() => {
         setFormData({
-          name: '', email: '', linkedin: '', role: '', organization: '',
-          country: '', city: '', yearsOfExperience: 0,
-          expertiseAreas: [], stemExpertise: [], nonStemExpertise: [],
-          otherExpertiseEnabled: false, otherExpertiseText: '',
-          achievement: '', mentoringExperience: 'No', mentoringDescription: '',
-          projectsOrResearch: '', mentorshipIntent: '', scenarioResponse: '',
-          mentorshipTools: '', monthlyCommitment: '2-3 hours',
-          mentorshipFormat: [], studentPreference: [],
-          portfolioLinks: '', innovationImpactView: '', studentMistakeObservation: '',
-          thirtyDayBuildPlan: '', publicMentorFeature: false, mentorReferral: '',
-          stateProvince: '',
+          name: "",
+          email: "",
+          linkedin: "",
+          role: "",
+          organization: "",
+          country: "",
+          city: "",
+          yearsOfExperience: 0,
+          expertiseAreas: [],
+          stemExpertise: [],
+          nonStemExpertise: [],
+          otherExpertiseEnabled: false,
+          otherExpertiseText: "",
+          achievement: "",
+          mentoringExperience: "No",
+          mentoringDescription: "",
+          projectsOrResearch: "",
+          mentorshipIntent: "",
+          scenarioResponse: "",
+          mentorshipTools: "",
+          monthlyCommitment: "2-3 hours",
+          mentorshipFormat: [],
+          studentPreference: [],
+          portfolioLinks: "",
+          innovationImpactView: "",
+          studentMistakeObservation: "",
+          thirtyDayBuildPlan: "",
+          publicMentorFeature: false,
+          mentorReferral: "",
+          stateProvince: "",
         });
-        setSubmitStatus('idle');
       }, 6000);
     } catch (error) {
-      setSubmitStatus('error');
-      setSubmitMessage(error instanceof Error ? error.message : 'Failed to submit. Please try again.');
+      setSubmitStatus("error");
+      setSubmitMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to submit. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const mentorshipFormatOptions = ['1:1 Mentorship', 'Group Mentorship', 'Project Guidance', 'Research Guidance', 'Workshops'];
+  const mentorshipFormatOptions = [
+    "1:1 Mentorship",
+    "Group Mentorship",
+    "Project Guidance",
+    "Research Guidance",
+    "Workshops",
+  ];
   const studentPreferenceOptions = [
-    'Undergraduates (B.Tech / BCA / BSc)',
-    'Postgraduates (M.Tech / MBA / MSc)',
-    'PhD & Research Scholars',
-    'Early Career Professionals (0–2 yrs)',
-    'First Project / Product Builders',
-    'Startup Founders & Ideators',
-    'Students Seeking Career Clarity',
-    'Competitive Exam & Placement Aspirants',
-    'Higher Studies Abroad (MS / MBA)',
-    'Social Impact & NGO Projects',
-    'Skill-Specific Learners',
-  ]; const commitmentOptions = ['2-3 hours', '4-6 hours', '6-10 hours', '10+ hours'];
+    "Beginners",
+    "Intermediate builders",
+    "Startup founders",
+    "Researchers",
+  ];
+  const commitmentOptions = [
+    "2-3 hours",
+    "4-6 hours",
+    "6-10 hours",
+    "10+ hours",
+  ];
 
   const stemCount = formData.stemExpertise.length;
   const nonStemCount = formData.nonStemExpertise.length;
-  const totalSelected = stemCount + nonStemCount + (formData.otherExpertiseEnabled && formData.otherExpertiseText.trim() ? 1 : 0);
+  const totalSelected =
+    stemCount +
+    nonStemCount +
+    (formData.otherExpertiseEnabled && formData.otherExpertiseText.trim()
+      ? 1
+      : 0);
 
   return (
     <>
       <style>{CSS}</style>
       <div className="mf-wrap">
-
         {/* ── PROGRESS BAR ── */}
         <div className="mf-progress-wrap">
-          <div className="mf-progress-label">Application Progress — {progress}% Complete</div>
+          <div className="mf-progress-label">
+            Application Progress — {progress}% Complete
+          </div>
           <div className="mf-progress-track">
-            <div className="mf-progress-fill" style={{ width: `${progress}%` }} />
+            <div
+              className="mf-progress-fill"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
 
         {/* ── STATUS BANNERS ── */}
-        {submitStatus === 'success' && (
+        {submitStatus === "success" && (
           <div className="mf-banner mf-banner-success">
             <span className="mf-banner-icon">✅</span>
             <div>
@@ -786,7 +1624,7 @@ export const MentorshipLeadForm = () => {
             </div>
           </div>
         )}
-        {submitStatus === 'error' && (
+        {submitStatus === "error" && (
           <div className="mf-banner mf-banner-error">
             <span className="mf-banner-icon">⚠️</span>
             <div>
@@ -796,416 +1634,598 @@ export const MentorshipLeadForm = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        {submitStatus === "success" ? (
+          <div className="mf-success-screen">
+            <div className="mf-success-card">
+              <div className="mf-success-icon">🎉</div>
+              <h2>Application Submitted Successfully!</h2>
+              <p>
+                Thank you for applying as a mentor at DreamXec. Our team will
+                review your application within 5–7 business days.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            {/* ══════════════ §1 BASIC INFORMATION ══════════════ */}
+            <Section num="01" title="Basic Information">
+              <div className="mf-grid-2">
+                <Field label="Full Name" required>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Your full name"
+                    required
+                  />
+                </Field>
+                <Field label="Email Address" required>
+                  <input
+                    className="mf-input"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="your.email@example.com"
+                    required
+                  />
+                </Field>
+                <Field label="LinkedIn Profile">
+                  <input
+                    className="mf-input"
+                    type="url"
+                    name="linkedin"
+                    value={formData.linkedin}
+                    onChange={handleInputChange}
+                    placeholder="https://linkedin.com/in/yourprofile"
+                    required
+                  />
+                </Field>
+                <Field label="Current Role / Title" required>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Senior Software Engineer"
+                    required
+                  />
+                </Field>
+                <Field label="Organization / Company">
+                  <input
+                    className="mf-input"
+                    type="text"
+                    name="organization"
+                    value={formData.organization}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Google, Startup, University"
+                    required
+                  />
+                </Field>
+                <Field label="Country" required>
+                  <div className="mf-select-wrap">
+                    <select
+                      className="mf-select"
+                      name="country"
+                      value={formData.country}
+                      onChange={handleCountryChange}
+                      required
+                    >
+                      <option value="">Select your country</option>
+                      {COUNTRY_LIST.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="mf-select-arrow">▾</span>
+                  </div>
+                </Field>
+                <Field label="State / Province / Region" required>
+                  <div className="mf-select-wrap">
+                    <select
+                      className="mf-select"
+                      name="stateProvince"
+                      value={formData.stateProvince}
+                      onChange={handleStateChange}
+                      required
+                      disabled={!formData.country}
+                      style={{
+                        opacity: formData.country ? 1 : 0.45,
+                        cursor: formData.country ? "pointer" : "not-allowed",
+                      }}
+                    >
+                      <option value="">
+                        {formData.country
+                          ? "Select state / province"
+                          : "← Select country first"}
+                      </option>
+                      {(COUNTRIES_STATES[formData.country] || []).map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="mf-select-arrow">▾</span>
+                  </div>
+                </Field>
+                <Field label="City" required>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    placeholder={
+                      formData.stateProvince
+                        ? `City in ${formData.stateProvince}`
+                        : "Select state first"
+                    }
+                    disabled={!formData.stateProvince}
+                    style={{ opacity: formData.stateProvince ? 1 : 0.45 }}
+                    required
+                  />
+                </Field>
+                <Field label="Years of Professional Experience" required>
+                  <input
+                    className="mf-input"
+                    type="number"
+                    name="yearsOfExperience"
+                    value={formData.yearsOfExperience}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="70"
+                    placeholder="0"
+                    required
+                  />
+                </Field>
+              </div>
+            </Section>
 
-          {/* ══════════════ §1 BASIC INFORMATION ══════════════ */}
-          <Section num="01" title="Basic Information">
-            <div className="mf-grid-2">
-              <Field label="Full Name" required>
-                <input className="mf-input" type="text" name="name"
-                  value={formData.name} onChange={handleInputChange}
-                  placeholder="Your full name" required />
-              </Field>
-              <Field label="Email Address" required>
-                <input className="mf-input" type="email" name="email"
-                  value={formData.email} onChange={handleInputChange}
-                  placeholder="your.email@example.com" required />
-              </Field>
-              <Field label="LinkedIn Profile" required>
-                <input className="mf-input" type="url" name="linkedin"
-                  value={formData.linkedin} onChange={handleInputChange}
-                  placeholder="https://linkedin.com/in/yourprofile" required />
-              </Field>
-              <Field label="Current Role / Title" required>
-                <input className="mf-input" type="text" name="role"
-                  value={formData.role} onChange={handleInputChange}
-                  placeholder="e.g., Senior Software Engineer" required />
-              </Field>
-              <Field label="Organization / Company" required>
-                <input className="mf-input" type="text" name="organization"
-                  value={formData.organization} onChange={handleInputChange}
-                  placeholder="e.g., Google, Startup, University" required />
-              </Field>
-              <Field label="Country" required>
-                <div className="mf-select-wrap">
-                  <select
-                    className="mf-select"
-                    name="country"
-                    value={formData.country}
-                    onChange={handleCountryChange}
-                    required
+            {/* ══════════════ §2 AREA OF EXPERTISE ══════════════ */}
+            <Section num="02" title="Area of Expertise">
+              <Field
+                label={`Select your areas of expertise${totalSelected > 0 ? ` — ${totalSelected} selected` : ""}`}
+                required
+                hint="Choose from STEM or Non-STEM fields (or both). Select at least one area. If your domain isn't listed, use the 'Other' option below."
+              >
+                {/* STEM + Non-STEM panels */}
+                <div className="mf-expertise-wrap">
+                  {/* STEM Panel */}
+                  <div className="mf-expertise-category">
+                    <div className="mf-expertise-cat-head mf-expertise-cat-head-stem">
+                      <span className="mf-expertise-cat-icon">🔬</span>
+                      <span className="mf-expertise-cat-title">STEM</span>
+                      {stemCount > 0 && (
+                        <span className="mf-expertise-cat-count">
+                          {stemCount} selected
+                        </span>
+                      )}
+                    </div>
+                    <div className="mf-expertise-cat-body">
+                      {STEM_OPTIONS.map((opt) => (
+                        <SmallCheckbox
+                          key={opt}
+                          label={opt}
+                          checked={formData.stemExpertise.includes(opt)}
+                          onChange={(checked) => handleStemChange(opt, checked)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Non-STEM Panel */}
+                  <div className="mf-expertise-category">
+                    <div className="mf-expertise-cat-head mf-expertise-cat-head-nonstem">
+                      <span className="mf-expertise-cat-icon">💡</span>
+                      <span className="mf-expertise-cat-title">Non-STEM</span>
+                      {nonStemCount > 0 && (
+                        <span className="mf-expertise-cat-count mf-expertise-cat-count-green">
+                          {nonStemCount} selected
+                        </span>
+                      )}
+                    </div>
+                    <div className="mf-expertise-cat-body">
+                      {NON_STEM_OPTIONS.map((opt) => (
+                        <SmallCheckbox
+                          key={opt}
+                          label={opt}
+                          checked={formData.nonStemExpertise.includes(opt)}
+                          onChange={(checked) =>
+                            handleNonStemChange(opt, checked)
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Other Domain */}
+                <div className="mf-other-wrap">
+                  <div
+                    className="mf-other-toggle-row"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        otherExpertiseEnabled: !prev.otherExpertiseEnabled,
+                        otherExpertiseText: prev.otherExpertiseEnabled
+                          ? ""
+                          : prev.otherExpertiseText,
+                      }))
+                    }
                   >
-                    <option value="">Select your country</option>
-                    {COUNTRY_LIST.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                  <span className="mf-select-arrow">▾</span>
+                    <span
+                      className={`mf-other-toggle-box${formData.otherExpertiseEnabled ? " on" : ""}`}
+                    >
+                      {formData.otherExpertiseEnabled ? "✓" : ""}
+                    </span>
+                    <span className="mf-other-toggle-text">Other Domain</span>
+                    <span className="mf-other-badge">Write your own</span>
+                  </div>
+                  {formData.otherExpertiseEnabled && (
+                    <input
+                      className="mf-other-input-field"
+                      type="text"
+                      placeholder="Describe your area of expertise (e.g., Performing Arts, Sports Science, Culinary Innovation...)"
+                      value={formData.otherExpertiseText}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          otherExpertiseText: e.target.value,
+                        }))
+                      }
+                      required
+                      autoFocus
+                    />
+                  )}
                 </div>
               </Field>
-              <Field label="State / Province / Region" required>
-                <div className="mf-select-wrap">
-                  <select
-                    className="mf-select"
-                    name="stateProvince"
-                    value={formData.stateProvince}
-                    onChange={handleStateChange}
-                    required
-                    disabled={!formData.country}
-                    style={{ opacity: formData.country ? 1 : 0.45, cursor: formData.country ? 'pointer' : 'not-allowed' }}
-                  >
-                    <option value="">
-                      {formData.country ? 'Select state / province' : '← Select country first'}
-                    </option>
-                    {(COUNTRIES_STATES[formData.country] || []).map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                  <span className="mf-select-arrow">▾</span>
-                </div>
-              </Field>
-              <Field label="City" required>
-                <input
-                  className="mf-input"
-                  type="text"
-                  name="city"
-                  value={formData.city}
+            </Section>
+
+            {/* ══════════════ §3 CREDIBILITY CHECK ══════════════ */}
+            <Section num="03" title="Credibility Check">
+              <Field
+                label="What is your professional achievement?"
+                required
+                hint="Examples: Built a startup, Published research, Worked at a leading company, Built large-scale systems"
+              >
+                <textarea
+                  className="mf-textarea"
+                  name="achievement"
+                  value={formData.achievement}
                   onChange={handleInputChange}
-                  placeholder={formData.stateProvince ? `City in ${formData.stateProvince}` : 'Select state first'}
-                  disabled={!formData.stateProvince}
-                  style={{ opacity: formData.stateProvince ? 1 : 0.45 }}
+                  placeholder="Describe your professional achievement..."
+                  rows={4}
                   required
                 />
               </Field>
-              <Field label="Years of Professional Experience" required>
-                <input className="mf-input" type="number" name="yearsOfExperience"
-                  value={formData.yearsOfExperience} onChange={handleInputChange}
-                  min="0" max="70" placeholder="0" required />
-              </Field>
-            </div>
-          </Section>
 
-          {/* ══════════════ §2 AREA OF EXPERTISE ══════════════ */}
-          <Section num="02" title="Area of Expertise">
-            <Field
-              label={`Select your areas of expertise${totalSelected > 0 ? ` — ${totalSelected} selected` : ''}`}
-              required
-              hint="Choose from STEM or Non-STEM fields (or both). Select at least one area. If your domain isn't listed, use the 'Other' option below."
-            >
-              {/* STEM + Non-STEM panels */}
-              <div className="mf-expertise-wrap">
-
-                {/* STEM Panel */}
-                <div className="mf-expertise-category">
-                  <div className="mf-expertise-cat-head mf-expertise-cat-head-stem">
-                    <span className="mf-expertise-cat-icon">🔬</span>
-                    <span className="mf-expertise-cat-title">STEM</span>
-                    {stemCount > 0 && (
-                      <span className="mf-expertise-cat-count">{stemCount} selected</span>
-                    )}
-                  </div>
-                  <div className="mf-expertise-cat-body">
-                    {STEM_OPTIONS.map((opt) => (
-                      <SmallCheckbox
-                        key={opt} label={opt}
-                        checked={formData.stemExpertise.includes(opt)}
-                        onChange={(checked) => handleStemChange(opt, checked)}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Non-STEM Panel */}
-                <div className="mf-expertise-category">
-                  <div className="mf-expertise-cat-head mf-expertise-cat-head-nonstem">
-                    <span className="mf-expertise-cat-icon">💡</span>
-                    <span className="mf-expertise-cat-title">Non-STEM</span>
-                    {nonStemCount > 0 && (
-                      <span className="mf-expertise-cat-count mf-expertise-cat-count-green">
-                        {nonStemCount} selected
-                      </span>
-                    )}
-                  </div>
-                  <div className="mf-expertise-cat-body">
-                    {NON_STEM_OPTIONS.map((opt) => (
-                      <SmallCheckbox
-                        key={opt} label={opt}
-                        checked={formData.nonStemExpertise.includes(opt)}
-                        onChange={(checked) => handleNonStemChange(opt, checked)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Other Domain */}
-              <div className="mf-other-wrap">
-                <div
-                  className="mf-other-toggle-row"
-                  onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      otherExpertiseEnabled: !prev.otherExpertiseEnabled,
-                      otherExpertiseText: prev.otherExpertiseEnabled ? '' : prev.otherExpertiseText,
-                    }))
-                  }
-                >
-                  <span className={`mf-other-toggle-box${formData.otherExpertiseEnabled ? ' on' : ''}`}>
-                    {formData.otherExpertiseEnabled ? '✓' : ''}
-                  </span>
-                  <span className="mf-other-toggle-text">Other Domain</span>
-                  <span className="mf-other-badge">Write your own</span>
-                </div>
-                {formData.otherExpertiseEnabled && (
-                  <input
-                    className="mf-other-input-field"
-                    type="text"
-                    placeholder="Describe your area of expertise (e.g., Performing Arts, Sports Science, Culinary Innovation...)"
-                    value={formData.otherExpertiseText}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, otherExpertiseText: e.target.value }))
-                    }
-                    required
-                    autoFocus
-                  />
-                )}
-              </div>
-            </Field>
-          </Section>
-
-          {/* ══════════════ §3 CREDIBILITY CHECK ══════════════ */}
-          <Section num="03" title="Credibility Check">
-            <Field
-              label="What is your professional achievement?"
-              required
-              hint="Examples: Built a startup, Published research, Worked at a leading company, Built large-scale systems"
-            >
-              <textarea className="mf-textarea" name="achievement"
-                value={formData.achievement} onChange={handleInputChange}
-                placeholder="Describe your professional achievement..."
-                rows={4} required />
-            </Field>
-
-            <Field label="Have you mentored students or professionals before?" required>
-              <div className="mf-radio-row">
-                {(['Yes', 'No'] as const).map((v) => (
-                  <label key={v} className={`mf-radio-label${formData.mentoringExperience === v ? ' selected' : ''}`}>
-                    <input type="radio" name="mentoringExperience" value={v}
-                      checked={formData.mentoringExperience === v}
-                      onChange={() => handleMentoringExperienceChange(v)} />
-                    {v}
-                  </label>
-                ))}
-              </div>
-            </Field>
-
-            {formData.mentoringExperience === 'Yes' && (
-              <Field label="Briefly describe your mentoring experience" required>
-                <textarea className="mf-textarea" name="mentoringDescription"
-                  value={formData.mentoringDescription || ''} onChange={handleInputChange}
-                  placeholder="Tell us about your mentoring experience..." rows={4} required />
-              </Field>
-            )}
-
-            <Field
-              label="What projects, companies, or research have you worked on that students could learn from?"
-              required
-            >
-              <textarea className="mf-textarea" name="projectsOrResearch"
-                value={formData.projectsOrResearch || ''} onChange={handleInputChange}
-                placeholder="Describe projects or research that demonstrate your expertise..."
-                rows={4} required />
-            </Field>
-          </Section>
-
-          <div className="mf-stripe" />
-
-          {/* ══════════════ §4 MENTORSHIP INTENT ══════════════ */}
-          <Section num="04" title="Mentorship Intent">
-            <Field
-              label="Why do you want to mentor at DreamXec?"
-              required
-              hint="Good signals: Giving back to students, Helping innovation, Supporting research. Weak signals: Networking only, General exposure"
-            >
-              <textarea className="mf-textarea" name="mentorshipIntent"
-                value={formData.mentorshipIntent} onChange={handleInputChange}
-                placeholder="Share your motivation for mentoring at DreamXec..."
-                rows={4} required />
-            </Field>
-          </Section>
-
-          {/* ══════════════ §5 SCENARIO QUESTION ══════════════ */}
-          <Section num="05" title="Scenario Question — Mentor Quality Filter">
-            <Field
-              label="A student has a great idea but no technical skills. How would you guide them?"
-              required
-              hint="This helps us evaluate your communication ability, mentorship mindset, and problem-solving approach"
-            >
-              <textarea className="mf-textarea" name="scenarioResponse"
-                value={formData.scenarioResponse} onChange={handleInputChange}
-                placeholder="Describe how you would mentor a student with a great idea but no technical skills..."
-                rows={4} required />
-            </Field>
-          </Section>
-
-          {/* ══════════════ §6 MENTORSHIP TOOLS & APPROACH ══════════════ */}
-          <Section num="06" title="Mentorship Tools & Approach">
-            <Field
-              label="What tools, platforms, or AI-assisted resources do you use to deliver your mentorship?"
-              required
-              hint="Help us understand your mentorship methodology — this may include productivity tools, AI assistants (e.g. ChatGPT, Gemini), coaching frameworks, collaboration platforms, or any structured approach you apply to guide mentees effectively."
-            >
-              <textarea
-                className="mf-textarea"
-                name="mentorshipTools"
-                value={formData.mentorshipTools}
-                onChange={handleInputChange}
-                placeholder="e.g., I use Notion for session planning and progress tracking, Loom for async video feedback, and ChatGPT to help mentees debug code or explore new concepts. I also apply the GROW coaching framework to structure goal-setting conversations and keep each session focused..."
-                rows={5}
+              <Field
+                label="Have you mentored students or professionals before?"
                 required
-              />
-            </Field>
-          </Section>
-
-          {/* ══════════════ §7 COMMITMENT ══════════════ */}
-          <Section num="07" title="Commitment">
-            <Field label="How many hours per month can you commit to mentoring?" required>
-              <div className="mf-select-wrap">
-                <select className="mf-select" name="monthlyCommitment"
-                  value={formData.monthlyCommitment} onChange={handleInputChange}>
-                  {commitmentOptions.map((opt) => (
-                    <option key={opt} value={opt}>{opt} / month</option>
+              >
+                <div className="mf-radio-row">
+                  {(["Yes", "No"] as const).map((v) => (
+                    <label
+                      key={v}
+                      className={`mf-radio-label${formData.mentoringExperience === v ? " selected" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name="mentoringExperience"
+                        value={v}
+                        checked={formData.mentoringExperience === v}
+                        onChange={() => handleMentoringExperienceChange(v)}
+                      />
+                      {v}
+                    </label>
                   ))}
-                </select>
-                <span className="mf-select-arrow">▾</span>
-              </div>
-            </Field>
+                </div>
+              </Field>
 
-            <Field label="Preferred mentorship format — Select at least one" required>
-              <div className="mf-check-grid">
-                {mentorshipFormatOptions.map((opt) => (
-                  <Checkbox key={opt} label={opt}
-                    checked={formData.mentorshipFormat.includes(opt)}
-                    onChange={(checked) => handleArrayChange('mentorshipFormat', opt, checked)}
+              {formData.mentoringExperience === "Yes" && (
+                <Field
+                  label="Briefly describe your mentoring experience"
+                  required
+                >
+                  <textarea
+                    className="mf-textarea"
+                    name="mentoringDescription"
+                    value={formData.mentoringDescription || ""}
+                    onChange={handleInputChange}
+                    placeholder="Tell us about your mentoring experience..."
+                    rows={4}
+                    required
                   />
-                ))}
-              </div>
-            </Field>
-          </Section>
-
-          <div className="mf-stripe" />
-
-          {/* ══════════════ §8 STUDENT IMPACT ══════════════ */}
-          <Section num="08" title="Student Impact">
-            <Field label="What kind of students do you prefer mentoring? — Select at least one" required>
-              <div className="mf-check-grid">
-                {studentPreferenceOptions.map((opt) => (
-                  <Checkbox key={opt} label={opt}
-                    checked={formData.studentPreference.includes(opt)}
-                    onChange={(checked) => handleArrayChange('studentPreference', opt, checked)}
-                  />
-                ))}
-              </div>
-            </Field>
-          </Section>
-
-          {/* ══════════════ §9 PROOF OF WORK ══════════════ */}
-          <Section num="09" title="Proof of Work">
-            <Field label="Portfolio / GitHub / Publications / Website" required>
-              <textarea className="mf-textarea" name="portfolioLinks"
-                value={formData.portfolioLinks || ''} onChange={handleInputChange}
-                placeholder="Paste links to your portfolio, GitHub, research papers, website, etc."
-                rows={3} required />
-            </Field>
-          </Section>
-
-          {/* ══════════════ §10 VALUES ALIGNMENT ══════════════ */}
-          <Section num="10" title="Values Alignment">
-            <Field label={'What does "innovation for impact" mean to you?'} required>
-              <textarea className="mf-textarea" name="innovationImpactView"
-                value={formData.innovationImpactView} onChange={handleInputChange}
-                placeholder="Share your perspective on innovation for impact..."
-                rows={4} required />
-            </Field>
-          </Section>
-
-          {/* ══════════════ §11 FINAL FILTER ══════════════ */}
-          <Section num="11" title="Extra Question">
-            <Field
-              label="What is one mistake most students make when building projects or startups?"
-              required
-            >
-              <textarea className="mf-textarea" name="studentMistakeObservation"
-                value={formData.studentMistakeObservation} onChange={handleInputChange}
-                placeholder="Share your observation about common mistakes..."
-                rows={4} required />
-            </Field>
-          </Section>
-
-          <div className="mf-stripe" />
-
-          {/* ══════════════ §12 ELITE FILTER (OPTIONAL) ══════════════ */}
-          <Section num="12" title="Extra Question — Optional" elite>
-            <Field
-              label="If you had to mentor a student to build something meaningful in 30 days, what would you make them build?"
-              hint="Strong mentors usually provide structured answers. This is optional but helps us identify exceptional mentors."
-            >
-              <textarea className="mf-textarea" name="thirtyDayBuildPlan"
-                value={formData.thirtyDayBuildPlan || ''} onChange={handleInputChange}
-                placeholder="Describe a 30-day build plan for a student..."
-                rows={4} />
-            </Field>
-          </Section>
-
-          {/* ══════════════ §13 PUBLIC MENTOR FEATURE ══════════════ */}
-          <Section num="13" title="Public Mentor Feature">
-            <div
-              className={`mf-toggle-wrap${formData.publicMentorFeature ? ' checked' : ''}`}
-              onClick={() => setFormData((prev) => ({ ...prev, publicMentorFeature: !prev.publicMentorFeature }))}
-            >
-              <input type="checkbox" name="publicMentorFeature"
-                checked={formData.publicMentorFeature || false} onChange={() => { }} />
-              <span className="mf-toggle-box">{formData.publicMentorFeature ? '✓' : ''}</span>
-              <div>
-                <div className="mf-toggle-title">I'm open to being featured publicly as a DreamXec mentor</div>
-                <div className="mf-toggle-sub">Selected mentors will be featured on our website and social media channels.</div>
-              </div>
-            </div>
-          </Section>
-
-          {/* ══════════════ §14 NETWORK EXPANSION ══════════════ */}
-          <Section num="14" title="Network Expansion">
-            <Field
-              label="Who is one person you recommend as a mentor for DreamXec?"
-              required
-              hint="Great mentors usually refer other strong mentors. This helps us expand our mentor network."
-            >
-              <textarea className="mf-textarea" name="mentorReferral"
-                value={formData.mentorReferral || ''} onChange={handleInputChange}
-                placeholder="Name and brief description of a person you'd recommend as a mentor..."
-                rows={3} required />
-            </Field>
-          </Section>
-
-          {/* ══════════════ SUBMIT ══════════════ */}
-          <div className="mf-submit-area">
-            <p className="mf-required-note">* All fields required unless marked optional · Reviewed within 5–7 business days</p>
-            <button
-              type="submit"
-              disabled={isSubmitting || submitStatus === 'success'}
-              className={`mf-submit-btn${submitStatus === 'success' ? ' submitted' : ''}`}
-            >
-              {isSubmitting ? (
-                <><span className="mf-spinner" /> Submitting...</>
-              ) : submitStatus === 'success' ? (
-                <>✓ Application Submitted</>
-              ) : (
-                <>🎓 Submit Application →</>
+                </Field>
               )}
-            </button>
-          </div>
 
-        </form>
+              <Field label="What projects, companies, or research have you worked on that students could learn from?">
+                <textarea
+                  className="mf-textarea"
+                  name="projectsOrResearch"
+                  value={formData.projectsOrResearch || ""}
+                  onChange={handleInputChange}
+                  placeholder="Describe projects or research that demonstrate your expertise..."
+                  rows={4}
+                  required
+                />
+              </Field>
+            </Section>
+
+            <div className="mf-stripe" />
+
+            {/* ══════════════ §4 MENTORSHIP INTENT ══════════════ */}
+            <Section num="04" title="Mentorship Intent">
+              <Field
+                label="Why do you want to mentor at DreamXec?"
+                required
+                hint="Good signals: Giving back to students, Helping innovation, Supporting research. Weak signals: Networking only, General exposure"
+              >
+                <textarea
+                  className="mf-textarea"
+                  name="mentorshipIntent"
+                  value={formData.mentorshipIntent}
+                  onChange={handleInputChange}
+                  placeholder="Share your motivation for mentoring at DreamXec..."
+                  rows={4}
+                  required
+                />
+              </Field>
+            </Section>
+
+            {/* ══════════════ §5 SCENARIO QUESTION ══════════════ */}
+            <Section num="05" title="Scenario Question — Mentor Quality Filter">
+              <Field
+                label="A student has a great idea but no technical skills. How would you guide them?"
+                required
+                hint="This helps us evaluate your communication ability, mentorship mindset, and problem-solving approach"
+              >
+                <textarea
+                  className="mf-textarea"
+                  name="scenarioResponse"
+                  value={formData.scenarioResponse}
+                  onChange={handleInputChange}
+                  placeholder="Describe how you would mentor a student with a great idea but no technical skills..."
+                  rows={4}
+                  required
+                />
+              </Field>
+            </Section>
+
+            {/* ══════════════ §6 MENTORSHIP TOOLS & APPROACH ══════════════ */}
+            <Section num="06" title="Mentorship Tools & Approach">
+              <Field
+                label="What tools, platforms, or AI-assisted resources do you use to deliver your mentorship?"
+                required
+                hint="Help us understand your mentorship methodology — this may include productivity tools, AI assistants (e.g. ChatGPT, Gemini), coaching frameworks, collaboration platforms, or any structured approach you apply to guide mentees effectively."
+              >
+                <textarea
+                  className="mf-textarea"
+                  name="mentorshipTools"
+                  value={formData.mentorshipTools}
+                  onChange={handleInputChange}
+                  placeholder="e.g., I use Notion for session planning and progress tracking, Loom for async video feedback, and ChatGPT to help mentees debug code or explore new concepts. I also apply the GROW coaching framework to structure goal-setting conversations and keep each session focused..."
+                  rows={5}
+                  required
+                />
+              </Field>
+            </Section>
+
+            {/* ══════════════ §7 COMMITMENT ══════════════ */}
+            <Section num="07" title="Commitment">
+              <Field
+                label="How many hours per month can you commit to mentoring?"
+                required
+              >
+                <div className="mf-select-wrap">
+                  <select
+                    className="mf-select"
+                    name="monthlyCommitment"
+                    value={formData.monthlyCommitment}
+                    onChange={handleInputChange}
+                  >
+                    {commitmentOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt} / month
+                      </option>
+                    ))}
+                  </select>
+                  <span className="mf-select-arrow">▾</span>
+                </div>
+              </Field>
+
+              <Field
+                label="Preferred mentorship format — Select at least one"
+                required
+              >
+                <div className="mf-check-grid">
+                  {mentorshipFormatOptions.map((opt) => (
+                    <Checkbox
+                      key={opt}
+                      label={opt}
+                      checked={formData.mentorshipFormat.includes(opt)}
+                      onChange={(checked) =>
+                        handleArrayChange("mentorshipFormat", opt, checked)
+                      }
+                    />
+                  ))}
+                </div>
+              </Field>
+            </Section>
+
+            <div className="mf-stripe" />
+
+            {/* ══════════════ §8 STUDENT IMPACT ══════════════ */}
+            <Section num="08" title="Student Impact">
+              <Field
+                label="What kind of students do you prefer mentoring? — Select at least one"
+                required
+              >
+                <div className="mf-check-grid">
+                  {studentPreferenceOptions.map((opt) => (
+                    <Checkbox
+                      key={opt}
+                      label={opt}
+                      checked={formData.studentPreference.includes(opt)}
+                      onChange={(checked) =>
+                        handleArrayChange("studentPreference", opt, checked)
+                      }
+                    />
+                  ))}
+                </div>
+              </Field>
+            </Section>
+
+            {/* ══════════════ §9 PROOF OF WORK ══════════════ */}
+            <Section num="09" title="Proof of Work">
+              <Field
+                label="Portfolio / GitHub / Publications / Website"
+                required
+              >
+                <textarea
+                  className="mf-textarea"
+                  name="portfolioLinks"
+                  value={formData.portfolioLinks || ""}
+                  onChange={handleInputChange}
+                  placeholder="Paste links to your portfolio, GitHub, research papers, website, etc."
+                  rows={3}
+                  required
+                />
+              </Field>
+            </Section>
+
+            {/* ══════════════ §10 VALUES ALIGNMENT ══════════════ */}
+            <Section num="10" title="Values Alignment">
+              <Field
+                label={'What does "innovation for impact" mean to you?'}
+                required
+              >
+                <textarea
+                  className="mf-textarea"
+                  name="innovationImpactView"
+                  value={formData.innovationImpactView}
+                  onChange={handleInputChange}
+                  placeholder="Share your perspective on innovation for impact..."
+                  rows={4}
+                  required
+                />
+              </Field>
+            </Section>
+
+            {/* ══════════════ §11 FINAL FILTER ══════════════ */}
+            <Section num="11" title="Extra Question">
+              <Field
+                label="What is one mistake most students make when building projects or startups?"
+                required
+              >
+                <textarea
+                  className="mf-textarea"
+                  name="studentMistakeObservation"
+                  value={formData.studentMistakeObservation}
+                  onChange={handleInputChange}
+                  placeholder="Share your observation about common mistakes..."
+                  rows={4}
+                  required
+                />
+              </Field>
+            </Section>
+
+            <div className="mf-stripe" />
+
+            {/* ══════════════ §12 ELITE FILTER (OPTIONAL) ══════════════ */}
+            <Section num="12" title="Extra Question — Optional" elite>
+              <Field
+                label="If you had to mentor a student to build something meaningful in 30 days, what would you make them build?"
+                hint="Strong mentors usually provide structured answers. This is optional but helps us identify exceptional mentors."
+              >
+                <textarea
+                  className="mf-textarea"
+                  name="thirtyDayBuildPlan"
+                  value={formData.thirtyDayBuildPlan || ""}
+                  onChange={handleInputChange}
+                  placeholder="Describe a 30-day build plan for a student..."
+                  rows={4}
+                />
+              </Field>
+            </Section>
+
+            {/* ══════════════ §13 PUBLIC MENTOR FEATURE ══════════════ */}
+            <Section num="13" title="Public Mentor Feature">
+              <div
+                className={`mf-toggle-wrap${formData.publicMentorFeature ? " checked" : ""}`}
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    publicMentorFeature: !prev.publicMentorFeature,
+                  }))
+                }
+              >
+                <input
+                  type="checkbox"
+                  name="publicMentorFeature"
+                  checked={formData.publicMentorFeature || false}
+                  onChange={() => {}}
+                />
+                <span className="mf-toggle-box">
+                  {formData.publicMentorFeature ? "✓" : ""}
+                </span>
+                <div>
+                  <div className="mf-toggle-title">
+                    I'm open to being featured publicly as a DreamXec mentor
+                  </div>
+                  <div className="mf-toggle-sub">
+                    Selected mentors will be featured on our website and social
+                    media channels.
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            {/* ══════════════ §14 NETWORK EXPANSION ══════════════ */}
+            <Section num="14" title="Network Expansion">
+              <Field
+                label="Who is one person you recommend as a mentor for DreamXec?"
+                required
+                hint="Great mentors usually refer other strong mentors. This helps us expand our mentor network."
+              >
+                <textarea
+                  className="mf-textarea"
+                  name="mentorReferral"
+                  value={formData.mentorReferral || ""}
+                  onChange={handleInputChange}
+                  placeholder="Name and brief description of a person you'd recommend as a mentor..."
+                  rows={3}
+                  required
+                />
+              </Field>
+            </Section>
+
+            {/* ══════════════ SUBMIT ══════════════ */}
+            <div className="mf-submit-area">
+              <p className="mf-required-note">
+                * All fields required unless marked optional · Reviewed within
+                5–7 business days
+              </p>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="mf-submit-btn"
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="mf-spinner" /> Submitting...
+                  </>
+                ) : (
+                  <>🎓 Submit Application →</>
+                )}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </>
   );

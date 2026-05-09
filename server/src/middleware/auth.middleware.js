@@ -34,18 +34,23 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // 4. If not found → check donor
   if (!currentUser) {
-    const donor = await prisma.donor.findUnique({
-      where: { id: decoded.id },
-    });
-
-    if (donor) {
-      // Map donor → user-like object with role
-      currentUser = {
-        ...donor,
-        role:
-          donor.subscriptionStatus === "PREMIUM" ? "PREMIUM_DONOR" : "DONOR",
-      };
+    currentUser = await prisma.donor.findUnique({ where: { id: decoded.id } });
+    if (currentUser) {
+      // Assign the new roles array based on donor tier
+      // Assign the new roles array based on donor tier
+      const donorRole =
+        currentUser.subscriptionStatus === "PREMIUM"
+          ? "PREMIUM_DONOR"
+          : "DONOR";
+      currentUser.roles = [donorRole];
     }
+  } else {
+    // Safely ensure standard Users have the array even if migration missed them
+    currentUser.roles = currentUser.roles?.length
+      ? currentUser.roles
+      : currentUser.role
+        ? [currentUser.role]
+        : ["USER"];
   }
 
   // 5. If still not found
@@ -65,9 +70,13 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 exports.restrictTo = (...allowedRoles) => {
   return (req, res, next) => {
-    const userRole = req.user?.role;
+    const userRoles = req.user?.roles;
 
-    if (!userRole || !allowedRoles.includes(userRole)) {
+    if (
+      !userRoles ||
+      !Array.isArray(userRoles) ||
+      !userRoles.some((role) => allowedRoles.includes(role))
+    ) {
       return res.status(403).json({
         status: "error",
         message: "You do not have permission to perform this action.",

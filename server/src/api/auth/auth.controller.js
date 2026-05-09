@@ -42,23 +42,22 @@ const createAndSendToken = (user, statusCode, res) => {
 };
 
 const linkDonorToUser = async (donorId) => {
-  const donor = await prisma.donor.findUnique({
-    where: { id: donorId },
-  });
-
+  const donor = await prisma.donor.findUnique({ where: { id: donorId } });
   if (!donor) return;
 
-  const user = await prisma.user.findUnique({
-    where: { email: donor.email },
-  });
+  const user = await prisma.user.findUnique({ where: { email: donor.email } });
+  if (!user) return;
+
+  const roleToAdd =
+    donor.subscriptionStatus === "PREMIUM" ? Roles.PREMIUM_DONOR : Roles.DONOR;
+
+  if (!donor) return;
 
   if (!user) return;
 
   await prisma.user.update({
     where: { id: user.id },
-    data: {
-      role: "DONOR",
-    },
+    data: { roles: { push: roleToAdd } },
   });
 };
 
@@ -72,10 +71,11 @@ exports.register = catchAsync(async (req, res, next) => {
   let accountType;
 
   const verificationToken = signVerificationToken(email);
-
   const verificationTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
+  // =========================
   // DONOR REGISTRATION
+  // =========================
   if (role === "DONOR") {
     const existingDonor = await prisma.donor.findUnique({
       where: { email },
@@ -98,7 +98,9 @@ exports.register = catchAsync(async (req, res, next) => {
 
     accountType = "DONOR";
   } else {
+    // =========================
     // USER REGISTRATION
+    // =========================
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -112,10 +114,7 @@ exports.register = catchAsync(async (req, res, next) => {
         name,
         email,
         password: hashedPassword,
-
-        // FIXED: use role not roles
-        role: role || "USER",
-
+        roles: [role || "USER"],
         verificationToken,
         verificationTokenExpiry,
       },
@@ -124,7 +123,9 @@ exports.register = catchAsync(async (req, res, next) => {
     accountType = role || "USER";
   }
 
+  // =========================
   // AUTO LINK DONATIONS
+  // =========================
   await prisma.donation.updateMany({
     where: {
       guestEmail: email,
@@ -147,6 +148,19 @@ exports.register = catchAsync(async (req, res, next) => {
     }
   }
 
+  // =========================
+  // UNIFIED ROLE OUTPUT
+  // =========================
+  const roles =
+    accountType === "DONOR" ? ["DONOR"] : newAccount.roles || ["USER"];
+
+  const responseAccount = {
+    id: newAccount.id,
+    email: newAccount.email,
+    name: newAccount.name,
+    roles,
+  };
+
   try {
     await publishEvent(EVENTS.EMAIL_VERIFICATION, {
       email: newAccount.email,
@@ -154,32 +168,22 @@ exports.register = catchAsync(async (req, res, next) => {
       verificationUrl: `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       status: "success",
       message:
         "Registration successful! Please check your email to verify your account.",
       data: {
-        account: {
-          id: newAccount.id,
-          email: newAccount.email,
-          name: newAccount.name,
-          role: accountType,
-        },
+        account: responseAccount,
       },
     });
   } catch (err) {
     console.error("Email sending error:", err);
 
-    res.status(201).json({
+    return res.status(201).json({
       status: "success",
       message: "Registration successful! You can now log in.",
       data: {
-        account: {
-          id: newAccount.id,
-          email: newAccount.email,
-          name: newAccount.name,
-          role: accountType,
-        },
+        account: responseAccount,
       },
     });
   }
@@ -301,12 +305,16 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Incorrect email or password", 401));
   }
 
-  // FIXED: use role not roles
-  if (accountType === "donor") {
-    account.role = "DONOR";
-  }
+  // ✅ normalize roles WITHOUT mutating DB object
+  const roles = accountType === "donor" ? ["DONOR"] : account.roles || ["USER"];
 
-  createAndSendToken(account, 200, res);
+  const responsePayload = {
+    ...account,
+    roles,
+    accountType,
+  };
+
+  createAndSendToken(responsePayload, 200, res);
 });
 
 // 4. GOOGLE OAUTH CALLBACK

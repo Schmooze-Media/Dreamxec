@@ -1,25 +1,33 @@
-import { useState, useEffect, useRef } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import FloatingDoodles from './components/FloatingDoodles';
-import { Header } from './sections/Header';
-import { Main } from './components/Main';
-import BrowseCampaigns from './components/BrowseCampaigns';
-import StudentDashboard from './components/StudentDashboard';
-import CreateCampaign from './components/CreateCampaign';
-import EditCampaign from './components/EditCampaign';
-import CreateCampaignDemo from './components/CreateCampaignDemo';
-import AdminDashboard from './components/admin/AdminDashboard';
-import AuthPage from './components/AuthPage';
-import UserProfile from './components/UserProfile';
-import DonorDashboard from './components/DonorDashboard';
-import CreateProject from './components/CreateProject';
-import DonorProjects from './components/DonorProjects';
-import BrowseProjects from './components/BrowseProjects';
-import EmailVerification from './components/EmailVerification';
-import CheckEmail from './components/CheckEmail';
-import CampaignDetails from './components/CampaignDetails';
-import type { Campaign, User, Project } from './types';
+import { useState, useEffect, useRef } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
+import { Roles } from "./rbac/roles";
+import FloatingDoodles from "./components/FloatingDoodles";
+import { Header } from "./sections/Header";
+import { Main } from "./components/Main";
+import BrowseCampaigns from "./components/BrowseCampaigns";
+import StudentDashboard from "./components/StudentDashboard";
+import CreateCampaign from "./components/CreateCampaign";
+import EditCampaign from "./components/EditCampaign";
+import CreateCampaignDemo from "./components/CreateCampaignDemo";
+import AdminDashboard from "./components/admin/AdminDashboard";
+import AuthPage from "./components/AuthPage";
+import UserProfile from "./components/UserProfile";
+import DonorDashboard from "./components/DonorDashboard";
+import CreateProject from "./components/CreateProject";
+import DonorProjects from "./components/DonorProjects";
+import BrowseProjects from "./components/BrowseProjects";
+import EmailVerification from "./components/EmailVerification";
+import CheckEmail from "./components/CheckEmail";
+import CampaignDetails from "./components/CampaignDetails";
+import type { Campaign, User, Project } from "./types";
 import ReferClub from "./components/ReferClub";
 import PresidentDashboard from "./components/president/PresidentDashboard";
 import PresidentMembers from "./components/president/PresidentMembers";
@@ -27,59 +35,88 @@ import PresidentCampaigns from "./components/president/PresidentCampaigns";
 import UploadMembers from "./components/president/UploadMembers";
 import AddMemberManually from "./components/president/AddMemberManually";
 import PresidentLayout from "./components/president/PresidentLayout";
-import AdminClubReferrals from './components/admin/AdminClubReferrals';
-import AdminClubVerifications from './components/admin/AdminClubVerifications';
+import AdminClubReferrals from "./components/admin/AdminClubReferrals";
+import AdminClubVerifications from "./components/admin/AdminClubVerifications";
 import ClubDiscovery from "./components/ClubDiscovery";
 import ClubDetails from "./components/ClubDetails";
-import AuthCallback from './components/AuthCallback';
-import ProfileSetup from './components/ProfileSetup';
+import AuthCallback from "./components/AuthCallback";
+import ProfileSetup from "./components/ProfileSetup";
 import { trackPageView } from "./lib/analytics";
 import {
   getDonorApplications,
-  updateApplicationStatus
+  updateApplicationStatus,
 } from "./services/applicationService";
 
-
 // Import API services
-import { login, register, logout as apiLogout, getCurrentUser, initiateGoogleAuth, handleGoogleCallback, initiateLinkedInAuth, handleLinkedInCallback, forgotPassword } from './services/authService';
-import { getPublicUserProjects, createUserProject, updateUserProject } from './services/userProjectService';
-import { getPublicDonorProjects, createDonorProject, getMyDonorProjects } from './services/donorProjectService';
-import { getAllProjects, verifyUserProject, verifyDonorProject } from './services/adminService';
-import { applyToProject, getMyApplications } from './services/applicationService';
-import { mapBackendRole, mapFrontendRole, mapUserProjectToCampaign, mapDonorProjectToProject } from './services/mappers';
-import StartAProject from './sections/Pages/innovators/StartAProject';
-import HowItWorksStudents from './sections/Pages/innovators/HowItWorks';
-import ProjectEligibility from './sections/Pages/innovators/ProjectEligibility';
-import ResourceCenter from './sections/Pages/innovators/Resources';
-import SuccessStories from './sections/Pages/innovators/SuccessStories';
-import FundInnovation from './sections/Pages/supporters/FundInnovation';
-import HowItWorksDonors from './sections/Pages/supporters/HowItWorksD';
-import WhyDonate from './sections/Pages/supporters/WhyDonate';
-import CorporateCSRPartnerships from './sections/Pages/supporters/Corporate';
-import AlumniGivingPrograms from './sections/Pages/supporters/AlumniGiving';
-import BecomeMentor from './sections/Pages/supporters/BecomeMentor';
-import PerfectStorm from './sections/Pages/company/PerfectStorm';
-import Careers from './sections/Pages/company/Careers';
-import ContactUs from './sections/Pages/company/ContactUs';
-import FAQ from './sections/Pages/company/FAQ';
-import PressMedia from './sections/Pages/company/PressMedia';
-import AboutUs from './components/AboutUs';
-import TermsAndConditions from './sections/Pages/legal/TermsAndConditions';
-import VerifyPresident from './components/VerifyPresident';
-import { LoaderProvider, useLoader } from './context/LoaderContext';
-import { AuthProvider } from './context/AuthContext';
-import LoadingAnimation from './components/LoadingAnimation';
+import {
+  login,
+  register,
+  logout as apiLogout,
+  getCurrentUser,
+  initiateGoogleAuth,
+  handleGoogleCallback,
+  initiateLinkedInAuth,
+  handleLinkedInCallback,
+  forgotPassword,
+} from "./services/authService";
+import {
+  getPublicUserProjects,
+  createUserProject,
+  updateUserProject,
+} from "./services/userProjectService";
+import {
+  getPublicDonorProjects,
+  createDonorProject,
+  getMyDonorProjects,
+} from "./services/donorProjectService";
+import {
+  getAllProjects,
+  verifyUserProject,
+  verifyDonorProject,
+} from "./services/adminService";
+import {
+  applyToProject,
+  getMyApplications,
+} from "./services/applicationService";
+import {
+  mapBackendRole,
+  mapFrontendRole,
+  mapUserProjectToCampaign,
+  mapDonorProjectToProject,
+} from "./services/mappers";
+import StartAProject from "./sections/Pages/innovators/StartAProject";
+import HowItWorksStudents from "./sections/Pages/innovators/HowItWorks";
+import ProjectEligibility from "./sections/Pages/innovators/ProjectEligibility";
+import ResourceCenter from "./sections/Pages/innovators/Resources";
+import SuccessStories from "./sections/Pages/innovators/SuccessStories";
+import FundInnovation from "./sections/Pages/supporters/FundInnovation";
+import HowItWorksDonors from "./sections/Pages/supporters/HowItWorksD";
+import WhyDonate from "./sections/Pages/supporters/WhyDonate";
+import CorporateCSRPartnerships from "./sections/Pages/supporters/Corporate";
+import AlumniGivingPrograms from "./sections/Pages/supporters/AlumniGiving";
+import BecomeMentor from "./sections/Pages/supporters/BecomeMentor";
+import PerfectStorm from "./sections/Pages/company/PerfectStorm";
+import Careers from "./sections/Pages/company/Careers";
+import ContactUs from "./sections/Pages/company/ContactUs";
+import FAQ from "./sections/Pages/company/FAQ";
+import PressMedia from "./sections/Pages/company/PressMedia";
+import AboutUs from "./components/AboutUs";
+import TermsAndConditions from "./sections/Pages/legal/TermsAndConditions";
+import VerifyPresident from "./components/VerifyPresident";
+import { LoaderProvider, useLoader } from "./context/LoaderContext";
+import { AuthProvider } from "./context/AuthContext";
+import LoadingAnimation from "./components/LoadingAnimation";
 // Add these imports with the others
-import AdminUsers from './components/admin/AdminUser';
-import AdminClubs from './components/admin/AdminClubs';
-import AdminFinancials from './components/admin/AdminFinancials';
-import AdminMilestones from './components/admin/AdminMilestone';
-import AdminStudentVerifications from './components/admin/AdminStudentVerification';
-import AdminAuditLogs from './components/admin/AdminAuditLogs';
-import AdminDonors from './components/admin/AdminDonors';
-import AdminApplications from './components/admin/AdminApplications';
-import apiRequest, { getToken } from './services/api';
-import AdminCampaigns from './components/admin/AdminCampaigns';
+import AdminUsers from "./components/admin/AdminUser";
+import AdminClubs from "./components/admin/AdminClubs";
+import AdminFinancials from "./components/admin/AdminFinancials";
+import AdminMilestones from "./components/admin/AdminMilestone";
+import AdminStudentVerifications from "./components/admin/AdminStudentVerification";
+import AdminAuditLogs from "./components/admin/AdminAuditLogs";
+import AdminDonors from "./components/admin/AdminDonors";
+import AdminApplications from "./components/admin/AdminApplications";
+import apiRequest, { getToken } from "./services/api";
+import AdminCampaigns from "./components/admin/AdminCampaigns";
 
 type UserProjectsResponse = {
   userProjects: any;
@@ -89,7 +126,59 @@ type UserProjectsResponse = {
     projects: Campaign[];
   };
 };
-// Main App Content Component
+
+// ─── Role helpers ──────────────────────────────────────────────────────────────
+
+const getPrimaryRole = (user: User | null): string | null => {
+  if (!user) return null;
+  if (Array.isArray((user as any).roles)) return (user as any).roles[0] ?? null;
+  return (user as any).role ?? null;
+};
+
+const hasRole = (user: User | null, role: string): boolean => {
+  if (!user) return false;
+  if (Array.isArray((user as any).roles))
+    return (user as any).roles.includes(role);
+  return (user as any).role === role;
+};
+
+// ─── Reusable restricted-access UI ────────────────────────────────────────────
+
+const AccessRestricted = ({
+  message,
+  showLogin,
+  onLogin,
+}: {
+  message: string;
+  showLogin?: boolean;
+  onLogin?: () => void;
+}) => (
+  <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
+    <div className="card-pastel-offwhite rounded-xl border-5 border-dreamxec-navy shadow-pastel-card p-12 text-center max-w-md">
+      <div className="card-tricolor-tag"></div>
+      <div className="text-dreamxec-navy text-xl font-sans mt-4">
+        <p>{message}</p>
+        {showLogin && onLogin && (
+          <button
+            onClick={onLogin}
+            className="mt-8 px-8 py-3 bg-dreamxec-orange text-white font-bold rounded-xl hover:bg-dreamxec-saffron transition-colors shadow-lg"
+          >
+            Log in
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+const SimpleRestricted = ({ message }: { message: string }) => (
+  <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
+    <p className="text-dreamxec-navy text-xl font-bold">{message}</p>
+  </div>
+);
+
+// ─── Main App Content Component ────────────────────────────────────────────────
+
 function AppContent() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [userCampaigns, setUserCampaigns] = useState<Campaign[]>([]);
@@ -101,7 +190,7 @@ function AppContent() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [userApplications, setUserApplications] = useState<string[]>([]);
   const [_showCheckEmail, setShowCheckEmail] = useState(false);
-  const [signupEmail, setSignupEmail] = useState('');
+  const [signupEmail, setSignupEmail] = useState("");
   const { showLoader, hideLoader } = useLoader();
   const navigate = useNavigate();
   const location = useLocation();
@@ -121,13 +210,9 @@ function AppContent() {
   // NOTE: OAuth callback handling (/auth/callback?token=...) is delegated
   // entirely to the AuthCallback component. No duplicate useEffect needed here.
 
-
   // Load user from token on mount
   useEffect(() => {
-    if (hasLoadedUserRef.current) {
-      return;
-    }
-
+    if (hasLoadedUserRef.current) return;
     hasLoadedUserRef.current = true;
 
     const loadUser = async () => {
@@ -140,11 +225,10 @@ function AppContent() {
       try {
         const response = await getCurrentUser();
         if (response.data?.user) {
-          // ✅ FIX: Include all fields required by User type
           const userData: User = {
             id: response.data.user.id,
             email: response.data.user.email,
-            role: mapBackendRole(response.data.user.role),
+            roles: response.data.user.roles || ["USER"],
             emailVerified: response.data.user.emailVerified || false,
             clubIds: response.data.user?.clubIds || [],
             createdAt: response.data.user.createdAt || new Date().toISOString(),
@@ -154,16 +238,17 @@ function AppContent() {
             clubVerified: response.data.user?.clubVerified || false,
             name: response.data.user.name,
             studentVerified: response.data.user?.studentVerified,
-            accountStatus: response.data.user?.accountStatus || 'ACTIVE',
+            accountStatus: response.data.user?.accountStatus || "ACTIVE",
             profileComplete: response.data.user?.profileComplete ?? false,
           };
+          console.log("✅ User loaded from token:", userData);
           setUser(userData);
         }
       } catch (error: any) {
         if (error?.response?.status === 401) {
-          setUser(null)
+          setUser(null);
         } else {
-          console.error('Unexpected /auth/me error:', error);
+          console.error("Unexpected /auth/me error:", error);
         }
       } finally {
         setLoading(false);
@@ -183,17 +268,21 @@ function AppContent() {
       try {
         const campaignsResponse = await getPublicUserProjects();
         if (campaignsResponse.data?.userProjects) {
-          const mappedCampaigns = campaignsResponse.data.userProjects.map(mapUserProjectToCampaign);
+          const mappedCampaigns = campaignsResponse.data.userProjects.map(
+            mapUserProjectToCampaign,
+          );
           setCampaigns(mappedCampaigns);
         }
 
         const projectsResponse = await getPublicDonorProjects();
         if (projectsResponse.data?.donorProjects) {
-          const mappedProjects = projectsResponse.data.donorProjects.map(mapDonorProjectToProject);
+          const mappedProjects = projectsResponse.data.donorProjects.map(
+            mapDonorProjectToProject,
+          );
           setProjects(mappedProjects);
         }
       } catch (error) {
-        console.error('Failed to load data:', error);
+        console.error("Failed to load data:", error);
       }
     };
 
@@ -203,11 +292,11 @@ function AppContent() {
   // Load ALL projects for admin users
   useEffect(() => {
     const loadAdminData = async () => {
-      if (user?.role === 'admin') {
+      if (hasRole(user, "admin")) {
         try {
-          console.log('📊 Loading all projects for admin...');
+          console.log("📊 Loading all projects for admin...");
           const response = await getAllProjects();
-          console.log('📦 Admin projects response:', response);
+          console.log("📦 Admin projects response:", response);
 
           if (response.data?.userProjects?.data) {
             setCampaigns(response.data.userProjects.data);
@@ -217,49 +306,53 @@ function AppContent() {
             setProjects(response.data.donorProjects.data);
           }
         } catch (error) {
-          console.error('Failed to load admin data:', error);
+          console.error("Failed to load admin data:", error);
         }
       }
     };
 
     loadAdminData();
-  }, [user?.role]);
+  }, [getPrimaryRole(user)]);
 
   // Load user-specific data for donors only
   useEffect(() => {
     const loadUserData = async () => {
-      if (user?.role === 'donor') {
+      if (hasRole(user, "donor")) {
         try {
-          console.log('💼 Loading donor projects...');
+          console.log("💼 Loading donor projects...");
           const response = await getMyDonorProjects();
           if (response.data?.donorProjects) {
-            const mappedProjects = response.data.donorProjects.map(mapDonorProjectToProject);
+            const mappedProjects = response.data.donorProjects.map(
+              mapDonorProjectToProject,
+            );
             setProjects(mappedProjects);
           }
         } catch (error) {
-          console.error('Failed to load donor projects:', error);
+          console.error("Failed to load donor projects:", error);
         }
       }
     };
 
     loadUserData();
-  }, [user?.role, user?.id]);
+  }, [getPrimaryRole(user), user?.id]);
 
   // Load user applications for students
   useEffect(() => {
     const loadUserApplications = async () => {
-      if (user?.role === 'student') {
+      if (hasRole(user, "student")) {
         try {
-          console.log('📝 Loading user applications for student:', user.name);
+          console.log("📝 Loading user applications for student:", user!.name);
           const response = await getMyApplications();
           if (response.success === true && response.data?.applications) {
-            const appliedProjectIds = response.data.applications.map((app: any) => app.donorProjectId);
+            const appliedProjectIds = response.data.applications.map(
+              (app: any) => app.donorProjectId,
+            );
             setUserApplications(appliedProjectIds);
           } else {
             setUserApplications([]);
           }
         } catch (error) {
-          console.error('Failed to load user applications:', error);
+          console.error("Failed to load user applications:", error);
           setUserApplications([]);
         }
       } else {
@@ -268,16 +361,15 @@ function AppContent() {
     };
 
     loadUserApplications();
-  }, [user?.role, user?.id]);
+  }, [getPrimaryRole(user), user?.id]);
 
-  // ✅ Campaign filters (STATUS SAFE + CREATEDBY SAFE)
-
+  // ✅ Campaign filters
   const approvedCampaigns = campaigns.filter(
-    (c) => c.status?.toLowerCase() === "approved"
+    (c) => c.status?.toLowerCase() === "approved",
   );
 
   const pendingCampaigns = campaigns.filter(
-    (c) => c.status?.toLowerCase() === "pending"
+    (c) => c.status?.toLowerCase() === "pending",
   );
 
   useEffect(() => {
@@ -289,16 +381,13 @@ function AppContent() {
 
         const res = await apiRequest<UserProjectsResponse>(
           "/user-projects/my",
-          { method: "GET" }
+          { method: "GET" },
         );
 
         const projects = res?.data?.userProjects;
-        console.log(projects)
+        console.log(projects);
         if (!Array.isArray(projects)) {
-          console.error(
-            "Invalid /user-projects response shape:",
-            res?.data
-          );
+          console.error("Invalid /user-projects response shape:", res?.data);
           setUserCampaigns([]);
           return;
         }
@@ -315,66 +404,36 @@ function AppContent() {
     fetchUserCampaigns();
   }, [user?.id]);
 
-
-  // ✅ Project filters (same fixes applied)
-
-  const donorProjects = projects.filter(
-    (p) => p.createdBy === user?.id
-  );
+  // ✅ Project filters
+  const donorProjects = projects.filter((p) => p.createdBy === user?.id);
 
   const approvedProjects = projects.filter(
-    (p) => p.status?.toLowerCase() === "approved"
+    (p) => p.status?.toLowerCase() === "approved",
   );
 
   const pendingProjects = projects.filter(
-    (p) => p.status?.toLowerCase() === "pending"
+    (p) => p.status?.toLowerCase() === "pending",
   );
-
-
-
-
-  // if (loading) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-  //       <div className="text-center">
-  //         <div className="w-16 h-16 border-2 border-dreamxec-orange border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-  //         <p className="text-dreamxec-navy text-xl font-bold">Loading...</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-  // Circular spinner removed - LoadingAnimation component handles all loading states
 
   const handleCreateCampaign = async (data: {
     title: string;
     description: string;
-
-    /* RENAMED */
-    // collegeName: string;
     clubId: string;
-
     goalAmount: number;
-
     bannerFile: File | null;
     mediaFiles: File[];
-
     presentationDeckUrl: string;
-
     campaignType: "INDIVIDUAL" | "TEAM";
-
     teamMembers?: {
       name: string;
       role: string;
       image?: File | null;
     }[];
-
     faqs?: {
       question: string;
       answer: string;
     }[];
-
     youtubeUrl?: string;
-
     milestones: {
       title: string;
       durationDays: number;
@@ -389,42 +448,26 @@ function AppContent() {
 
       const formData = new FormData();
 
-      /* ---------------- BASIC ---------------- */
-
       formData.append("title", data.title);
       formData.append("description", data.description);
-
-      // 🔑 companyName now stores COLLEGE NAME (legacy field)
-      // formData.append("companyName", data.collegeName);
-
-      // 🔑 IMPORTANT: club ownership
       formData.append("clubId", data.clubId);
-
       formData.append("goalAmount", data.goalAmount.toString());
 
       if (data.presentationDeckUrl) {
         formData.append("presentationDeckUrl", data.presentationDeckUrl);
       }
 
-      /* ---------------- TYPE ---------------- */
-
       formData.append("campaignType", data.campaignType);
-
-      /* ---------------- YOUTUBE ---------------- */
 
       if (data.youtubeUrl) {
         formData.append("youtubeUrl", data.youtubeUrl);
       }
 
-      /* ---------------- FAQS ---------------- */
-
       if (data.faqs?.length) {
         formData.append("faqs", JSON.stringify(data.faqs));
       }
 
-      /* ---------------- MILESTONES ---------------- */
-
-      const cleanMilestones = data.milestones.map((m, index) => ({
+      const cleanMilestones = data.milestones.map((m) => ({
         title: m.title,
         durationDays: Number(m.durationDays),
         budget: Number(m.budget),
@@ -433,45 +476,36 @@ function AppContent() {
 
       formData.append("milestones", JSON.stringify(cleanMilestones));
 
-      /* ---------------- TEAM ---------------- */
-
       if (data.campaignType === "TEAM" && data.teamMembers?.length) {
-        const teamData = data.teamMembers.map(m => ({
+        const teamData = data.teamMembers.map((m) => ({
           name: m.name,
           role: m.role,
         }));
 
         formData.append("teamMembers", JSON.stringify(teamData));
 
-        data.teamMembers.forEach(member => {
+        data.teamMembers.forEach((member) => {
           if (member.image) {
             formData.append("teamImages", member.image);
           }
         });
       }
 
-      /* ---------------- FILES ---------------- */
-
       if (data.bannerFile) {
         formData.append("bannerFile", data.bannerFile);
       }
 
       if (data.mediaFiles?.length) {
-        data.mediaFiles.forEach(file => {
+        data.mediaFiles.forEach((file) => {
           formData.append("mediaFiles", file);
         });
       }
 
-      /* ---------------- API CALL ---------------- */
-
       const response = await createUserProject(formData);
 
       if (response.data?.userProject) {
-        const newCampaign = mapUserProjectToCampaign(
-          response.data.userProject
-        );
-
-        setCampaigns(prev => [...prev, newCampaign]);
+        const newCampaign = mapUserProjectToCampaign(response.data.userProject);
+        setCampaigns((prev) => [...prev, newCampaign]);
         console.log("✅ Campaign created:", newCampaign);
       } else {
         throw new Error("Invalid response");
@@ -484,21 +518,21 @@ function AppContent() {
     }
   };
 
-
-
   const handleApproveCampaign = async (id: string) => {
     showLoader();
     try {
-      console.log('✅ Approving campaign:', id);
-      await verifyUserProject(id, { status: 'APPROVED' });
+      console.log("✅ Approving campaign:", id);
+      await verifyUserProject(id, { status: "APPROVED" });
 
       setCampaigns(
-        campaigns.map((c) => (c.id === id ? { ...c, status: 'approved' as const } : c))
+        campaigns.map((c) =>
+          c.id === id ? { ...c, status: "approved" as const } : c,
+        ),
       );
-      console.log('✅ Campaign approved successfully');
+      console.log("✅ Campaign approved successfully");
     } catch (error) {
-      console.error('Failed to approve campaign:', error);
-      alert('Failed to approve campaign. Please try again.');
+      console.error("Failed to approve campaign:", error);
+      alert("Failed to approve campaign. Please try again.");
     } finally {
       hideLoader();
     }
@@ -507,16 +541,20 @@ function AppContent() {
   const handleRejectCampaign = async (id: string, reason: string) => {
     showLoader();
     try {
-      console.log('❌ Rejecting campaign:', id, 'Reason:', reason);
-      await verifyUserProject(id, { status: 'REJECTED', reason });
+      console.log("❌ Rejecting campaign:", id, "Reason:", reason);
+      await verifyUserProject(id, { status: "REJECTED", reason });
 
       setCampaigns(
-        campaigns.map((c) => (c.id === id ? { ...c, status: 'rejected' as const, rejectionReason: reason } : c))
+        campaigns.map((c) =>
+          c.id === id
+            ? { ...c, status: "rejected" as const, rejectionReason: reason }
+            : c,
+        ),
       );
-      console.log('❌ Campaign rejected successfully');
+      console.log("❌ Campaign rejected successfully");
     } catch (error) {
-      console.error('Failed to reject campaign:', error);
-      alert('Failed to reject campaign. Please try again.');
+      console.error("Failed to reject campaign:", error);
+      alert("Failed to reject campaign. Please try again.");
     } finally {
       hideLoader();
     }
@@ -525,16 +563,18 @@ function AppContent() {
   const handleApproveProject = async (id: string) => {
     showLoader();
     try {
-      console.log('✅ Approving donor project:', id);
-      await verifyDonorProject(id, { status: 'APPROVED' });
+      console.log("✅ Approving donor project:", id);
+      await verifyDonorProject(id, { status: "APPROVED" });
 
       setProjects(
-        projects.map((p) => (p.id === id ? { ...p, status: 'APPROVED' as const } : p))
+        projects.map((p) =>
+          p.id === id ? { ...p, status: "APPROVED" as const } : p,
+        ),
       );
-      console.log('✅ Donor project approved successfully');
+      console.log("✅ Donor project approved successfully");
     } catch (error) {
-      console.error('Failed to approve donor project:', error);
-      alert('Failed to approve donor project. Please try again.');
+      console.error("Failed to approve donor project:", error);
+      alert("Failed to approve donor project. Please try again.");
     } finally {
       hideLoader();
     }
@@ -543,33 +583,40 @@ function AppContent() {
   const handleRejectProject = async (id: string, reason: string) => {
     showLoader();
     try {
-      console.log('❌ Rejecting donor project:', id, 'Reason:', reason);
-      await verifyDonorProject(id, { status: 'REJECTED', reason });
+      console.log("❌ Rejecting donor project:", id, "Reason:", reason);
+      await verifyDonorProject(id, { status: "REJECTED", reason });
 
       setProjects(
-        projects.map((p) => (p.id === id ? { ...p, status: 'REJECTED' as const, rejectionReason: reason } : p))
+        projects.map((p) =>
+          p.id === id
+            ? { ...p, status: "REJECTED" as const, rejectionReason: reason }
+            : p,
+        ),
       );
-      console.log('❌ Donor project rejected successfully');
+      console.log("❌ Donor project rejected successfully");
     } catch (error) {
-      console.error('Failed to reject donor project:', error);
-      alert('Failed to reject donor project. Please try again.');
+      console.error("Failed to reject donor project:", error);
+      alert("Failed to reject donor project. Please try again.");
     } finally {
       hideLoader();
     }
   };
 
-  const handleLogin = async (email: string, password: string, _role: 'student' | 'donor') => {
+  const handleLogin = async (
+    email: string,
+    password: string,
+    _role: "student" | "donor",
+  ) => {
     showLoader();
     setIsSubmitting(true);
     try {
       const response = await login({ email, password });
-      console.log("USER DATA", response.data)
+
       if (response.data?.user) {
-        // ✅ FIX: Include all fields required by User type
         const userData: User = {
           id: response.data.user.id,
           email: response.data.user.email,
-          role: mapBackendRole(response.data.user.role),
+          role: mapBackendRole(response.data.user.roles),
           emailVerified: response.data.user?.emailVerified || false,
           clubIds: response.data.user?.clubIds || [],
           createdAt: response.data.user.createdAt || new Date().toISOString(),
@@ -579,31 +626,31 @@ function AppContent() {
           clubVerified: response.data.user?.clubVerified || false,
           name: response.data.user.name,
           studentVerified: response.data.user?.studentVerified,
-          accountStatus: response.data.user?.accountStatus || 'ACTIVE',
+          accountStatus: response.data.user?.accountStatus || "ACTIVE",
           profileComplete: response.data.user?.profileComplete ?? false,
         };
 
         setUser(userData);
+        console.log("✅ Login successful, user set in context:", userData);
 
-        // If profile is incomplete, redirect to profile setup first
-        const profileComplete = userData.profileComplete;
-        if (profileComplete === false) {
-          navigate('/profile/setup');
+        if (userData.profileComplete === false) {
+          navigate("/profile/setup");
           return;
         }
 
-        if (userData.role === 'student') {
-          navigate('/dashboard');
-        } else if (userData.role === 'donor') {
-          navigate('/donor/dashboard');
-        } else if (userData.role === 'admin') {
-          navigate('/admin');
-        } else if (userData.role === 'STUDENT_PRESIDENT') {
-          navigate('/president');
+        const primaryRole = getPrimaryRole(userData);
+        if (primaryRole === "student") {
+          navigate("/dashboard");
+        } else if (primaryRole === "donor") {
+          navigate("/donor/dashboard");
+        } else if (primaryRole === "admin") {
+          navigate("/admin");
+        } else if (primaryRole === "STUDENT_PRESIDENT") {
+          navigate("/president");
         }
       }
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
       throw error;
     } finally {
       hideLoader();
@@ -615,8 +662,8 @@ function AppContent() {
     name: string,
     email: string,
     password: string,
-    role: 'student' | 'donor',
-    institution?: string
+    role: "student" | "donor",
+    institution?: string,
   ) => {
     showLoader();
     setIsSubmitting(true);
@@ -629,16 +676,15 @@ function AppContent() {
         organizationName: institution,
       });
 
-      if (response.message && response.message.includes('verification email')) {
+      if (response.message && response.message.includes("verification email")) {
         setSignupEmail(email);
         setShowCheckEmail(true);
-        navigate('/check-email');
+        navigate("/check-email");
       } else if (response.data?.user) {
-        // ✅ FIX: Include all fields required by User type
         const userData: User = {
           id: response.data.user.id,
           email: response.data.user.email,
-          role: mapBackendRole(response.data.user.role),
+          role: mapBackendRole(response.data.user.roles),
           emailVerified: response.data.user.emailVerified || false,
           clubIds: response.data.user?.clubIds || [],
           createdAt: response.data.user.createdAt || new Date().toISOString(),
@@ -648,16 +694,14 @@ function AppContent() {
           clubVerified: response.data.user?.clubVerified || false,
           name: response.data.user.name,
           studentVerified: response.data.user?.studentVerified,
-          accountStatus: response.data.user?.accountStatus || 'ACTIVE',
+          accountStatus: response.data.user?.accountStatus || "ACTIVE",
           profileComplete: response.data.user?.profileComplete ?? false,
         };
 
         setUser(userData);
 
-        // If profile is incomplete, redirect to profile setup first
-        const profileComplete = userData.profileComplete;
-        if (userData.role === 'donor' && profileComplete === false) {
-          navigate('/profile/setup');
+        if (hasRole(userData, "donor") && userData.profileComplete === false) {
+          navigate("/profile/setup");
           return;
         }
 
@@ -667,16 +711,17 @@ function AppContent() {
           return;
         }
 
-        if (userData.role === 'student') {
-          navigate('/dashboard');
-        } else if (userData.role === 'donor') {
-          navigate('/donor/dashboard');
-        } else if (userData.role === 'admin') {
-          navigate('/admin');
+        const primaryRole = getPrimaryRole(userData);
+        if (primaryRole === "student") {
+          navigate("/dashboard");
+        } else if (primaryRole === "donor") {
+          navigate("/donor/dashboard");
+        } else if (primaryRole === "admin") {
+          navigate("/admin");
         }
       }
     } catch (error) {
-      console.error('Signup failed:', error);
+      console.error("Signup failed:", error);
       throw error;
     } finally {
       hideLoader();
@@ -684,30 +729,30 @@ function AppContent() {
     }
   };
 
-  const handleGoogleAuth = async (role: 'student' | 'donor') => {
+  const handleGoogleAuth = async (role: "student" | "donor") => {
     showLoader();
     setIsSubmitting(true);
     try {
       const backendRole = mapFrontendRole(role);
       initiateGoogleAuth(backendRole);
     } catch (error) {
-      console.error('Google auth error:', error);
-      throw new Error('Google authentication failed');
+      console.error("Google auth error:", error);
+      throw new Error("Google authentication failed");
     } finally {
       hideLoader();
       setIsSubmitting(false);
     }
   };
 
-  const handleLinkedInAuth = async (role: 'student' | 'donor') => {
+  const handleLinkedInAuth = async (role: "student" | "donor") => {
     showLoader();
     setIsSubmitting(true);
     try {
-      const backendRole = role === 'student' ? 'USER' : 'DONOR';
+      const backendRole = role === "student" ? "USER" : "DONOR";
       initiateLinkedInAuth(backendRole);
     } catch (error) {
-      console.error('LinkedIn auth error:', error);
-      throw new Error('LinkedIn authentication failed');
+      console.error("LinkedIn auth error:", error);
+      throw new Error("LinkedIn authentication failed");
     } finally {
       hideLoader();
       setIsSubmitting(false);
@@ -716,15 +761,14 @@ function AppContent() {
 
   const handleForgotPassword = async (email: string) => {
     try {
-      await forgotPassword(email)
+      await forgotPassword(email);
     } catch (error) {
-      console.error('Forgot password error:', error);
-      throw new Error('Failed to send password reset email');
+      console.error("Forgot password error:", error);
+      throw new Error("Failed to send password reset email");
     }
   };
 
   const handleEmailVerificationSuccess = (backendUser: any) => {
-    // ✅ FIX: Include all fields required by User type
     const userData: User = {
       id: backendUser.id,
       email: backendUser.email,
@@ -738,24 +782,24 @@ function AppContent() {
       clubVerified: backendUser?.clubVerified || false,
       name: backendUser.name,
       studentVerified: backendUser?.studentVerified,
-      accountStatus: backendUser?.accountStatus || 'ACTIVE',
+      accountStatus: backendUser?.accountStatus || "ACTIVE",
       profileComplete: backendUser?.profileComplete ?? false,
     };
     setUser(userData);
   };
 
   const handleLoginClick = () => {
-    navigate('/auth');
+    navigate("/auth");
   };
 
   const handleLogout = () => {
     apiLogout();
     setUser(null);
-    navigate('/');
+    navigate("/");
   };
 
   const handleDonate = async (campaignId: string, amount: number) => {
-    showLoader()
+    showLoader();
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/donations/create-order`,
@@ -769,7 +813,7 @@ function AppContent() {
             projectId: campaignId,
             amount,
           }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -782,22 +826,19 @@ function AppContent() {
         description: "Campaign Donation",
         order_id: data.orderId,
         handler: async (response: any) => {
-          await fetch(
-            `${import.meta.env.VITE_API_URL}/donations/verify`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                projectId: campaignId,
-              }),
-            }
-          );
+          await fetch(`${import.meta.env.VITE_API_URL}/donations/verify`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              projectId: campaignId,
+            }),
+          });
           hideLoader();
           toast.success("🎉 Donation successful!");
         },
@@ -823,10 +864,12 @@ function AppContent() {
   }) => {
     showLoader();
     try {
-      const diffTime = Math.abs(data.endDate.getTime() - data.startDate.getTime());
+      const diffTime = Math.abs(
+        data.endDate.getTime() - data.startDate.getTime(),
+      );
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       const months = Math.ceil(diffDays / 30);
-      const timeline = `${months} month${months > 1 ? 's' : ''}`;
+      const timeline = `${months} month${months > 1 ? "s" : ""}`;
 
       const projectData: any = {
         title: data.title,
@@ -842,19 +885,24 @@ function AppContent() {
       if (response.data?.donorProject) {
         const newProject = mapDonorProjectToProject(response.data.donorProject);
         setProjects([...projects, newProject]);
-        console.log('✅ Project created:', newProject);
-        navigate('/donor/projects');
+        console.log("✅ Project created:", newProject);
+        navigate("/donor/projects");
       }
     } catch (error) {
-      console.error('Failed to create project:', error);
+      console.error("Failed to create project:", error);
       hideLoader();
       throw error;
     }
   };
 
-  const handleApplyToProject = async (projectId: string, coverLetter: string, skills: string[]) => {
-    if (!user) throw new Error('Please log in to apply');
-    if (userApplications.includes(projectId)) throw new Error('You have already applied to this project');
+  const handleApplyToProject = async (
+    projectId: string,
+    coverLetter: string,
+    skills: string[],
+  ) => {
+    if (!user) throw new Error("Please log in to apply");
+    if (userApplications.includes(projectId))
+      throw new Error("You have already applied to this project");
 
     try {
       const response = await applyToProject({
@@ -867,7 +915,7 @@ function AppContent() {
         setUserApplications([...userApplications, projectId]);
       }
     } catch (error) {
-      console.error('Failed to apply to project:', error);
+      console.error("Failed to apply to project:", error);
       throw error;
     }
   };
@@ -875,23 +923,48 @@ function AppContent() {
   const handleUpdateApplicationStatus = (
     _projectId: string,
     _applicationId: string,
-    _status: 'accepted' | 'rejected'
+    _status: "accepted" | "rejected",
   ) => {
-    // Note: This function is kept for API compatibility but the actual
-    // application status update is handled by the DonorProjects component
-    // which fetches its own data
-    console.log('Application status update triggered - handled by component');
+    console.log("Application status update triggered - handled by component");
   };
 
   const handleUpdateBankDetails = async (bankDetails: any) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('✅ Bank details updated successfully');
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("✅ Bank details updated successfully");
     } catch (error) {
-      console.error('Failed to update bank details:', error);
-      throw new Error('Failed to update bank details');
+      console.error("Failed to update bank details:", error);
+      throw new Error("Failed to update bank details");
     }
   };
+
+  // ─── Derived booleans (use hasRole / getPrimaryRole everywhere) ──────────────
+
+  const isStudent = hasRole(user, "STUDENT");
+  const isStudentPresident = hasRole(user, "STUDENT_PRESIDENT");
+  const isStudentOrPresident = isStudent || isStudentPresident;
+  const isDonor = hasRole(user, "DONOR");
+  const isAdmin = hasRole(user, "ADMIN");
+
+  // ─── Shared header props ────────────────────────────────────────────────────
+
+  const headerProps = {
+    currentUser: user,
+    onLogin: handleLoginClick,
+    onLogout: handleLogout,
+  };
+
+  // ─── Admin guard wrapper ────────────────────────────────────────────────────
+
+  const AdminRoute = ({ children }: { children: React.ReactNode }) =>
+    isAdmin ? (
+      <>
+        <Header {...headerProps} />
+        {children}
+      </>
+    ) : (
+      <SimpleRestricted message="Access Restricted" />
+    );
 
   return (
     <div className="text-dreamxec-navy font-sans">
@@ -900,17 +973,13 @@ function AppContent() {
         toastOptions={{
           duration: 5000,
           style: {
-            background: '#fff',
-            color: '#333',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            borderRadius: '8px',
+            background: "#fff",
+            color: "#333",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+            borderRadius: "8px",
           },
         }}
-        containerStyle={{
-          top: 50,
-          right: 20,
-        }}
-
+        containerStyle={{ top: 50, right: 20 }}
       />
 
       <FloatingDoodles count={8} />
@@ -937,27 +1006,26 @@ function AppContent() {
                           <div className="pointer-events-auto">
                             <Routes>
                               {/* OAuth Callback — MUST be first */}
-                              <Route path="/auth/callback" element={<AuthCallback />} />
+                              <Route
+                                path="/auth/callback"
+                                element={<AuthCallback />}
+                              />
 
                               {/* Homepage */}
                               <Route
                                 path="/"
                                 element={
-                                  <>
-                                    {isInitialLoading ? (
-                                      <LoadingAnimation fullScreen={true} showDarkModeToggle={false} />
-                                    ) : (
-                                      <>
-                                        <Header
-                                          currentUser={user}
-                                          onLogin={handleLoginClick}
-                                          onLogout={handleLogout}
-
-                                        />
-                                        <Main />
-                                      </>
-                                    )}
-                                  </>
+                                  isInitialLoading ? (
+                                    <LoadingAnimation
+                                      fullScreen={true}
+                                      showDarkModeToggle={false}
+                                    />
+                                  ) : (
+                                    <>
+                                      <Header {...headerProps} />
+                                      <Main />
+                                    </>
+                                  )
                                 }
                               />
 
@@ -966,30 +1034,23 @@ function AppContent() {
                                 path="/campaigns"
                                 element={
                                   <>
-                                    <Header
-                                      currentUser={user}
-                                      onLogin={handleLoginClick}
-                                      onLogout={handleLogout}
-                                    />
+                                    <Header {...headerProps} />
                                     <BrowseCampaigns
                                       campaigns={approvedCampaigns}
-                                      onViewCampaign={(id) => navigate(`/campaign/${id}`)}
+                                      onViewCampaign={(id) =>
+                                        navigate(`/campaign/${id}`)
+                                      }
                                     />
                                   </>
                                 }
                               />
-                              {/* <Route path="/refer-club" element={<ReferClub />} /> */}
+
                               {/* Campaign Detail */}
                               <Route
                                 path="/campaign/:id"
                                 element={
                                   <>
-                                    <Header
-                                      currentUser={user}
-                                      onLogin={handleLoginClick}
-                                      onLogout={handleLogout}
-                                    />
-
+                                    <Header {...headerProps} />
                                     <CampaignDetails
                                       currentUser={user}
                                       campaigns={approvedCampaigns}
@@ -998,97 +1059,41 @@ function AppContent() {
                                   </>
                                 }
                               />
-                              <Route path="/refer-club" element={<ReferClub />} />
-                              {/* Student Dashboard */}
-                              {/* <Route
-                                path="/dashboard"
-                                element={
-                                  (user?.role === 'student' || user?.role === 'STUDENT_PRESIDENT') ? (
-                                    <>
-                                      <Header
-                                        currentUser={user}
-                                        onLogin={handleLoginClick}
-                                        onLogout={handleLogout}
-                                      />
-                                      <StudentDashboard
-                                        studentName={user.name || 'User'}
-                                        campaigns={userCampaigns}
-                                        user={user}
-                                        studentVerified={user.studentVerified}
-                                        onCreateCampaign={() => navigate('/create')}
-                                        onViewCampaign={(id) => navigate(`/campaign/${id}`)}
-                                        isClubPresident={user.role === 'STUDENT_PRESIDENT'}
-                                        isClubMember={false}
-                                        clubVerified={user.role === 'STUDENT_PRESIDENT'}
-                                      />
 
-                                    </>
-                                  ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <div className="card-pastel-offwhite rounded-xl border-5 border-dreamxec-navy shadow-pastel-card p-12 text-center max-w-md">
-                                        <div className="card-tricolor-tag"></div>
-                                        <p className="text-dreamxec-navy text-xl font-sans mt-4">
-                                          <p className="text-dreamxec-navy text-xl font-sans mt-4">
-                                            Every journey begins with the right role.
-                                            <br />
-                                            Log in as a student to access your DreamXec dashboard.
-                                          </p>
-                                          <button
-                                            onClick={() => navigate("/auth")}
-                                            className="mt-8 px-8 py-3 bg-dreamxec-orange text-white font-bold rounded-xl
-                     hover:bg-dreamxec-saffron transition-colors shadow-lg"
-                                          >
-                                            Log in
-                                          </button>
-                                        </p>
-                                      </div>
-                                    </div>
-                                  )
-                                }
-                              /> */}
+                              <Route
+                                path="/refer-club"
+                                element={<ReferClub />}
+                              />
+
+                              {/* Student Dashboard */}
                               <Route
                                 path="/dashboard"
                                 element={
-                                  (user?.role === 'student' || user?.role === 'STUDENT_PRESIDENT') ? (
+                                  isStudentOrPresident ? (
                                     <>
-                                      <Header
-                                        currentUser={user}
-                                        onLogin={handleLoginClick}
-                                        onLogout={handleLogout}
-                                      />
+                                      <Header {...headerProps} />
                                       <StudentDashboard
-                                        studentName={user.name || 'User'}
+                                        studentName={user!.name || "User"}
                                         campaigns={userCampaigns}
-                                        onCreateCampaign={() => navigate('/create')}
-                                        onViewCampaign={(id) => navigate(`/campaign/${id}`)}
-                                        isClubPresident={user?.role === 'STUDENT_PRESIDENT'}
-                                        isClubMember={user.isClubMember}
-                                        clubVerified={user?.role === 'STUDENT_PRESIDENT'}
-                                        user={user}
-                                        studentVerified={user.studentVerified}
+                                        onCreateCampaign={() =>
+                                          navigate("/create")
+                                        }
+                                        onViewCampaign={(id) =>
+                                          navigate(`/campaign/${id}`)
+                                        }
+                                        isClubPresident={isStudentPresident}
+                                        isClubMember={user!.isClubMember}
+                                        clubVerified={isStudentPresident}
+                                        user={user!}
+                                        studentVerified={user!.studentVerified}
                                       />
                                     </>
                                   ) : (
-                                    // ... (restricted access div remains the same)
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <div className="card-pastel-offwhite rounded-xl border-5 border-dreamxec-navy shadow-pastel-card p-12 text-center max-w-md">
-                                        <div className="card-tricolor-tag"></div>
-                                        <div className="text-dreamxec-navy text-xl font-sans mt-4">
-                                          <p className="text-dreamxec-navy text-xl font-sans mt-4">
-                                            Every journey begins with the right role.
-                                            <br />
-                                            Log in as a student to access your DreamXec dashboard.
-                                          </p>
-                                          <button
-                                            onClick={() => navigate("/auth")}
-                                            className="mt-8 px-8 py-3 bg-dreamxec-orange text-white font-bold rounded-xl
-                                              hover:bg-dreamxec-saffron transition-colors shadow-lg"
-                                          >
-                                            Log in
-                                          </button>
-                                        </div>
-                                      </div>
-                                    </div>
+                                    <AccessRestricted
+                                      message="Every journey begins with the right role. Log in as a student to access your DreamXec dashboard."
+                                      showLogin
+                                      onLogin={() => navigate("/auth")}
+                                    />
                                   )
                                 }
                               />
@@ -1097,27 +1102,16 @@ function AppContent() {
                               <Route
                                 path="/create"
                                 element={
-                                  user?.role === 'student' || user?.role === 'STUDENT_PRESIDENT' ? (
+                                  isStudentOrPresident ? (
                                     <>
-                                      <Header
-                                        currentUser={user}
-                                        onLogin={handleLoginClick}
-                                        onLogout={handleLogout}
-                                      />
+                                      <Header {...headerProps} />
                                       <CreateCampaign
-                                        onBack={() => navigate('/dashboard')}
+                                        onBack={() => navigate("/dashboard")}
                                         onSubmit={handleCreateCampaign}
                                       />
                                     </>
                                   ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <div className="card-pastel-offwhite rounded-xl border-5 border-dreamxec-navy shadow-pastel-card p-12 text-center max-w-md">
-                                        <div className="card-tricolor-tag"></div>
-                                        <p className="text-dreamxec-navy text-xl font-sans mt-4">
-                                          Please log in as a student to create campaigns.
-                                        </p>
-                                      </div>
-                                    </div>
+                                    <AccessRestricted message="Please log in as a student to create campaigns." />
                                   )
                                 }
                               />
@@ -1126,11 +1120,7 @@ function AppContent() {
                                 path="/create-demo-campaign"
                                 element={
                                   <>
-                                    <Header
-                                      currentUser={user}
-                                      onLogin={handleLoginClick}
-                                      onLogout={handleLogout}
-                                    />
+                                    <Header {...headerProps} />
                                     <CreateCampaignDemo
                                       onBack={() => navigate("/dashboard")}
                                     />
@@ -1139,220 +1129,144 @@ function AppContent() {
                               />
 
                               {/* Edit Campaign */}
-                              <Route path="/campaign/:id/edit" element={<EditCampaign />} />
+                              <Route
+                                path="/campaign/:id/edit"
+                                element={<EditCampaign />}
+                              />
 
                               {/* Admin Dashboard */}
                               <Route
                                 path="/admin"
                                 element={
-                                  user?.role === 'admin' ? (
+                                  isAdmin ? (
                                     <>
-                                      <Header
-                                        currentUser={user}
-                                        onLogin={handleLoginClick}
-                                        onLogout={handleLogout}
-                                      />
+                                      <Header {...headerProps} />
                                       <AdminDashboard />
                                     </>
                                   ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <div className="card-pastel-offwhite rounded-xl border-5 border-dreamxec-navy shadow-pastel-card p-12 text-center max-w-md">
-                                        <div className="card-tricolor-tag"></div>
-                                        <p className="text-dreamxec-navy text-xl font-sans mt-4">
-                                          Please log in as an admin to access the admin dashboard.
-                                        </p>
-                                      </div>
-                                    </div>
+                                    <AccessRestricted message="Please log in as an admin to access the admin dashboard." />
                                   )
                                 }
                               />
-
 
                               <Route
                                 path="/admin/referrals"
                                 element={
-                                  user?.role === 'admin' ? (
-                                    <>
-                                      <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
-                                      <AdminClubReferrals />
-                                    </>
-                                  ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                    </div>
-                                  )
+                                  <AdminRoute>
+                                    <AdminClubReferrals />
+                                  </AdminRoute>
                                 }
                               />
+
                               <Route
                                 path="/admin/club-referrals"
                                 element={
-                                  user?.role === 'admin' ? (
-                                    <>
-                                      <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
-                                      <AdminClubReferrals />
-                                    </>
-                                  ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                    </div>
-                                  )
+                                  <AdminRoute>
+                                    <AdminClubReferrals />
+                                  </AdminRoute>
                                 }
                               />
 
                               <Route
                                 path="/admin/verifications"
                                 element={
-                                  user?.role === 'admin' ? (
-                                    <>
-                                      <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
-                                      <AdminClubVerifications />
-                                    </>
-                                  ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                    </div>
-                                  )
+                                  <AdminRoute>
+                                    <AdminClubVerifications />
+                                  </AdminRoute>
                                 }
                               />
+
                               <Route
                                 path="/admin/club-verifications"
                                 element={
-                                  user?.role === 'admin' ? (
-                                    <>
-                                      <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
-                                      <AdminClubVerifications />
-                                    </>
-                                  ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                    </div>
-                                  )
+                                  <AdminRoute>
+                                    <AdminClubVerifications />
+                                  </AdminRoute>
                                 }
                               />
+
                               <Route
                                 path="/admin/financials"
                                 element={
-                                  user?.role === 'admin' ? (
-                                    <>
-                                      <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
-                                      <AdminFinancials />
-                                    </>
-                                  ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                    </div>
-                                  )
+                                  <AdminRoute>
+                                    <AdminFinancials />
+                                  </AdminRoute>
                                 }
                               />
-                              <Route path="/admin/milestones" element={
-                                user?.role === 'admin' ? (
-                                  <>
-                                    <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
+
+                              <Route
+                                path="/admin/milestones"
+                                element={
+                                  <AdminRoute>
                                     <AdminMilestones />
-                                  </>
-                                ) : (
-                                  <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                    <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                  </div>
-                                )
-                              } />
-                              <Route path="/admin/student-verifications" element={
-                                user?.role === 'admin' ? (
-                                  <>
-                                    <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
+                                  </AdminRoute>
+                                }
+                              />
+
+                              <Route
+                                path="/admin/student-verifications"
+                                element={
+                                  <AdminRoute>
                                     <AdminStudentVerifications />
-                                  </>
-                                ) : (
-                                  <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                    <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                  </div>
-                                )
-                              } />
-                              <Route path="/admin/audit-logs" element={
-                                user?.role === 'admin' ? (
-                                  <>
-                                    <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
+                                  </AdminRoute>
+                                }
+                              />
+
+                              <Route
+                                path="/admin/audit-logs"
+                                element={
+                                  <AdminRoute>
                                     <AdminAuditLogs />
-                                  </>
-                                ) : (
-                                  <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                    <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                  </div>
-                                )
-                              } />
-                              <Route path="/admin/donors" element={
-                                user?.role === 'admin' ? (
-                                  <>
-                                    <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
+                                  </AdminRoute>
+                                }
+                              />
+
+                              <Route
+                                path="/admin/donors"
+                                element={
+                                  <AdminRoute>
                                     <AdminDonors />
-                                  </>
-                                ) : (
-                                  <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                    <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                  </div>
-                                )
-                              } />
-                              <Route path="/admin/applications" element={
-                                user?.role === 'admin' ? (
-                                  <>
-                                    <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
+                                  </AdminRoute>
+                                }
+                              />
+
+                              <Route
+                                path="/admin/applications"
+                                element={
+                                  <AdminRoute>
                                     <AdminApplications />
-                                  </>
-                                ) : (
-                                  <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                    <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                  </div>
-                                )
-                              } />
+                                  </AdminRoute>
+                                }
+                              />
 
-                              <Route path="/admin/campaigns" element={
-                                user?.role === 'admin' ? (
-                                  <>
-                                    <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
+                              <Route
+                                path="/admin/campaigns"
+                                element={
+                                  <AdminRoute>
                                     <AdminCampaigns />
-                                  </>
-                                ) : (
-                                  <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                    <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                  </div>
-                                )
-                              } />
+                                  </AdminRoute>
+                                }
+                              />
 
-                              {/* --- Admin User Management --- */}
                               <Route
                                 path="/admin/users"
                                 element={
-                                  user?.role === 'admin' ? (
-                                    <>
-                                      <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
-                                      <AdminUsers />
-                                    </>
-                                  ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                    </div>
-                                  )
+                                  <AdminRoute>
+                                    <AdminUsers />
+                                  </AdminRoute>
                                 }
                               />
 
-                              {/* --- Admin Club Management --- */}
                               <Route
                                 path="/admin/clubs"
                                 element={
-                                  user?.role === 'admin' ? (
-                                    <>
-                                      <Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} />
-                                      <AdminClubs />
-                                    </>
-                                  ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <p className="text-dreamxec-navy text-xl font-bold">Access Restricted</p>
-                                    </div>
-                                  )
+                                  <AdminRoute>
+                                    <AdminClubs />
+                                  </AdminRoute>
                                 }
                               />
 
-                              {/* Auth Page - Login/Signup */}
+                              {/* Auth Page */}
                               <Route
                                 path="/auth"
                                 element={
@@ -1390,13 +1304,13 @@ function AppContent() {
                                 }
                               />
 
-                              {/* OAuth callback handler */}
-                              <Route path="/auth/callback" element={<AuthCallback />} />
+                              {/* Profile Setup */}
+                              <Route
+                                path="/profile/setup"
+                                element={<ProfileSetup />}
+                              />
 
-                              {/* Profile Setup — redirected here after first auth */}
-                              <Route path="/profile/setup" element={<ProfileSetup />} />
-
-                              {/* Check Email Page */}
+                              {/* Check Email */}
                               <Route
                                 path="/check-email"
                                 element={
@@ -1404,7 +1318,7 @@ function AppContent() {
                                     email={signupEmail}
                                     onBackToLogin={() => {
                                       setShowCheckEmail(false);
-                                      navigate('/auth');
+                                      navigate("/auth");
                                     }}
                                   />
                                 }
@@ -1415,19 +1329,23 @@ function AppContent() {
                                 path="/verify-email/:token"
                                 element={
                                   <EmailVerification
-                                    onVerificationSuccess={handleEmailVerificationSuccess}
+                                    onVerificationSuccess={
+                                      handleEmailVerificationSuccess
+                                    }
                                   />
                                 }
                               />
 
-                              {/* User Profile - Bank Details */}
+                              {/* User Profile */}
                               <Route
                                 path="/profile"
                                 element={
                                   user ? (
                                     <UserProfile
                                       user={user}
-                                      onUpdateBankDetails={handleUpdateBankDetails}
+                                      onUpdateBankDetails={
+                                        handleUpdateBankDetails
+                                      }
                                       onBack={() => navigate(-1)}
                                     />
                                   ) : (
@@ -1453,45 +1371,43 @@ function AppContent() {
                               <Route
                                 path="/donor/dashboard"
                                 element={
-                                  user?.role === 'donor' ? (
+                                  isDonor ? (
                                     <>
-                                      <Header
-                                        currentUser={user}
-                                        onLogin={handleLoginClick}
-                                        onLogout={handleLogout}
-                                      />
+                                      <Header {...headerProps} />
                                       <DonorDashboard
-                                        donorName={user.name || 'Donor'}
+                                        donorName={user!.name || "Donor"}
                                         projectsCount={donorProjects.length}
-                                        profileComplete={(user as any).profileComplete}
-                                        onCreateProject={() => navigate('/donor/create')}
-                                        onViewProjects={() => navigate('/donor/projects')}
-                                        getDonorApplications={getDonorApplications}
-                                        updateApplicationStatus={updateApplicationStatus}
+                                        profileComplete={
+                                          (user as any).profileComplete
+                                        }
+                                        userRoles={(user as any).roles ?? []}
+                                        onCreateProject={() =>
+                                          navigate("/donor/create")
+                                        }
+                                        onViewProjects={() =>
+                                          navigate("/donor/projects")
+                                        }
+                                        getDonorApplications={
+                                          getDonorApplications
+                                        }
+                                        updateApplicationStatus={
+                                          updateApplicationStatus
+                                        }
                                         getDonationSummary={async () => ({})}
                                       />
                                     </>
                                   ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <div className="card-pastel-offwhite rounded-xl border-5 border-dreamxec-navy shadow-pastel-card p-12 text-center max-w-md">
-                                        <div className="card-tricolor-tag"></div>
-                                        <p className="text-dreamxec-navy text-xl font-sans mt-4">
-                                          Please log in as a donor to access the donor dashboard.
-                                        </p>
-                                      </div>
-                                    </div>
+                                    <AccessRestricted message="Please log in as a donor to access the donor dashboard." />
                                   )
                                 }
                               />
+
+                              {/* Clubs */}
                               <Route
                                 path="/clubs"
                                 element={
                                   <>
-                                    <Header
-                                      currentUser={user}
-                                      onLogin={handleLoginClick}
-                                      onLogout={handleLogout}
-                                    />
+                                    <Header {...headerProps} />
                                     <ClubDiscovery />
                                   </>
                                 }
@@ -1501,41 +1417,28 @@ function AppContent() {
                                 path="/clubs/:id"
                                 element={
                                   <>
-                                    <Header
-                                      currentUser={user}
-                                      onLogin={handleLoginClick}
-                                      onLogout={handleLogout}
-                                    />
+                                    <Header {...headerProps} />
                                     <ClubDetails />
                                   </>
                                 }
                               />
 
-                              {/* Create Project */}
+                              {/* Create Donor Project */}
                               <Route
                                 path="/donor/create"
                                 element={
-                                  user?.role === 'donor' ? (
+                                  isDonor ? (
                                     <>
-                                      <Header
-                                        currentUser={user}
-                                        onLogin={handleLoginClick}
-                                        onLogout={handleLogout}
-                                      />
+                                      <Header {...headerProps} />
                                       <CreateProject
-                                        onBack={() => navigate('/donor/dashboard')}
+                                        onBack={() =>
+                                          navigate("/donor/dashboard")
+                                        }
                                         onSubmit={handleCreateProject}
                                       />
                                     </>
                                   ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <div className="card-pastel-offwhite rounded-xl border-5 border-dreamxec-navy shadow-pastel-card p-12 text-center max-w-md">
-                                        <div className="card-tricolor-tag"></div>
-                                        <p className="text-dreamxec-navy text-xl font-sans mt-4">
-                                          Please log in as a donor to create projects.
-                                        </p>
-                                      </div>
-                                    </div>
+                                    <AccessRestricted message="Please log in as a donor to create projects." />
                                   )
                                 }
                               />
@@ -1544,45 +1447,35 @@ function AppContent() {
                               <Route
                                 path="/donor/projects"
                                 element={
-                                  user?.role === 'donor' ? (
+                                  isDonor ? (
                                     <>
-                                      <Header
-                                        currentUser={user}
-                                        onLogin={handleLoginClick}
-                                        onLogout={handleLogout}
-                                      />
+                                      <Header {...headerProps} />
                                       <DonorProjects
                                         projects={donorProjects}
-                                        onCreateProject={() => navigate('/donor/create')}
-                                        onBack={() => navigate('/donor/dashboard')}
-                                        onUpdateApplicationStatus={handleUpdateApplicationStatus}
+                                        onCreateProject={() =>
+                                          navigate("/donor/create")
+                                        }
+                                        onBack={() =>
+                                          navigate("/donor/dashboard")
+                                        }
+                                        onUpdateApplicationStatus={
+                                          handleUpdateApplicationStatus
+                                        }
                                       />
                                     </>
                                   ) : (
-                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                      <div className="card-pastel-offwhite rounded-xl border-5 border-dreamxec-navy shadow-pastel-card p-12 text-center max-w-md">
-                                        <div className="card-tricolor-tag"></div>
-                                        <p className="text-dreamxec-navy text-xl font-sans mt-4">
-                                          Please log in as a donor to view your projects.
-                                        </p>
-                                      </div>
-                                    </div>
+                                    <AccessRestricted message="Please log in as a donor to view your projects." />
                                   )
                                 }
                               />
 
-
-                              {/* Browse Projects - For Students */}
+                              {/* Browse Projects — students only */}
                               <Route
                                 path="/projects"
                                 element={
-                                  user?.role === 'student' || user?.role === 'STUDENT_PRESIDENT' ? (
+                                  isStudentOrPresident ? (
                                     <>
-                                      <Header
-                                        currentUser={user}
-                                        onLogin={handleLoginClick}
-                                        onLogout={handleLogout}
-                                      />
+                                      <Header {...headerProps} />
                                       <BrowseProjects
                                         projects={approvedProjects}
                                         currentUserId={user?.id}
@@ -1590,25 +1483,12 @@ function AppContent() {
                                         userApplications={userApplications}
                                       />
                                     </>
+                                  ) : (
+                                    <>
+                                      <Header {...headerProps} />
+                                      <AccessRestricted message="Please log in as a student to browse projects." />
+                                    </>
                                   )
-                                    : (
-                                      <>
-                                        <Header
-                                          currentUser={user}
-                                          onLogin={handleLoginClick}
-                                          onLogout={handleLogout}
-                                        />
-                                        <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
-                                          <div className="card-pastel-offwhite rounded-xl border-5 border-dreamxec-navy shadow-pastel-card p-12 text-center max-w-md">
-                                            <div className="card-tricolor-tag"></div>
-                                            <p className="text-dreamxec-navy text-xl font-sans mt-4">
-                                              Please log in as a student to browse projects.
-                                            </p>
-                                          </div>
-                                        </div>
-                                      </>
-
-                                    )
                                 }
                               />
 
@@ -1617,82 +1497,158 @@ function AppContent() {
                                 path="/about"
                                 element={
                                   <>
-                                    <Header
-                                      currentUser={user}
-                                      onLogin={handleLoginClick}
-                                      onLogout={handleLogout}
-                                    />
+                                    <Header {...headerProps} />
                                     <AboutUs />
                                   </>
                                 }
                               />
-                              {/* verify-president */}
-                              <Route path="/verify-president" element={
-                                <>
-                                  <Header
-                                    currentUser={user}
-                                    onLogin={handleLoginClick}
-                                    onLogout={handleLogout}
-                                  />
-                                  <VerifyPresident />
-                                </>
-                              } />
+
+                              {/* Verify President */}
+                              <Route
+                                path="/verify-president"
+                                element={
+                                  <>
+                                    <Header {...headerProps} />
+                                    <VerifyPresident />
+                                  </>
+                                }
+                              />
 
                               {/* President Dashboard */}
-                              <Route path="/president" element={<><Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} /><PresidentLayout><PresidentDashboard /></PresidentLayout></>} />
-                              <Route path="/president/members" element={<><Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} /><PresidentLayout><PresidentMembers clubId={user?.clubIds?.[0] || ''} currentUserId={user?.id || ''} /></PresidentLayout></>} />
-                              <Route path="/president/campaigns" element={<><Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} /><PresidentLayout><PresidentCampaigns clubId={user?.clubIds?.[0] || ''} /></PresidentLayout></>} />
-                              <Route path="/president/upload-members" element={<><Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} /><PresidentLayout><UploadMembers /></PresidentLayout></>} />
-                              <Route path="/president/add-member" element={<><Header currentUser={user} onLogin={handleLoginClick} onLogout={handleLogout} /><PresidentLayout><AddMemberManually clubId={user?.clubIds?.[0] || ''} /></PresidentLayout></>} />
+                              <Route
+                                path="/president"
+                                element={
+                                  <>
+                                    <Header {...headerProps} />
+                                    <PresidentLayout>
+                                      <PresidentDashboard />
+                                    </PresidentLayout>
+                                  </>
+                                }
+                              />
+
+                              <Route
+                                path="/president/members"
+                                element={
+                                  <>
+                                    <Header {...headerProps} />
+                                    <PresidentLayout>
+                                      <PresidentMembers
+                                        clubId={user?.clubIds?.[0] || ""}
+                                        currentUserId={user?.id || ""}
+                                      />
+                                    </PresidentLayout>
+                                  </>
+                                }
+                              />
+
+                              <Route
+                                path="/president/campaigns"
+                                element={
+                                  <>
+                                    <Header {...headerProps} />
+                                    <PresidentLayout>
+                                      <PresidentCampaigns
+                                        clubId={user?.clubIds?.[0] || ""}
+                                      />
+                                    </PresidentLayout>
+                                  </>
+                                }
+                              />
+
+                              <Route
+                                path="/president/upload-members"
+                                element={
+                                  <>
+                                    <Header {...headerProps} />
+                                    <PresidentLayout>
+                                      <UploadMembers />
+                                    </PresidentLayout>
+                                  </>
+                                }
+                              />
+
+                              <Route
+                                path="/president/add-member"
+                                element={
+                                  <>
+                                    <Header {...headerProps} />
+                                    <PresidentLayout>
+                                      <AddMemberManually
+                                        clubId={user?.clubIds?.[0] || ""}
+                                      />
+                                    </PresidentLayout>
+                                  </>
+                                }
+                              />
+
                               {/* Footer / content page routes */}
-                              <Route path="/start-project" element={<StartAProject />} />
-                              <Route path="/how-it-works/students" element={<HowItWorksStudents />} />
-                              <Route path="/eligibility" element={<ProjectEligibility />} />
-                              <Route path="/resources" element={<ResourceCenter />} />
-                              <Route path="/fund-innovation" element={<FundInnovation />} />
-                              <Route path="/how-it-works/donors" element={<HowItWorksDonors />} />
-                              <Route path="/why-donate" element={<WhyDonate />} />
-                              <Route path="/corporate-partnerships" element={<CorporateCSRPartnerships />} />
-                              <Route path="/alumni-giving" element={<AlumniGivingPrograms />} />
-                              <Route path="/become-mentor" element={<BecomeMentor />} />
-                              <Route path="/perfect-storm" element={<PerfectStorm />} />
+                              <Route
+                                path="/start-project"
+                                element={<StartAProject />}
+                              />
+                              <Route
+                                path="/how-it-works/students"
+                                element={<HowItWorksStudents />}
+                              />
+                              <Route
+                                path="/eligibility"
+                                element={<ProjectEligibility />}
+                              />
+                              <Route
+                                path="/resources"
+                                element={<ResourceCenter />}
+                              />
+                              <Route
+                                path="/success-stories"
+                                element={<SuccessStories />}
+                              />
+                              <Route
+                                path="/fund-innovation"
+                                element={<FundInnovation />}
+                              />
+                              <Route
+                                path="/how-it-works/donors"
+                                element={<HowItWorksDonors />}
+                              />
+                              <Route
+                                path="/why-donate"
+                                element={<WhyDonate />}
+                              />
+                              <Route
+                                path="/corporate-partnerships"
+                                element={<CorporateCSRPartnerships />}
+                              />
+                              <Route
+                                path="/alumni-giving"
+                                element={<AlumniGivingPrograms />}
+                              />
+                              <Route
+                                path="/become-mentor"
+                                element={<BecomeMentor />}
+                              />
+                              <Route
+                                path="/perfect-storm"
+                                element={<PerfectStorm />}
+                              />
                               <Route path="/careers" element={<Careers />} />
                               <Route path="/contact" element={<ContactUs />} />
                               <Route path="/faq" element={<FAQ />} />
-                              <Route path="/success-stories" element={<SuccessStories />} />
                               <Route path="/press" element={<PressMedia />} />
-                              <Route path="/terms-And-Conditions" element={<TermsAndConditions />} />
-                              {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                               */}
-                              <Route path="/how-it-works/students" element={<HowItWorksStudents />} />
-                              <Route path="/eligibility" element={<ProjectEligibility />} />
-                              <Route path="/resources" element={<ResourceCenter />} />
-
-
-
-                              <Route path="/fund-innovation" element={<FundInnovation />} />
-                              <Route path="/how-it-works/donors" element={<HowItWorksDonors />} />
-                              <Route path="/why-donate" element={<WhyDonate />} />
-                              <Route path="/corporate-partnerships" element={<CorporateCSRPartnerships />} />
-                              <Route path="/alumni-giving" element={<AlumniGivingPrograms />} />
-                              <Route path="/become-mentor" element={<BecomeMentor />} />
-                              <Route path="/perfect-storm" element={<PerfectStorm />} />
-                              <Route path="/careers" element={<Careers />} />
-                              <Route path="/contact" element={<ContactUs />} />
-                              <Route path="/faq" element={<FAQ />} />
-                              {/* <Route path="/success-stories" element={<SuccessStories />} /> */}
-                              <Route path="/press" element={<PressMedia />} />
-
-                            </Routes >
-                          </div >
-                        </div >
-                      </div >
-                    </div >
-                  </div >
-                </div >
-              </div >
-            </div >
-          </div >
+                              <Route
+                                path="/terms-And-Conditions"
+                                element={<TermsAndConditions />}
+                              />
+                            </Routes>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div
             role="region"
             aria-label="bottom of page"
@@ -1702,9 +1658,9 @@ function AppContent() {
               bottom of page
             </span>
           </div>
-        </div >
-      </div >
-    </div >
+        </div>
+      </div>
+    </div>
   );
 }
 
