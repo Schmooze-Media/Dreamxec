@@ -11,10 +11,21 @@ const { Roles } = require("../../rbac");
  */
 exports.submitMentorApplication = catchAsync(async (req, res, next) => {
   console.log("📝 Mentor form submission received");
-  console.log("Request body keys:", Object.keys(req.body));
+  
+  // Security: Force the application email to match the logged-in user
+  const payload = { ...req.body, email: req.user.email, name: req.user.name };
+
+  // Check if they already have a pending or approved application
+  const existingApp = await prisma.mentorApplication.findUnique({
+    where: { email: req.user.email }
+  });
+
+  if (existingApp && ['PENDING', 'APPROVED'].includes(existingApp.status)) {
+    return next(new AppError(`You already have an application that is ${existingApp.status}.`, 400));
+  }
 
   // Validate request data
-  const { error, value } = validateMentorApplication(req.body);
+  const { error, value } = validateMentorApplication(payload);
 
   if (error) {
     console.error("❌ Validation error:", error.message);
@@ -26,16 +37,9 @@ exports.submitMentorApplication = catchAsync(async (req, res, next) => {
     );
   }
 
-  console.log("✅ Validation passed");
-
   try {
-    // Create mentor application in database
-    const mentorApplication =
-      await mentorService.createMentorApplication(value);
+    const mentorApplication = await mentorService.createMentorApplication(value);
 
-    console.log("✅ Created mentor application:", mentorApplication.id);
-
-    // Return success response
     res.status(201).json({
       success: true,
       message: "Mentor application submitted successfully",
@@ -49,14 +53,24 @@ exports.submitMentorApplication = catchAsync(async (req, res, next) => {
     });
   } catch (error) {
     console.error("❌ Submission error:", error);
-    if (error instanceof AppError) {
-      return next(error);
-    }
-
-    return next(
-      new AppError(error.message || "Failed to submit mentor application", 500),
-    );
+    if (error instanceof AppError) return next(error);
+    return next(new AppError(error.message || "Failed to submit mentor application", 500));
   }
+});
+
+/**
+ * Get the logged-in user's application status (USER ONLY)
+ * GET /api/mentor/my-application
+ */
+exports.getMyApplication = catchAsync(async (req, res, next) => {
+  const application = await prisma.mentorApplication.findUnique({
+    where: { email: req.user.email }
+  });
+
+  res.status(200).json({
+    success: true,
+    data: application || null
+  });
 });
 
 /**
@@ -65,7 +79,6 @@ exports.submitMentorApplication = catchAsync(async (req, res, next) => {
  */
 exports.getMentorApplication = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-
   const mentorApplication = await mentorService.getMentorApplicationById(id);
 
   res.status(200).json({
@@ -82,11 +95,7 @@ exports.getAllMentorApplications = catchAsync(async (req, res, next) => {
   const { status, skip, take, sortBy, sortOrder } = req.query;
 
   const mentorApplications = await mentorService.getAllMentorApplications({
-    status,
-    skip,
-    take,
-    sortBy,
-    sortOrder,
+    status, skip, take, sortBy, sortOrder,
   });
 
   res.status(200).json({
@@ -102,15 +111,11 @@ exports.getAllMentorApplications = catchAsync(async (req, res, next) => {
  */
 exports.getMentorApplicationStats = catchAsync(async (req, res, next) => {
   const stats = await mentorService.getMentorApplicationsStats();
-
-  res.status(200).json({
-    success: true,
-    data: stats,
-  });
+  res.status(200).json({ success: true, data: stats });
 });
 
 /**
- * Update mentor application status (admin only)
+ * Update mentor application status & assign RBAC roles (admin only)
  * PATCH /api/mentor/:id/status
  */
 exports.updateMentorApplicationStatus = catchAsync(async (req, res, next) => {
@@ -121,36 +126,36 @@ exports.updateMentorApplicationStatus = catchAsync(async (req, res, next) => {
     return next(new AppError("Status is required", 400));
   }
 
+  // ENFORCE SPEC: Rejection requires 20+ chars of reasoning
+  if (status === 'REJECTED' && (!adminNotes || adminNotes.trim().length < 20)) {
+    return next(new AppError('Rejection requires an admin note of at least 20 characters.', 400));
+  }
+
+  // Update the application status via your service
   const updatedApplication = await mentorService.updateMentorApplicationStatus(
     id,
     status,
     adminNotes,
   );
 
+  // ENFORCE SPEC: If Approved, grant the MENTOR role to the user's RBAC array
+  if (status === 'APPROVED') {
+    const user = await prisma.user.findUnique({ where: { email: updatedApplication.email } });
+    
+    // Only push if they don't already have it
+    if (user && !user.roles.includes(Roles.MENTOR)) {
+      await prisma.user.update({
+        where: { email: updatedApplication.email },
+        data: { roles: { push: Roles.MENTOR } }
+      });
+    }
+  }
+
   res.status(200).json({
     success: true,
-    message: "Mentor application status updated",
+    message: `Mentor application marked as ${status}`,
     data: updatedApplication,
   });
-});
-
-/**
- * Approve a mentor application and assign role
- * PATCH /api/mentor/:id/approve
- */
-exports.approveMentorApplication = catchAsync(async (req, res, next) => {
-  const app = await prisma.mentorApplication.update({
-    where: { id: req.params.id },
-    data: { status: 'APPROVED' }
-  });
-
-  // Push MENTOR role onto the matching User account
-  await prisma.user.updateMany({
-    where: { email: app.email },
-    data: { roles: { push: Roles.MENTOR } }
-  });
-
-  res.json({ success: true });
 });
 
 /**
@@ -165,10 +170,7 @@ exports.scoreMentorApplication = catchAsync(async (req, res, next) => {
     return next(new AppError("Score is required", 400));
   }
 
-  const updatedApplication = await mentorService.scoreMentorApplication(
-    id,
-    score,
-  );
+  const updatedApplication = await mentorService.scoreMentorApplication(id, score);
 
   res.status(200).json({
     success: true,
@@ -197,7 +199,6 @@ exports.getHighQualityMentors = catchAsync(async (req, res, next) => {
  */
 exports.deleteMentorApplication = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-
   await mentorService.deleteMentorApplication(id);
 
   res.status(200).json({

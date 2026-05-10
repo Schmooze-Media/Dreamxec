@@ -1,7 +1,7 @@
 const { Roles } = require('./roles');
 
 const ROLE_INHERITANCE = {
-    [Roles.ALUMNI]:                 [Roles.USER],
+    [Roles.ALUMNI]:                 [Roles.DONOR],
     [Roles.STUDENT_PRESIDENT]:      [Roles.STUDENT],
     [Roles.PREMIUM_DONOR]:          [Roles.DONOR],
     [Roles.DEAN_ACADEMICS]:         [Roles.FACULTY],

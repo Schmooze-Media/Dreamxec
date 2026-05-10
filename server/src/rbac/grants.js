@@ -18,6 +18,9 @@ const ROLE_GRANTS = {
     [Roles.ALUMNI] : [
         Permissions.DONATION_MAKE,
         Permissions.MENTOR_APPLY,
+        Permissions.CAMPAIGN_ENDORSE,
+        Permissions.OPPORTUNITY_GATE_BYPASS,
+        Permissions.MENTOR_APPLY, // Assuming they still need to apply to become a mentor
     ],
 
     [Roles.STUDENT_PRESIDENT] : [
@@ -33,6 +36,7 @@ const ROLE_GRANTS = {
         Permissions.SESSION_CREATE,
         Permissions.STUDENT_GUIDE,
         Permissions.MENTOR_PROFILE_MANAGE,
+        Permissions.MENTORSHIP_MANAGE,
     ],
 
     [Roles.DONOR] : [

@@ -33,7 +33,12 @@ const Permissions = {
   SESSION_CREATE:             "session:create",
   STUDENT_GUIDE:              "student:guide",
   MENTOR_PROFILE_MANAGE:      "mentor:profile:manage",
- 
+  MENTORSHIP_MANAGE:          "mentorship:manage",
+
+  // Alumni
+  CAMPAIGN_ENDORSE:           "campaign:endorse",
+  OPPORTUNITY_GATE_BYPASS:    "opportunity:gate_bypass",
+
   // Faculty / Admin
   ACADEMIC_MANAGE:            "academic:manage",
   WELFARE_MANAGE:             "student:welfare:manage",

@@ -700,10 +700,14 @@ function AppContent() {
 
         setUser(userData);
 
-        if (hasRole(userData, "donor") && userData.profileComplete === false) {
+        // if (hasRole(userData, "donor") && userData.profileComplete === false) {
+        //   navigate("/profile/setup");
+        //   return;
+        // }
+        if (userData.profileComplete === false) {
           navigate("/profile/setup");
           return;
-        }
+        } 
 
         const origin = (location.state as any)?.from;
         if (origin) {

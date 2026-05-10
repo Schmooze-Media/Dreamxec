@@ -74,4 +74,13 @@ router.patch("/:id/score", mentorController.scoreMentorApplication);
  */
 router.delete("/:id", mentorController.deleteMentorApplication);
 
+router.post('/apply', protect, mentorController.submitApplication);
+router.get('/my-application', protect, mentorController.getMyApplication);
+
+// Admin Routes
+router.use(protect, requirePermission(Permissions.ALL)); // Assuming ADMIN has Permissions.ALL
+router.get('/applications', mentorController.getAllApplications);
+router.get('/applications/:id', mentorController.getApplicationDetails);
+router.patch('/applications/:id', mentorController.updateApplicationStatus);
+
 module.exports = router;

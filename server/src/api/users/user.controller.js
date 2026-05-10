@@ -11,7 +11,7 @@ exports.getMe = catchAsync(async (req, res, next) => {
       id: true,
       email: true,
       name: true,
-      role: true,
+      roles: true, // Updated from legacy 'role'
       emailVerified: true,
       studentVerified: true,
       clubVerified: true,
@@ -43,7 +43,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
       id: true,
       email: true,
       name: true,
-      role: true,
+      roles: true, // Updated from legacy 'role'
       emailVerified: true,
       createdAt: true,
     },
@@ -66,6 +66,12 @@ exports.suspendUser = catchAsync(async (req, res, next) => {
     return next(new AppError("User not found", 404));
   }
 
+  // Update accountStatus in database
+  await prisma.user.update({
+    where: { id: req.params.id },
+    data: { accountStatus: 'SUSPENDED' }
+  });
+
   console.log(`Admin ${req.user.id} suspended user ${req.params.id}`);
 
   res.status(200).json({
@@ -74,23 +80,83 @@ exports.suspendUser = catchAsync(async (req, res, next) => {
   });
 });
 
-// PATCH /api/users/suppress-upgrade-card
-exports.suppressUpgradeCard = catchAsync(async (req, res, next) => {
-  const { id, role } = req.user;
+// ─────────────────────────────────────────────────
+// POST /api/users/activate-role
+// ─────────────────────────────────────────────────
+exports.activateRole = catchAsync(async (req, res, next) => {
+  const { role } = req.body;
+  const userId = req.user.id;
 
-  if (role === "ADMIN") {
+  if (!['ALUMNI', 'MENTOR'].includes(role)) {
+    return next(new AppError('Invalid role activation requested.', 400));
+  }
+
+  // 1. ALUMNI PATH (Instant Activation)
+  if (role === 'ALUMNI') {
+    const donorProfile = await prisma.donor.findUnique({ where: { id: userId } });
+    if (!donorProfile) return next(new AppError('Donor profile required.', 404));
+
+    const currentYear = new Date().getFullYear();
+    const isEligible = Boolean(
+      donorProfile.institution?.trim() && 
+      donorProfile.graduationYear && 
+      donorProfile.graduationYear < currentYear
+    );
+
+    if (!isEligible) {
+      return next(new AppError('You do not meet the criteria for Alumni status.', 403));
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { roles: { push: 'ALUMNI' } } 
+    });
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Alumni role activated successfully.',
+      roles: updatedUser.roles
+    });
+  }
+
+  // 2. MENTOR PATH (Does NOT grant role, just preps the UI/Intent)
+  if (role === 'MENTOR') {
+    const existingApp = await prisma.mentorApplication.findUnique({ 
+      where: { email: req.user.email } 
+    });
+    
+    if (existingApp && existingApp.status === 'PENDING') {
+      return next(new AppError('You already have a pending mentor application.', 400));
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Proceed to Mentorship application.',
+      applicationStatus: existingApp?.status || 'NOT_STARTED'
+    });
+  }
+});
+
+
+// ─────────────────────────────────────────────────
+// PATCH /api/users/suppress-upgrade-card
+// ─────────────────────────────────────────────────
+exports.suppressUpgradeCard = catchAsync(async (req, res, next) => {
+  const { id } = req.user;
+  const roles = req.user.roles || []; // Updated to use roles array
+
+  if (roles.includes("ADMIN")) {
     return next(new AppError("Admins do not have a role-upgrade card.", 400));
   }
 
-  const isDonorModel = role === "DONOR" || role === "ALUMNI";
+  const isDonorModel = roles.includes("DONOR") || roles.includes("ALUMNI");
 
   if (isDonorModel) {
     const donor = await prisma.donor.findUnique({
       where: { id },
-
       select: {
         id: true,
-        suppressupgradecard: true,
+        suppressUpgradeCard: true, // Corrected to camelCase
       },
     });
 
@@ -98,30 +164,26 @@ exports.suppressUpgradeCard = catchAsync(async (req, res, next) => {
       return next(new AppError("Donor profile not found.", 404));
     }
 
-    if (donor.suppressupgradecard) {
+    if (donor.suppressUpgradeCard) {
       return res.status(200).json({
         status: "success",
         message: "Upgrade card already dismissed.",
-        data: {
-          suppressupgradecard: true,
-        },
+        data: { suppressUpgradeCard: true },
       });
     }
 
     await prisma.donor.update({
       where: { id },
-
-      data: {
-        suppressupgradecard: true,
-      },
+      data: { suppressUpgradeCard: true },
     });
+
   } else {
+    // Standard User Model
     const user = await prisma.user.findUnique({
       where: { id },
-
       select: {
         id: true,
-        suppressupgradecard: true,
+        suppressUpgradeCard: true, // Corrected to camelCase
       },
     });
 
@@ -129,22 +191,17 @@ exports.suppressUpgradeCard = catchAsync(async (req, res, next) => {
       return next(new AppError("User profile not found.", 404));
     }
 
-    if (user.suppressupgradecard) {
+    if (user.suppressUpgradeCard) {
       return res.status(200).json({
         status: "success",
         message: "Upgrade card already dismissed.",
-        data: {
-          suppressupgradecard: true,
-        },
+        data: { suppressUpgradeCard: true },
       });
     }
 
     await prisma.user.update({
       where: { id },
-
-      data: {
-        suppressupgradecard: true,
-      },
+      data: { suppressUpgradeCard: true },
     });
   }
 
@@ -152,7 +209,7 @@ exports.suppressUpgradeCard = catchAsync(async (req, res, next) => {
     status: "success",
     message: "Upgrade card dismissed successfully.",
     data: {
-      suppressupgradecard: true,
+      suppressUpgradeCard: true,
     },
   });
 });

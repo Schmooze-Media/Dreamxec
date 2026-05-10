@@ -13,7 +13,7 @@ datasource db {
 enum Role {
   USER
   DONOR
-  ALUMNI
+  ALUMNI  
   MENTOR
   ADMIN
   STUDENT_PRESIDENT
@@ -154,7 +154,7 @@ model User {
 
   // Profile completion
   profileComplete Boolean  @default(false)
-  suppressupgradecard Boolean  @default(false)
+  suppressUpgradeCard Boolean  @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
