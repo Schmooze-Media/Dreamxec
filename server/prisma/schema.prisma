@@ -118,6 +118,7 @@ model User {
   isExternallyVerified Boolean    @default(false) // KYC / 3rd-party verification status
   clubVerified         Boolean    @default(false)
   studentVerified      Boolean    @default(false)
+  facultyVerified      Boolean    @default(false)
   donations            Donation[]
   comments CampaignComment[] @relation("UserComments")
 
