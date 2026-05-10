@@ -275,62 +275,73 @@
 //     </>
 //   );
 // };
-
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "../../../components/Logo";
 import { MobileMenuButton } from "../../../components/MobileMenuButton";
 import { DesktopMenu } from "./DesktopMenu";
 import { NewsletterModal } from "../../../components/NewsletterModal";
-import type { UserRole } from "../../../types";
 import { getProfile } from "../../../services/profileService";
+import type { UserRole } from "../../../types";
 
 interface NavbarProps {
-  currentUser?: { name: string; role?: UserRole; roles?: string[] } | null;
+  currentUser?: {
+    name: string;
+    roles?: string[];
+  } | null;
   onLogin?: () => void;
   onLogout?: () => void;
 }
+
+// helper
+const hasRole = (user: any, role: string) =>
+  Array.isArray(user?.roles) && user.roles.includes(role);
 
 export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [newsletterOpen, setNewsletterOpen] = useState(false);
   const [completionPct, setCompletionPct] = useState<number | null>(null);
+
   const navigate = useNavigate();
 
-  // Fetch profile completion % when a donor or student is logged in
+  const isStudentType =
+    currentUser &&
+    (hasRole(currentUser, "student") ||
+      hasRole(currentUser, "STUDENT_PRESIDENT"));
+
+  // profile completion
   useEffect(() => {
     if (!currentUser) {
       setCompletionPct(null);
       return;
     }
+
     const showCompletion =
-      currentUser.role === 'donor' ||
-      currentUser.role === 'student' ||
-      currentUser.role === 'STUDENT_PRESIDENT';
+      hasRole(currentUser, "donor") ||
+      hasRole(currentUser, "student") ||
+      hasRole(currentUser, "STUDENT_PRESIDENT");
+
     if (!showCompletion) {
       setCompletionPct(null);
       return;
     }
+
     let cancelled = false;
+
     getProfile()
       .then((res) => {
-        if (!cancelled && res.status === 'success' && res.data) {
+        if (!cancelled && res.status === "success" && res.data) {
           setCompletionPct(res.data.completionPct);
         }
       })
       .catch(() => {
         if (!cancelled) setCompletionPct(null);
       });
-    return () => { cancelled = true; };
-  }, [currentUser?.role]);
 
-  // console.log(currentUser);
-
-  // Helper to check if user is a student type (regular or president)
-  // Presidents also get the clickable profile button
-  const isStudentType = currentUser && (currentUser.role === 'student' || currentUser.role === 'STUDENT_PRESIDENT');
-
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser?.roles]);
 
   return (
     <>
@@ -339,104 +350,80 @@ export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
         onClose={() => setNewsletterOpen(false)}
         source="navbar"
       />
+
       <nav className="flex items-center justify-between px-4 py-2">
-        {/* Logo */}
         <Logo />
 
-        {/* Right side - Navigation and User Actions */}
         <div className="flex items-center gap-6">
-          {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-4">
             <DesktopMenu currentUser={currentUser} onLogin={onLogin} />
 
-            {/* Newsletter CTA - Desktop */}
             <button
               onClick={() => setNewsletterOpen(true)}
-              className="text-dreamxec-navy hover:text-dreamxec-orange font-semibold text-sm transition-colors flex items-center gap-1"
+              className="text-dreamxec-navy hover:text-dreamxec-orange font-semibold text-sm flex items-center gap-1"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-
+              Updates
             </button>
           </div>
 
-          {/* User Actions */}
           <div className="flex items-center gap-3">
             {currentUser && (
               <>
-                {/* User Profile - For Students and Student Presidents */}
+                {/* STUDENT / PRESIDENT */}
                 {isStudentType && (
                   <button
-                    onClick={() => navigate('/profile')}
-                    className="hidden md:flex items-center gap-2 bg-dreamxec-beige border-2 border-dreamxec-navy rounded-xl px-3 py-2 shadow-md hover:bg-dreamxec-cream transition-all"
+                    onClick={() => navigate("/profile")}
+                    className="hidden md:flex items-center gap-2 bg-dreamxec-beige border-2 border-dreamxec-navy rounded-xl px-3 py-2"
                   >
                     <div className="relative w-8 h-8">
-                      <div className="w-8 h-8 bg-dreamxec-orange border-2 border-dreamxec-navy rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-dreamxec-orange rounded-full flex items-center justify-center">
                         <span className="text-white font-bold text-sm">
                           {currentUser.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
+
                       {completionPct !== null && completionPct < 100 && (
-                        <span
-                          className="absolute -bottom-1 -right-1 text-[9px] font-black text-white px-1 rounded-full border border-white leading-tight"
-                          style={{ background: completionPct >= 80 ? '#0B9C2C' : '#FF7F00' }}
-                        >
+                        <span className="absolute -bottom-1 -right-1 text-[9px] bg-orange-500 text-white px-1 rounded-full">
                           {completionPct}%
                         </span>
                       )}
                     </div>
+
                     <div className="flex flex-col text-left">
-                      <span className="text-dreamxec-navy font-bold text-sm font-sans">
+                      <span className="font-bold text-sm">
                         {currentUser.name}
                       </span>
-                      <span
-                        className="text-xs font-bold font-sans"
-                        style={{ color: (completionPct !== null && completionPct < 100) ? (completionPct >= 80 ? '#0B9C2C' : '#FF7F00') : undefined, opacity: (completionPct !== null && completionPct < 100) ? 1 : 0.7 }}
-                      >
-                        {(completionPct !== null && completionPct < 100)
-                          ? `${completionPct >= 80 ? '✅' : '⚠️'} Profile ${completionPct}%`
-                          : currentUser.role === 'STUDENT_PRESIDENT' ? 'President' : 'Student'}
+                      <span className="text-xs opacity-70">
+                        {hasRole(currentUser, "STUDENT_PRESIDENT")
+                          ? "President"
+                          : "Student"}
                       </span>
                     </div>
                   </button>
                 )}
 
-                {/* Simple name display for Donors/Admins (non-student types) */}
+                {/* DONOR / ADMIN */}
                 {!isStudentType && (
                   <div
-                    className="hidden md:flex items-center gap-2 bg-dreamxec-beige border-2 border-dreamxec-navy rounded-xl px-3 py-2 shadow-md cursor-pointer hover:bg-dreamxec-cream transition-all"
-                    onClick={() => currentUser.role === 'donor' ? navigate('/profile/setup') : undefined}
+                    className="hidden md:flex items-center gap-2 bg-dreamxec-beige border-2 border-dreamxec-navy rounded-xl px-3 py-2 cursor-pointer"
+                    onClick={() =>
+                      hasRole(currentUser, "donor")
+                        ? navigate("/profile/setup")
+                        : undefined
+                    }
                   >
-                    <div className="relative w-8 h-8">
-                      <div className="w-8 h-8 bg-dreamxec-orange border-2 border-dreamxec-navy rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">
-                          {currentUser.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      {completionPct !== null && currentUser.role === 'donor' && completionPct < 100 && (
-                        <span
-                          className="absolute -bottom-1 -right-1 text-[9px] font-black text-white px-1 rounded-full border border-white leading-tight"
-                          style={{ background: completionPct >= 80 ? '#0B9C2C' : '#FF7F00' }}
-                        >
-                          {completionPct}%
-                        </span>
-                      )}
+                    <div className="w-8 h-8 bg-dreamxec-orange rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">
+                        {currentUser.name.charAt(0).toUpperCase()}
+                      </span>
                     </div>
+
                     <div className="flex flex-col text-left">
-                      <span className="text-dreamxec-navy font-bold text-sm font-sans">
+                      <span className="font-bold text-sm">
                         {currentUser.name}
                       </span>
-                      <span
-                        className="text-xs font-bold font-sans"
-                        style={{
-                          color: (completionPct !== null && currentUser.role === 'donor') ? (completionPct >= 80 ? '#0B9C2C' : '#FF7F00') : undefined,
-                          opacity: (completionPct !== null && currentUser.role === 'donor') ? 1 : 0.7
-                        }}
-                      >
-                        {(completionPct !== null && currentUser.role === 'donor' && completionPct !== 100)
-                          ? `${completionPct >= 80 ? '✅' : '⚠️'} Profile ${completionPct}%`
-                          : currentUser.role === 'donor' ? 'Donor' : 'Admin'}
+                      <span className="text-xs opacity-70">
+                        {hasRole(currentUser, "DONOR") ? "Donor" : "Admin"}
                       </span>
                     </div>
                   </div>
@@ -444,227 +431,74 @@ export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
 
                 <button
                   onClick={onLogout}
-                  className="bg-dreamxec-cream border-2 border-dreamxec-navy px-4 py-2 rounded-xl font-bold text-dreamxec-navy hover:bg-dreamxec-orange hover:text-white transition-colors font-display shadow-md"
+                  className="bg-dreamxec-cream border-2 border-dreamxec-navy px-4 py-2 rounded-xl font-bold"
                 >
                   Logout
                 </button>
               </>
             )}
 
-            {/* Mobile Menu Button */}
             <div className="md:hidden">
-              <MobileMenuButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)} />
+              <MobileMenuButton
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              />
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Menu */}
+      {/* MOBILE MENU */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t-2 border-dreamxec-navy shadow-lg rounded-b-2xl">
+        <div className="md:hidden bg-white border-t-2 border-dreamxec-navy">
           <div className="flex flex-col gap-3 p-4">
             {currentUser ? (
               <>
-                {/* User Profile Card - For Students and Presidents */}
-                {isStudentType && (
-                  <button
-                    onClick={() => {
-                      navigate('/profile');
-                      setMobileMenuOpen(false);
-                    }}
-                    className="px-4 py-3 bg-dreamxec-beige border-3 border-dreamxec-navy rounded-lg mx-2 my-2 hover:bg-dreamxec-cream hover:shadow-pastel-card transition-all w-full text-left cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-dreamxec-orange border-2 border-dreamxec-navy rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">
-                          {currentUser.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-dreamxec-navy font-bold text-sm font-sans">
-                          {currentUser.name}
-                        </span>
-                        <span className="text-dreamxec-navy text-xs opacity-70 font-sans">
-                          {currentUser.role === 'STUDENT_PRESIDENT' ? 'President' : 'Student'}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                )}
-
-                {/* User Info Display - For Donors/Admins (non-clickable) */}
-                {!isStudentType && (
-                  <div className="px-4 py-3 bg-dreamxec-beige border-3 border-dreamxec-navy rounded-lg mx-2 my-2 w-full">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-dreamxec-orange border-2 border-dreamxec-navy rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">
-                          {currentUser.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-dreamxec-navy font-bold text-sm font-sans">
-                          {currentUser.name}
-                        </span>
-                        <span className="text-dreamxec-navy text-xs opacity-70 font-sans">
-                          {currentUser.role === 'donor' ? 'Donor' : 'Admin'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Student Links */}
-                {currentUser.role === 'student' && (
+                {/* STUDENT */}
+                {hasRole(currentUser, "STUDENT") && (
                   <>
-                    <a
-                      href="/dashboard"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      DASHBOARD
-                    </a>
-                    <a
-                      href="/campaigns"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      CAMPAIGNS
-                    </a>
-                    <Link
-                      to="/clubs"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      CLUBS
-                    </Link>
-                    <a
-                      href="/projects"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      OPPORTUNITIES
-                    </a>
-
+                    <a href="/dashboard">DASHBOARD</a>
+                    <a href="/campaigns">CAMPAIGNS</a>
+                    <Link to="/clubs">CLUBS</Link>
+                    <a href="/projects">OPPORTUNITIES</a>
                   </>
                 )}
 
-                {/* STUDENT PRESIDENT Links */}
-                {currentUser.role === 'STUDENT_PRESIDENT' && (
+                {/* PRESIDENT */}
+                {hasRole(currentUser, "STUDENT_PRESIDENT") && (
                   <>
-                    <a
-                      href="/dashboard"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      DASHBOARD
-                    </a>
-                    <a
-                      href="/campaigns"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      CAMPAIGNS
-                    </a>
-                    <Link
-                      to="/clubs"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      CLUBS
-                    </Link>
-                    <a
-                      href="/projects"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      OPPORTUNITIES
-                    </a>
+                    <a href="/dashboard">DASHBOARD</a>
+                    <a href="/campaigns">CAMPAIGNS</a>
+                    <Link to="/clubs">CLUBS</Link>
+                    <a href="/projects">OPPORTUNITIES</a>
                   </>
                 )}
 
-                {/* Admin Links */}
-                {currentUser.role === 'admin' && (
+                {/* ADMIN */}
+                {hasRole(currentUser, "ADMIN") && (
                   <>
-                    <a
-                      href="/admin"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      ADMIN DASHBOARD
-                    </a>
-                    <a
-                      href="/campaigns"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      CAMPAIGNS
-                    </a>
+                    <a href="/admin">ADMIN DASHBOARD</a>
+                    <a href="/campaigns">CAMPAIGNS</a>
                   </>
                 )}
 
-                {/* Donor Links */}
-                {currentUser.role === 'donor' && (
+                {/* DONOR */}
+                {hasRole(currentUser, "DONOR") && (
                   <>
-                    <a
-                      href="/donor/dashboard"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      MY PROJECTS
-                    </a>
-                    <a
-                      href="/campaigns"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      CAMPAIGNS
-                    </a>
-                    <Link
-                      to="/clubs"
-                      className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                    >
-                      CLUBS
-                    </Link>
+                    <a href="/donor/dashboard">MY PROJECTS</a>
+                    <a href="/campaigns">CAMPAIGNS</a>
+                    <Link to="/clubs">CLUBS</Link>
                   </>
                 )}
 
-                {/* Logout Button */}
-                <button
-                  onClick={() => {
-                    onLogout?.();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="mx-2 my-2 bg-dreamxec-orange text-white px-6 py-3 rounded-lg font-bold border-3 border-dreamxec-navy hover:bg-dreamxec-green transition-colors font-display shadow-pastel-saffron"
-                >
-                  Logout
-                </button>
+                <button onClick={onLogout}>Logout</button>
               </>
             ) : (
               <>
-                {/* Guest Links */}
-                <a
-                  href="/"
-                  className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                >
-                  HOME
-                </a>
-                {/* <a
-                  href="/about"
-                  className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                >
-                  ABOUT US
-                </a> */}
-                <a
-                  href="/campaigns"
-                  className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                >
-                  CAMPAIGNS
-                </a>
-                <Link
-                  to="/clubs"
-                  className="text-left px-4 py-3 text-dreamxec-navy hover:bg-dreamxec-cream hover:text-dreamxec-orange font-bold transition-colors rounded-lg font-display border-2 border-transparent hover:border-dreamxec-navy"
-                >
-                  CLUBS
-                </Link>
+                <a href="/">HOME</a>
+                <a href="/campaigns">CAMPAIGNS</a>
+                <Link to="/clubs">CLUBS</Link>
 
-                {/* Sign In Button for Mobile */}
-                <button
-                  onClick={() => {
-                    onLogin?.();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="mx-2 my-2 bg-dreamxec-orange text-white px-6 py-3 rounded-lg font-bold border-3 border-dreamxec-navy hover:bg-dreamxec-saffron transition-colors font-display shadow-pastel-saffron"
-                >
-                  Sign In
-                </button>
+                <button onClick={onLogin}>Sign In</button>
               </>
             )}
           </div>

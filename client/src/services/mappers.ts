@@ -6,10 +6,6 @@ import type { UserProject } from "./userProjectService";
 import type { DonorProject } from "./donorProjectService";
 
 /* =========================================================
-   Shared Types
-========================================================= */
-
-/* =========================================================
    Role Mapping
 ========================================================= */
 
@@ -28,39 +24,53 @@ export const PROJECT_STATUS = {
   FROZEN: "frozen",
 } as const;
 
-// Backend → Frontend
-export type BackendRole =
-  | "USER"
-  | "DONOR"
-  | "ADMIN"
-  | "STUDENT_PRESIDENT"
-  | "ALUMNI"
-  | "MENTOR";
+/**
+ * Backend → Frontend role mapping
+ * Accepts string or string[]
+ */
+export const mapBackendRole = (
+  backendRoles: string | string[] = [],
+): UserRole => {
+  const roles = Array.isArray(backendRoles) ? backendRoles : [backendRoles];
 
-export const mapBackendRole = (backendRole: BackendRole): UserRole => {
-  const roleMap: Record<BackendRole, UserRole> = {
-    USER: "student",
-    DONOR: "donor",
-    ADMIN: "admin",
-    STUDENT_PRESIDENT: "STUDENT_PRESIDENT",
-    ALUMNI: "ALUMNI", // ← pass-through, no UI alias needed
-    MENTOR: "MENTOR", // ← pass-through
-  };
-  return roleMap[backendRole] ?? "student";
+  const normalized = roles.map((r) => r.toUpperCase());
+
+  if (normalized.includes("ADMIN")) return "admin";
+
+  if (normalized.includes("STUDENT_PRESIDENT")) {
+    return "STUDENT_PRESIDENT";
+  }
+
+  if (normalized.includes("PREMIUM_DONOR") || normalized.includes("DONOR")) {
+    return "donor";
+  }
+
+  return "student";
 };
 
-export const mapFrontendRole = (frontendRole: UserRole): BackendRole => {
-  const roleMap: Record<UserRole, BackendRole> = {
+/**
+ * Frontend → Backend role mapping
+ */
+export const mapFrontendRole = (
+  frontendRole: UserRole,
+): "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" => {
+  const roleMap: Record<
+    UserRole,
+    "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT"
+  > = {
     student: "USER",
     donor: "DONOR",
-    DONOR: "DONOR",
     admin: "ADMIN",
-    ADMIN: "ADMIN",
-    USER: "USER",
     STUDENT_PRESIDENT: "STUDENT_PRESIDENT",
-    ALUMNI: "ALUMNI",
-    MENTOR: "MENTOR",
+
+    // fallback-safe mappings
+    USER: "USER",
+    ADMIN: "USER",
+    DONOR: "USER",
+    ALUMNI: "USER",
+    MENTOR: "USER",
   };
+
   return roleMap[frontendRole];
 };
 
@@ -81,8 +91,7 @@ export const mapFrontendStatus = (
 };
 
 /* =========================================================
-   UserProject (Backend) → Campaign (Frontend)
-   ✅ Single source of truth = Club Relation
+   UserProject → Campaign
 ========================================================= */
 
 export const mapUserProjectToCampaign = (
@@ -96,21 +105,21 @@ export const mapUserProjectToCampaign = (
     clubId: userProject.clubId,
     club: userProject.club
       ? {
-        id: userProject.club.id,
-        name: userProject.club.name,
-        college: userProject.club.college,
-        slug: userProject.club.slug,
-      }
+          id: userProject.club.id,
+          name: userProject.club.name,
+          college: userProject.club.college,
+          slug: userProject.club.slug,
+        }
       : undefined,
 
     goalAmount: userProject.goalAmount,
     currentAmount: userProject.amountRaised || 0,
 
-    rating: userProject.rating ?? 5, // ⭐ DEFAULT SAFE
+    rating: userProject.rating ?? 5,
 
     userId: userProject.userId,
 
-    status: mapBackendStatus(userProject.status), // KEEP UPPERCASE
+    status: mapBackendStatus(userProject.status),
 
     createdAt: new Date(userProject.createdAt),
 
@@ -143,7 +152,7 @@ export const mapUserProjectToCampaign = (
 };
 
 /* =========================================================
-   DonorProject (Backend) → Project (Frontend)
+   DonorProject → Project
 ========================================================= */
 
 export const mapDonorProjectToProject = (
@@ -170,8 +179,7 @@ export const mapDonorProjectToProject = (
 };
 
 /* =========================================================
-   Campaign (Frontend) → CreateUserProjectData (Backend)
-   🚀 clubId is sent directly (NO names)
+   Campaign → Backend CreateUserProject
 ========================================================= */
 
 export const mapCampaignToUserProjectData = (campaign: Partial<Campaign>) => {
@@ -185,7 +193,7 @@ export const mapCampaignToUserProjectData = (campaign: Partial<Campaign>) => {
 };
 
 /* =========================================================
-   Project (Frontend) → CreateDonorProjectData (Backend)
+   Project → Backend CreateDonorProject
 ========================================================= */
 
 export const mapProjectToDonorProjectData = (project: Partial<Project>) => {

@@ -18,12 +18,19 @@ import {
 import { mapBackendRole, mapFrontendRole } from "../services/mappers";
 import { getToken } from "../services/api";
 
-type BackendRoleType = "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR";
+type BackendRoleType =
+  | "USER"
+  | "DONOR"
+  | "ADMIN"
+  | "STUDENT_PRESIDENT"
+  | "ALUMNI"
+  | "MENTOR";
 
 interface BackendUser {
   id: string;
   email: string;
-  role: BackendRoleType;
+  role?: BackendRoleType;
+  roles?: string[];
   emailVerified?: boolean;
   clubIds?: string[];
   createdAt?: string;
@@ -82,7 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const createUserData = (backendUser: BackendUser): User => ({
     id: backendUser.id,
     email: backendUser.email,
-    role: mapBackendRole(backendUser.role),
+    role: mapBackendRole(backendUser.roles),
+    roles: backendUser.roles || [],
     emailVerified: backendUser.emailVerified || false,
     clubIds: backendUser?.clubIds || [],
     profileComplete: backendUser.profileComplete,
