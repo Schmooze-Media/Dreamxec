@@ -13,7 +13,7 @@ const router = express.Router();
  * POST /api/mentor
  * Submit a new mentor application
  */
-router.post("/", mentorController.submitMentorApplication);
+router.post("/", protect, mentorController.submitMentorApplication);
 
 // ==========================================
 // PROTECTED ROUTES (Admin only)

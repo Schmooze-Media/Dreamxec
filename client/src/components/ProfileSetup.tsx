@@ -234,16 +234,12 @@ export default function ProfileSetup() {
   // ── Derive initial role from AuthContext immediately (no API wait) ──
   const getInitialRole = (): Role => {
     if (!user) return "USER";
-    // mapBackendRole returns lowercase frontend roles ("donor", "student", "admin", etc.)
-    const r = (user.role as string)?.toUpperCase();
-    if (r === "DONOR") return "DONOR";
-    if (r === "FACULTY") return "FACULTY";
-    if (r === "ADMIN") return "ADMIN";
-    if (r === "ALUMNI") return "ALUMNI";
-    if (r === "MENTOR") return "MENTOR";
-    // Both "STUDENT" and "USER" (backend raw) map to the Student flow
-    if (r === "STUDENT" || r === "USER") return "USER";
-    return "USER"; // unselected fallback
+    const roles = (user as any).roles || [(user as any).role];
+    const upperRoles = roles.map((r: string) => r?.toUpperCase());
+    if (upperRoles.includes("DONOR")) return "DONOR";
+    if (upperRoles.includes("FACULTY")) return "FACULTY";
+    if (upperRoles.includes("ALUMNI")) return "ALUMNI";
+    return "USER";
   };
 
   // "USER" is unselected placeholder only when user has no resolved role yet
@@ -328,15 +324,20 @@ export default function ProfileSetup() {
             return;
           }
 
-          // Use API role as the authoritative source once loaded
-          // API returns backend roles ("USER", "DONOR", "FACULTY", etc.)
-          const apiRole = (r as string)?.toUpperCase() as Role;
-          // Map legacy backend "USER" → keep as "USER" (Student flow)
-          setRole(apiRole || "USER");
+          // Determine the form role based on the user's role array
+          const p = profile as any;
+          const rolesArray = p.roles || [(r as string)?.toUpperCase()];
+          const upperRoles = rolesArray.map((r: string) => r?.toUpperCase());
+          
+          let apiRole: Role = "USER";
+          if (upperRoles.includes("DONOR")) apiRole = "DONOR";
+          else if (upperRoles.includes("FACULTY")) apiRole = "FACULTY";
+          else if (upperRoles.includes("ALUMNI")) apiRole = "ALUMNI";
+
+          setRole(apiRole);
           // Any authenticated user has a role — mark as chosen
           setRoleChosen(true);
           setCompletionPct(pct);
-          const p = profile as any;
           if (p.phone) {
             setIsRoleLocked(true);
           }
