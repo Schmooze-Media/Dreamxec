@@ -45,6 +45,10 @@ export const mapBackendRole = (
     return "donor";
   }
 
+  if (normalized.includes("FACULTY")) {
+    return "FACULTY";
+  }
+
   return "student";
 };
 
@@ -53,10 +57,10 @@ export const mapBackendRole = (
  */
 export const mapFrontendRole = (
   frontendRole: UserRole,
-): "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" => {
+): "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "FACULTY" => {
   const roleMap: Record<
     UserRole,
-    "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT"
+    "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "FACULTY"
   > = {
     student: "USER",
     donor: "DONOR",
@@ -69,6 +73,7 @@ export const mapFrontendRole = (
     DONOR: "USER",
     ALUMNI: "USER",
     MENTOR: "USER",
+    FACULTY: "FACULTY",
   };
 
   return roleMap[frontendRole];

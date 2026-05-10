@@ -24,7 +24,8 @@ type BackendRoleType =
   | "ADMIN"
   | "STUDENT_PRESIDENT"
   | "ALUMNI"
-  | "MENTOR";
+  | "MENTOR"
+  | "FACULTY";
 
 interface BackendUser {
   id: string;
@@ -41,6 +42,7 @@ interface BackendUser {
   profileComplete?: boolean;
   name?: string;
   studentVerified?: boolean;
+  facultyVerified?: boolean;
   accountStatus?: "ACTIVE" | "BLOCKED" | "SUSPENDED" | "UNDER_REVIEW";
 }
 
@@ -101,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     clubVerified: backendUser?.clubVerified || false,
     name: backendUser.name,
     studentVerified: backendUser?.studentVerified || false,
+    facultyVerified: backendUser?.facultyVerified || false,
     accountStatus: backendUser.accountStatus || "ACTIVE",
   });
 
