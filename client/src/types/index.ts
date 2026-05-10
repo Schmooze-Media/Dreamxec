@@ -68,7 +68,8 @@ export type UserRole =
   | "DONOR"
   | "STUDENT_PRESIDENT"
   | "ALUMNI"
-  | "MENTOR";
+  | "MENTOR"
+  | "FACULTY";
 
 export interface User {
   id: string;
@@ -81,6 +82,7 @@ export interface User {
   profileComplete: boolean;
   emailVerified: boolean;
   studentVerified: boolean;
+  facultyVerified?: boolean;
   isClubPresident: boolean;
   isClubMember: boolean;
   clubVerified: boolean;

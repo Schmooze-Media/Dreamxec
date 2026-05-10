@@ -89,7 +89,8 @@ exports.verifyFacultyOtp = catchAsync(async (req, res, next) => {
   const updatedUser = await prisma.user.update({
     where: { id: req.user.id },
     data: {
-      role: Roles.FACULTY,
+      roles: { push: Roles.FACULTY },
+      facultyVerified: true,
     },
   });
 
@@ -208,7 +209,10 @@ exports.acceptFacultyInvite = catchAsync(async (req, res, next) => {
 
   const updatedUser = await prisma.user.update({
     where: { id: targetUser.id },
-    data: updateData,
+    data: {
+      ...updateData,
+      facultyVerified: true,
+    },
   });
 
   // 4. BURN THE TOKEN! (So it can never be used again)

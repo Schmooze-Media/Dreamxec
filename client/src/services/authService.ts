@@ -11,10 +11,11 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR";
+  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR" | "FACULTY";
   roles?: string[];
   organizationName?: string;
   studentVerified?: boolean;
+  facultyVerified?: boolean;
   accountStatus?: "ACTIVE" | "BLOCKED" | "SUSPENDED" | "UNDER_REVIEW";
   profileComplete: boolean;
 }
@@ -23,7 +24,7 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR"; // Added STUDENT_PRESIDENT
+  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR" | "FACULTY"; // Added STUDENT_PRESIDENT, FACULTY
   organizationName?: string;
 }
 
@@ -103,7 +104,7 @@ export const resetPassword = async (
 
 // Google OAuth - Initiate authentication
 export const initiateGoogleAuth = (
-  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR",
+  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR" | "FACULTY",
 ): void => {
   // Added STUDENT_PRESIDENT
   const envUrl = import.meta.env.VITE_API_URL;
@@ -134,7 +135,7 @@ export const handleGoogleCallback = async (): Promise<
 
 // LinkedIn OAuth - Initiate authentication
 export const initiateLinkedInAuth = (
-  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR",
+  role: "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT" | "ALUMNI" | "MENTOR" | "FACULTY",
 ): void => {
   // Added STUDENT_PRESIDENT
   const envUrl = import.meta.env.VITE_API_URL;

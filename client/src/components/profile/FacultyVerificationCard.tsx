@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { usePermission } from '../../rbac/usePermission';
 import { Permissions } from '../../rbac/permissions';
+import { useAuth } from '../../context/AuthContext';
 
 export default function FacultyVerificationCard() {
   const { can } = usePermission();
+  const { user } = useAuth();
   const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -14,7 +16,7 @@ export default function FacultyVerificationCard() {
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   // Hide component if they are already verified!
-  if (can(Permissions.CAMPAIGN_REVIEW)) {
+  if (user?.facultyVerified) {
     return (
       <div className="p-4 bg-green-50 border-2 border-green-600 shadow-[4px_4px_0px_0px_#16a34a] flex items-center gap-3 max-w-md">
         <span className="text-2xl">🎓</span>

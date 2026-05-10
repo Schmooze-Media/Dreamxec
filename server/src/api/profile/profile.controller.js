@@ -49,13 +49,27 @@ function calcDonorCompletion(d) {
   return Math.round((filled / fields.length) * 100);
 }
 
+/**
+ * Compute eligibility for ALUMNI and MENTOR roles based on Donor profile
+ */
+function computeEligibility(profile) {
+  const currentYear = new Date().getFullYear();
+  const isAlumniEligible = Boolean(
+    profile.institution?.trim() &&
+    profile.graduationYear &&
+    profile.graduationYear < currentYear
+  );
+  const isMentorEligible = Boolean(
+    profile.openToConnect === true &&
+    profile.expertiseSkills?.length >= 1
+  );
+  return { isAlumniEligible, isMentorEligible };
+}
+
 const getRoles = (user) => {
   if (!user) return [];
-
   if (Array.isArray(user.roles)) return user.roles;
-
   if (user.role) return [user.role];
-
   return [];
 };
 
@@ -100,6 +114,7 @@ exports.getMyProfile = catchAsync(async (req, res, next) => {
         expertiseSkills: true,
         openToConnect: true,
         profileComplete: true,
+        suppressUpgradeCard: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -107,9 +122,16 @@ exports.getMyProfile = catchAsync(async (req, res, next) => {
     if (!profile) return next(new AppError("Donor profile not found", 404));
 
     const completionPct = calcDonorCompletion(profile);
+    const eligibility = completionPct >= 80 ? computeEligibility(profile) : { isAlumniEligible: false, isMentorEligible: false };
+
     return res.status(200).json({
       status: "success",
-      data: { profile, completionPct, role: "DONOR" },
+      data: { 
+        profile, 
+        completionPct, 
+        role: "DONOR",
+        ...eligibility // Injects isAlumniEligible & isMentorEligible
+      },
     });
   }
 
@@ -169,7 +191,7 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
   // HANDLE ROLE UPDATE
   // ─────────────────────────────────────────
   if (req.body.role !== undefined) {
-    const allowedRoles = ["USER", "DONOR", "STUDENT_PRESIDENT"];
+    const allowedRoles = ["USER", "DONOR", "FACULTY", "ALUMNI"];
 
     if (!allowedRoles.includes(req.body.role)) {
       return next(new AppError("Invalid role selected.", 400));
@@ -200,7 +222,9 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
   const isStudent =
     roles.includes("USER") ||
     roles.includes("STUDENT") ||
-    roles.includes("STUDENT_PRESIDENT");
+    roles.includes("STUDENT_PRESIDENT") ||
+    roles.includes("FACULTY") ||
+    roles.includes("ALUMNI");
 
   // ─────────────────────────────────────────
   // DISALLOW EMAIL CHANGE
@@ -337,27 +361,16 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
       updated.profileComplete = isComplete;
     }
 
-    // ✅ Alumni check — uses computeEligibility() already in this file
-    const { isAlumniEligible } = computeEligibility(updated);
-    if (isAlumniEligible) {
-      const linkedUser = await prisma.user.findUnique({
-        where: { email: updated.email },
-        select: { id: true, roles: true },
-      });
-      if (linkedUser && !linkedUser.roles.includes("ALUMNI")) {
-        await prisma.user.update({
-          where: { id: linkedUser.id },
-          data: { roles: { push: "ALUMNI" } },
-        });
-      }
-    }
+    // Evaluate eligibility and return to the frontend
+    const eligibility = isComplete ? computeEligibility(updated) : { isAlumniEligible: false, isMentorEligible: false };
 
     return res.status(200).json({
       status: "success",
       data: {
         profile: updated,
         completionPct,
-        role: updated.roles?.[0] ?? "USER",
+        role: roles,
+        ...eligibility // Frontend reads this to trigger Activation Cards
       },
     });
   }

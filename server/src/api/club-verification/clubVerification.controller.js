@@ -123,13 +123,15 @@ async function approveVerification(req, res) {
         data: { status: "APPROVED" },
       });
 
-      // 2. Upgrade user role
+      // 2. Upgrade user role (additive — push into roles array)
       await tx.user.update({
         where: { id: verification.userId },
         data: { 
-          role: "STUDENT_PRESIDENT",
+          roles: { push: "STUDENT_PRESIDENT" },
           canCreateCampaign: true,
-          clubVerified: true
+          clubVerified: true,
+          isClubPresident: true,
+          isClubMember: true,
         },
       });
 

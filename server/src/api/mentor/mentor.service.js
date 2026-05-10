@@ -133,20 +133,7 @@ exports.updateMentorApplicationStatus = async (
     },
   });
 
-  if (status === "APPROVED") {
-    const user = await prisma.user.findUnique({
-      where: { email: updatedApplication.email },
-    });
 
-    if (user) {
-      if (user.role !== "MENTOR" && user.role !== "ADMIN") {
-        await prisma.user.update({
-          where: { email: updatedApplication.email },
-          data: { role: "MENTOR" },
-        });
-      }
-    }
-  }
 
   return updatedApplication;
 };

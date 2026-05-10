@@ -122,31 +122,4 @@ router.delete(
   mentorController.deleteMentorApplication,
 );
 
-// --------------------
-// MENTOR APPLICATIONS
-// --------------------
-
-router.get("/mentor-applications", mentorController.getAllMentorApplications);
-router.get(
-  "/mentor-applications/stats/overview",
-  mentorController.getMentorApplicationStats,
-);
-router.get(
-  "/mentor-applications/quality/high",
-  mentorController.getHighQualityMentors,
-);
-router.get("/mentor-applications/:id", mentorController.getMentorApplication);
-router.patch(
-  "/mentor-applications/:id",
-  mentorController.updateMentorApplicationStatus,
-); // approve/reject/hold
-router.patch(
-  "/mentor-applications/:id/score",
-  mentorController.scoreMentorApplication,
-);
-router.delete(
-  "/mentor-applications/:id",
-  mentorController.deleteMentorApplication,
-);
-
 module.exports = router;

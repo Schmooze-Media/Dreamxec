@@ -13,7 +13,7 @@ const router = express.Router();
  * POST /api/mentor
  * Submit a new mentor application
  */
-router.post("/", mentorController.submitMentorApplication);
+router.post("/", protect, mentorController.submitMentorApplication);
 
 // ==========================================
 // PROTECTED ROUTES (Admin only)
@@ -54,12 +54,6 @@ router.get("/:id", mentorController.getMentorApplication);
  * Body: { status: "PENDING|REVIEWED|APPROVED|REJECTED", adminNotes?: string }
  */
 router.patch("/:id/status", mentorController.updateMentorApplicationStatus);
-
-/**
- * PATCH /api/mentor/:id/approve
- * Approve mentor application and assign role
- */
-router.patch("/:id/approve", mentorController.approveMentorApplication);
 
 /**
  * PATCH /api/mentor/:id/score

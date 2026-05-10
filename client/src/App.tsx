@@ -117,6 +117,8 @@ import AdminDonors from "./components/admin/AdminDonors";
 import AdminApplications from "./components/admin/AdminApplications";
 import apiRequest, { getToken } from "./services/api";
 import AdminCampaigns from "./components/admin/AdminCampaigns";
+import AdminMentorApps from "./components/admin/Adminmentorapp";
+import AdminMentorAppDetail from "./components/admin/Adminmentordetails";
 
 type UserProjectsResponse = {
   userProjects: any;
@@ -229,6 +231,7 @@ function AppContent() {
             id: response.data.user.id,
             email: response.data.user.email,
             roles: response.data.user.roles || ["USER"],
+            role: mapBackendRole(response.data.user.roles),
             emailVerified: response.data.user.emailVerified || false,
             clubIds: response.data.user?.clubIds || [],
             createdAt: response.data.user.createdAt || new Date().toISOString(),
@@ -616,6 +619,7 @@ function AppContent() {
         const userData: User = {
           id: response.data.user.id,
           email: response.data.user.email,
+          roles: response.data.user.roles || ["USER"],
           role: mapBackendRole(response.data.user.roles),
           emailVerified: response.data.user?.emailVerified || false,
           clubIds: response.data.user?.clubIds || [],
@@ -638,14 +642,14 @@ function AppContent() {
           return;
         }
 
-        const primaryRole = getPrimaryRole(userData);
-        if (primaryRole === "student") {
+        const frontendRole = userData.role;
+        if (frontendRole === "student") {
           navigate("/dashboard");
-        } else if (primaryRole === "donor") {
+        } else if (frontendRole === "donor") {
           navigate("/donor/dashboard");
-        } else if (primaryRole === "admin") {
+        } else if (frontendRole === "admin") {
           navigate("/admin");
-        } else if (primaryRole === "STUDENT_PRESIDENT") {
+        } else if (frontendRole === "STUDENT_PRESIDENT") {
           navigate("/president");
         }
       }
@@ -684,6 +688,7 @@ function AppContent() {
         const userData: User = {
           id: response.data.user.id,
           email: response.data.user.email,
+          roles: response.data.user.roles || ["USER"],
           role: mapBackendRole(response.data.user.roles),
           emailVerified: response.data.user.emailVerified || false,
           clubIds: response.data.user?.clubIds || [],
@@ -700,10 +705,14 @@ function AppContent() {
 
         setUser(userData);
 
-        if (hasRole(userData, "donor") && userData.profileComplete === false) {
+        // if (hasRole(userData, "donor") && userData.profileComplete === false) {
+        //   navigate("/profile/setup");
+        //   return;
+        // }
+        if (userData.profileComplete === false) {
           navigate("/profile/setup");
           return;
-        }
+        } 
 
         const origin = (location.state as any)?.from;
         if (origin) {
@@ -711,13 +720,15 @@ function AppContent() {
           return;
         }
 
-        const primaryRole = getPrimaryRole(userData);
-        if (primaryRole === "student") {
+        const frontendRole = userData.role;
+        if (frontendRole === "student") {
           navigate("/dashboard");
-        } else if (primaryRole === "donor") {
+        } else if (frontendRole === "donor") {
           navigate("/donor/dashboard");
-        } else if (primaryRole === "admin") {
+        } else if (frontendRole === "admin") {
           navigate("/admin");
+        } else if (frontendRole === "STUDENT_PRESIDENT") {
+          navigate("/president");
         }
       }
     } catch (error) {
@@ -940,7 +951,7 @@ function AppContent() {
 
   // ─── Derived booleans (use hasRole / getPrimaryRole everywhere) ──────────────
 
-  const isStudent = hasRole(user, "STUDENT");
+  const isStudent = hasRole(user, "STUDENT") || hasRole(user, "USER") || hasRole(user, "FACULTY") || hasRole(user, "ALUMNI");
   const isStudentPresident = hasRole(user, "STUDENT_PRESIDENT");
   const isStudentOrPresident = isStudent || isStudentPresident;
   const isDonor = hasRole(user, "DONOR");
@@ -1240,6 +1251,24 @@ function AppContent() {
                               />
 
                               <Route
+                                path="/admin/mentor-applications"
+                                element={
+                                  <AdminRoute>
+                                    <AdminMentorApps />
+                                  </AdminRoute>
+                                }
+                              />
+
+                              <Route
+                                path="/admin/mentor-applications/:id"
+                                element={
+                                  <AdminRoute>
+                                    <AdminMentorAppDetail />
+                                  </AdminRoute>
+                                }
+                              />
+
+                              <Route
                                 path="/admin/campaigns"
                                 element={
                                   <AdminRoute>
@@ -1379,6 +1408,9 @@ function AppContent() {
                                         projectsCount={donorProjects.length}
                                         profileComplete={
                                           (user as any).profileComplete
+                                        }
+                                        suppressUpgradeCard={
+                                          (user as any).suppressUpgradeCard
                                         }
                                         userRoles={(user as any).roles ?? []}
                                         onCreateProject={() =>

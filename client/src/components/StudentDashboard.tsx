@@ -10,6 +10,9 @@ import PresidentCampaigns from "./president/PresidentCampaigns";
 import UploadMembers from "./president/UploadMembers";
 import AddMemberManually from "./president/AddMemberManually";
 import { X } from 'lucide-react';
+import { usePermission } from '../rbac/usePermission';
+import { Permissions } from '../rbac/permissions';
+import FacultyVerificationCard from './profile/FacultyVerificationCard';
 
 /* ─────────────────────────────────────────────
    ICONS
@@ -247,6 +250,10 @@ export default function StudentDashboard({
   clubVerified = false,
   onCreateCampaignDemo,
 }: StudentDashboardProps) {
+  const { can } = usePermission();
+  const isFaculty = user?.roles?.includes('FACULTY') || false;
+  const isVerifiedFaculty = user?.facultyVerified || false;
+
   const [selectedTab, setSelectedTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -257,6 +264,7 @@ export default function StudentDashboard({
   const [presidentTab, setPresidentTab] = useState<PresidentTab>('dashboard');
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [isPresidentRestrictionOpen, setIsPresidentRestrictionOpen] = useState(false);
+  const [showFacultyModal, setShowFacultyModal] = useState(isFaculty && !isVerifiedFaculty);
   const navigate = useNavigate();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -269,6 +277,8 @@ export default function StudentDashboard({
     if (user.roles.includes('ADMIN')) return 'Admin';
     if (user.roles.includes('STUDENT_PRESIDENT')) return 'President';
     if (user.roles.includes('DONOR') || user.roles.includes('PREMIUM_DONOR')) return 'Donor';
+    if (user.roles.includes('FACULTY')) return 'Faculty';
+    if (user.roles.includes('ALUMNI')) return 'Alumni';
     return 'Student';
   };
 
@@ -495,7 +505,8 @@ export default function StudentDashboard({
 
         {/* Bottom actions */}
         <div className="p-4 space-y-2" style={{ borderTop: '3px solid #FF7F00' }}>
-          {!clubVerified && !isClubPresident && (
+          {/* Student-only actions */}
+          {!isFaculty && !clubVerified && !isClubPresident && (
             <>
               <button
                 onClick={() => { handlePresidentClick(); setSidebarOpen(false); }}
@@ -515,19 +526,34 @@ export default function StudentDashboard({
               </button>
             </>
           )}
-          <button
-            onClick={() => { handleCreateCampaign(); setSidebarOpen(false); }}
-            disabled={!canCreateCampaign}
-            className="w-full flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-widest transition-all"
-            style={
-              canCreateCampaign
-                ? { background: '#FF7F00', color: '#003366', border: '3px solid #fff', boxShadow: '4px 4px 0 #0B9C2C' }
-                : { background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)', border: '2px solid rgba(255,255,255,0.15)', cursor: 'not-allowed' }
-            }
-          >
-            <PlusIcon className="w-4 h-4" />
-            Create Campaign
-          </button>
+
+          {/* Faculty-specific verification button */}
+          {isFaculty && !isVerifiedFaculty && (
+            <button
+              onClick={() => { setShowFacultyModal(true); setSidebarOpen(false); }}
+              className="w-full flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-widest transition-all"
+              style={{ background: '#FF7F00', color: '#003366', border: '3px solid #fff', boxShadow: '4px 4px 0 #0B9C2C' }}
+            >
+              🎓 Verify Faculty Identity
+            </button>
+          )}
+
+          {/* Campaign creation (Hide for Faculty) */}
+          {!isFaculty && (
+            <button
+              onClick={() => { handleCreateCampaign(); setSidebarOpen(false); }}
+              disabled={!canCreateCampaign}
+              className="w-full flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-widest transition-all"
+              style={
+                canCreateCampaign
+                  ? { background: '#FF7F00', color: '#003366', border: '3px solid #fff', boxShadow: '4px 4px 0 #0B9C2C' }
+                  : { background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)', border: '2px solid rgba(255,255,255,0.15)', cursor: 'not-allowed' }
+              }
+            >
+              <PlusIcon className="w-4 h-4" />
+              Create Campaign
+            </button>
+          )}
         </div>
       </aside>
 
@@ -634,7 +660,7 @@ export default function StudentDashboard({
           {selectedTab === 'overview' && (
             <>
               {/* Verification alert */}
-              {!studentVerified && (
+              {((!isFaculty && !studentVerified) || (isFaculty && !isVerifiedFaculty)) && (
                 <div
                   className="flex flex-col sm:flex-row sm:items-center gap-4 p-4"
                   style={{ background: '#fffbeb', border: '3px solid #FF7F00', boxShadow: '5px 5px 0 #003366' }}
@@ -646,13 +672,17 @@ export default function StudentDashboard({
                     <ClockIcon className="w-5 h-5 text-[#003366]" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-black text-sm text-[#003366] uppercase tracking-wide">Action Required: Verify Your Account</p>
+                    <p className="font-black text-sm text-[#003366] uppercase tracking-wide">
+                      Action Required: {isFaculty ? 'Verify Faculty Identity' : 'Verify Your Account'}
+                    </p>
                     <p className="text-xs font-medium text-[#003366]/70 mt-0.5">
-                      Complete student verification to unlock campaign creation and full platform access.
+                      {isFaculty 
+                        ? 'Verify your institutional email to unlock campaign approval rights and platform access.'
+                        : 'Complete student verification to unlock campaign creation and full platform access.'}
                     </p>
                   </div>
                   <button
-                    onClick={() => setIsVerificationModalOpen(true)}
+                    onClick={() => isFaculty ? setShowFacultyModal(true) : setIsVerificationModalOpen(true)}
                     className="flex-shrink-0 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white transition-all hover:translate-x-[-2px] hover:translate-y-[-2px]"
                     style={{ background: '#003366', border: '3px solid #003366', boxShadow: '4px 4px 0 #FF7F00' }}
                   >
@@ -996,6 +1026,20 @@ export default function StudentDashboard({
         onClose={() => setIsPresidentRestrictionOpen(false)}
         onVerify={() => { setIsPresidentRestrictionOpen(false); setIsVerificationModalOpen(true); }}
       />
+      {showFacultyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowFacultyModal(false)} 
+              className="absolute -top-3 -right-3 z-10 w-8 h-8 flex items-center justify-center bg-white border-2 border-[#003366] text-[#003366] hover:bg-gray-100 transition-colors shadow-[2px_2px_0px_0px_#FF7F00]"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <FacultyVerificationCard />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

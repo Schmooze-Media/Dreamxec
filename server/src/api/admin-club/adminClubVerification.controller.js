@@ -71,7 +71,7 @@ exports.approveVerification = async (req, res) => {
       await tx.user.update({
         where: { id: verification.userId },
         data: {
-          role: "STUDENT_PRESIDENT",
+          roles: { push: "STUDENT_PRESIDENT" },
           clubVerified: true,
           isClubPresident: true,
           isClubMember: true,
