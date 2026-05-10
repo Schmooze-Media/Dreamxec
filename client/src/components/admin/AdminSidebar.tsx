@@ -200,6 +200,11 @@ export default function AdminSidebar() {
       path: "/admin/applications",
       icon: <Icons.FileText />,
     }, // <--- NEW
+    {
+      label: "Mentor Apps",
+      path: "/admin/mentor-applications",
+      icon: <Icons.Briefcase />,
+    },
     { label: "Financials", path: "/admin/financials", icon: <Icons.Wallet /> },
     {
       label: "Student Verify",

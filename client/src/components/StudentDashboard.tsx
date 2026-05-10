@@ -269,6 +269,8 @@ export default function StudentDashboard({
     if (user.roles.includes('ADMIN')) return 'Admin';
     if (user.roles.includes('STUDENT_PRESIDENT')) return 'President';
     if (user.roles.includes('DONOR') || user.roles.includes('PREMIUM_DONOR')) return 'Donor';
+    if (user.roles.includes('FACULTY')) return 'Faculty';
+    if (user.roles.includes('ALUMNI')) return 'Alumni';
     return 'Student';
   };
 

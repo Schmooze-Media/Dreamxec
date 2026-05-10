@@ -2,11 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProfile, updateProfile } from "../services/profileService";
 import { useAuth } from "../context/AuthContext";
+import axios from "axios";
+import FacultyVerificationCard from "./profile/FacultyVerificationCard";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 /* ─────────────────────────────────────────
    TYPES
 ───────────────────────────────────────── */
-type Role = "USER" | "DONOR" | "ADMIN" | "STUDENT_PRESIDENT";
+type Role = "USER" | "STUDENT" | "DONOR" | "FACULTY" | "ADMIN" | "ALUMNI" | "MENTOR";
 type Gender = "MALE" | "FEMALE" | "OTHER";
 type YearOfStudy = "FIRST" | "SECOND" | "THIRD" | "FINAL";
 type Occupation = "SALARIED" | "BUSINESS" | "PROFESSIONAL" | "OTHER";
@@ -32,7 +36,7 @@ const Field = ({
 );
 
 const inputCls =
-  "w-full px-3 py-2.5 text-sm font-medium text-[#003366] bg-white focus:outline-none transition-all border-[3px] border-[#003366] shadow-[3px_3px_0_#FF7F00]";
+  "w-full px-3 py-2.5 text-sm font-medium text-[#003366] bg-white focus:outline-none transition-all border-[3px] border-[#003366] shadow-[3px_3px_0_#FF7F00] disabled:opacity-60 disabled:cursor-not-allowed";
 const selectCls = inputCls + " cursor-pointer";
 
 /* ─────────────────────────────────────────
@@ -230,19 +234,36 @@ export default function ProfileSetup() {
   // ── Derive initial role from AuthContext immediately (no API wait) ──
   const getInitialRole = (): Role => {
     if (!user) return "USER";
-    // AuthContext stores the frontend-mapped role ('donor', 'student', etc.)
-    if (user.role === "donor") return "DONOR";
-    if (user.role === "STUDENT_PRESIDENT") return "STUDENT_PRESIDENT";
-    return "USER";
+    // mapBackendRole returns lowercase frontend roles ("donor", "student", "admin", etc.)
+    const r = (user.role as string)?.toUpperCase();
+    if (r === "DONOR") return "DONOR";
+    if (r === "FACULTY") return "FACULTY";
+    if (r === "ADMIN") return "ADMIN";
+    if (r === "ALUMNI") return "ALUMNI";
+    if (r === "MENTOR") return "MENTOR";
+    // Both "STUDENT" and "USER" (backend raw) map to the Student flow
+    if (r === "STUDENT" || r === "USER") return "USER";
+    return "USER"; // unselected fallback
   };
 
+  // "USER" is unselected placeholder only when user has no resolved role yet
   const [role, setRole] = useState<Role>(getInitialRole);
+  const [roleChosen, setRoleChosen] = useState<boolean>(() => {
+    // A logged-in user always has at least USER/student — treat as already chosen
+    return !!user;
+  });
   const [step, setStep] = useState(0);
   const [completionPct, setCompletionPct] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [isAlumniEligible, setIsAlumniEligible] = useState(false);
+  const [isMentorEligible, setIsMentorEligible] = useState(false);
+  const [showActivationCards, setShowActivationCards] = useState(false);
+  const [showFacultyVerification, setShowFacultyVerification] = useState(false);
+  const [activatingAlumni, setActivatingAlumni] = useState(false);
+  const [isRoleLocked, setIsRoleLocked] = useState(false);
 
   // ── Student form state ──
   // Pre-fill name from auth context (entered at signup)
@@ -297,11 +318,30 @@ export default function ProfileSetup() {
         const res = await getProfile();
         if (res.status === "success" && res.data) {
           const { profile, completionPct: pct, role: r } = res.data;
+
+          // ── Guard: redirect away if profile is already complete ──
+          if (profile.profileComplete === true) {
+            const resolvedRole = (r as string)?.toUpperCase();
+            if (resolvedRole === "DONOR") navigate("/donor/dashboard");
+            else if (resolvedRole === "FACULTY") navigate("/dashboard");
+            else navigate("/dashboard");
+            return;
+          }
+
           // Use API role as the authoritative source once loaded
-          setRole(r as Role);
+          // API returns backend roles ("USER", "DONOR", "FACULTY", etc.)
+          const apiRole = (r as string)?.toUpperCase() as Role;
+          // Map legacy backend "USER" → keep as "USER" (Student flow)
+          setRole(apiRole || "USER");
+          // Any authenticated user has a role — mark as chosen
+          setRoleChosen(true);
           setCompletionPct(pct);
           const p = profile as any;
-          if (r === "DONOR") {
+          if (p.phone) {
+            setIsRoleLocked(true);
+          }
+          // Use the normalized apiRole for branching (not the raw `r` which may vary in case)
+          if (apiRole === "DONOR") {
             // Use saved name OR fall back to the name from signup
             setDName(p.name || user?.name || "");
             setDPhone(p.phone || "");
@@ -476,19 +516,28 @@ export default function ProfileSetup() {
       }
       if (step === 1) {
         if (!sCollege.trim()) return "College/University name is required.";
-        if (!sYear) return "Please select your year of study.";
+        // Only require year of study for Students (USER)
+        if (role === "USER" && !sYear) return "Please select your year of study.";
       }
     }
     return "";
   };
   // ── Role change — resets step to 0 so steps config recalculates ──
-  const handleRoleChange = (newRole: Role) => {
-    setRole(newRole);
+  const handleRoleChange = (newRole: Role | "") => {
+    if (newRole !== "") {
+      setRole(newRole as Role);
+      setRoleChosen(true);
+    }
     setStep(0);
     setError("");
   };
   // ── Save step ──
   const handleNext = async () => {
+    // ── Mandatory role gate ──
+    if (step === 0 && !roleChosen) {
+      setError("Please select your role before continuing.");
+      return;
+    }
     const err = validateStep();
     if (err) {
       setError(err);
@@ -497,8 +546,15 @@ export default function ProfileSetup() {
     setError("");
     setSaving(true);
     try {
-      const res = await updateProfile(buildPayload() as any);
-      if (res.data) setCompletionPct(res.data.completionPct);
+      // On step 0, always include the chosen role so it gets persisted
+      const payload = step === 0 ? { ...buildPayload(), role } : buildPayload();
+      const res = await updateProfile(payload as any);
+      if (res.data) {
+        setCompletionPct(res.data.completionPct);
+        // Capture eligibility flags from API response
+        if (res.data.isAlumniEligible !== undefined) setIsAlumniEligible(res.data.isAlumniEligible);
+        if (res.data.isMentorEligible !== undefined) setIsMentorEligible(res.data.isMentorEligible);
+      }
     } catch (err: any) {
       setError(err?.message || "Failed to save. Please try again.");
       setSaving(false);
@@ -506,10 +562,16 @@ export default function ProfileSetup() {
     }
     if (isLast) {
       setSuccessMsg("🎉 Profile setup complete!");
-      setTimeout(
-        () => navigate(role === "DONOR" ? "/donor/dashboard" : "/dashboard"),
-        1500,
-      );
+      if (role === "FACULTY") {
+        setShowFacultyVerification(true);
+      } else if (role === "DONOR" && (isAlumniEligible || isMentorEligible)) {
+        setShowActivationCards(true);
+      } else {
+        setTimeout(
+          () => { window.location.href = role === "DONOR" ? "/donor/dashboard" : "/dashboard"; },
+          1500,
+        );
+      }
     } else {
       setStep((s) => s + 1);
     }
@@ -518,8 +580,26 @@ export default function ProfileSetup() {
 
   const handleSkip = () => {
     if (isLast) {
-      navigate(role === "DONOR" ? "/donor/dashboard" : "/dashboard");
+      window.location.href = role === "DONOR" ? "/donor/dashboard" : "/dashboard";
     } else setStep((s) => s + 1);
+  };
+
+  // ── Activate Alumni handler ──
+  const handleActivateAlumni = async () => {
+    setActivatingAlumni(true);
+    try {
+      await axios.post(
+        `${API_BASE}/users/activate-role`,
+        { role: "ALUMNI" },
+        { withCredentials: true, headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      setSuccessMsg("🎓 Alumni role activated! Welcome to the Alumni network.");
+      setTimeout(() => navigate("/donor/dashboard"), 1500);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to activate Alumni role.");
+    } finally {
+      setActivatingAlumni(false);
+    }
   };
 
   if (loading) {
@@ -535,6 +615,147 @@ export default function ProfileSetup() {
     );
   }
 
+  // ── Faculty Verification Screen ──
+  if (showFacultyVerification) {
+    return (
+      <div className="min-h-screen bg-[#FFFBF3] flex items-center justify-center py-8 px-4">
+        <div className="w-full max-w-2xl flex flex-col items-center">
+          <FacultyVerificationCard />
+          
+          <button
+            onClick={() => { window.location.href = "/dashboard"; }}
+            className="mt-6 w-full max-w-md py-3 font-black text-sm uppercase tracking-wide text-[#003366]/50 bg-white text-center"
+            style={{ border: "3px solid #003366", opacity: 0.6 }}
+          >
+            Skip — Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Activation Cards Screen (shown after final step for eligible donors) ──
+  if (showActivationCards) {
+    return (
+      <div className="min-h-screen bg-[#FFFBF3] flex items-center justify-center py-8 px-4">
+        <div className="w-full max-w-2xl">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-black text-[#003366] uppercase tracking-tight">
+              🎉 Profile Complete!
+            </h1>
+            <p className="text-[#003366]/70 font-bold text-sm mt-2">
+              You're eligible for additional roles — unlock new features!
+            </p>
+          </div>
+
+          {/* Success Message */}
+          {successMsg && (
+            <div
+              className="mb-6 p-3 text-sm font-bold text-green-700 bg-green-50"
+              style={{ border: "3px solid #0B9C2C", boxShadow: "3px 3px 0 #0B9C2C" }}
+            >
+              {successMsg}
+            </div>
+          )}
+          {error && (
+            <div
+              className="mb-6 p-3 text-sm font-bold text-red-700 bg-red-50 flex items-start gap-2"
+              style={{ border: "3px solid #dc2626", boxShadow: "3px 3px 0 #dc2626" }}
+            >
+              <span>⚠️</span><span>{error}</span>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {/* Alumni Activation Card */}
+            {isAlumniEligible && (
+              <div
+                className="bg-white p-6"
+                style={{ border: "4px solid #0B9C2C", boxShadow: "8px 8px 0 #003366" }}
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className="w-14 h-14 flex items-center justify-center text-3xl flex-shrink-0"
+                    style={{ background: "#f0fdf4", border: "3px solid #0B9C2C" }}
+                  >
+                    🎓
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-black text-[#003366] uppercase tracking-tight">
+                      Become an Alumni
+                    </h2>
+                    <p className="text-sm font-medium text-[#003366]/70 mt-1">
+                      Your institution and graduation year qualify you for Alumni status.
+                      Unlock verified badges, campaign endorsements, and free opportunity posting.
+                    </p>
+                    <button
+                      onClick={handleActivateAlumni}
+                      disabled={activatingAlumni}
+                      className="mt-4 px-6 py-3 font-black text-white uppercase tracking-widest text-sm transition-all disabled:opacity-60"
+                      style={{
+                        background: "#0B9C2C",
+                        border: "3px solid #003366",
+                        boxShadow: "4px 4px 0 #003366",
+                      }}
+                    >
+                      {activatingAlumni ? "⏳ Activating..." : "✓ Activate Alumni Now"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Mentor Application Card */}
+            {isMentorEligible && (
+              <div
+                className="bg-white p-6"
+                style={{ border: "4px solid #FF7F00", boxShadow: "8px 8px 0 #003366" }}
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className="w-14 h-14 flex items-center justify-center text-3xl flex-shrink-0"
+                    style={{ background: "#fff7ed", border: "3px solid #FF7F00" }}
+                  >
+                    🧑‍🏫
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-black text-[#003366] uppercase tracking-tight">
+                      Apply as a Mentor
+                    </h2>
+                    <p className="text-sm font-medium text-[#003366]/70 mt-1">
+                      Share your expertise and guide the next generation of student innovators.
+                      Applications are reviewed within 5–7 business days.
+                    </p>
+                    <button
+                      onClick={() => navigate("/donor/dashboard")}
+                      className="mt-4 px-6 py-3 font-black text-white uppercase tracking-widest text-sm transition-all"
+                      style={{
+                        background: "#FF7F00",
+                        border: "3px solid #003366",
+                        boxShadow: "4px 4px 0 #003366",
+                      }}
+                    >
+                      Start Application →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Skip to Dashboard */}
+          <button
+            onClick={() => navigate("/donor/dashboard")}
+            className="mt-6 w-full py-3 font-black text-sm uppercase tracking-wide text-[#003366]/50 bg-white text-center"
+            style={{ border: "3px solid #003366", opacity: 0.6 }}
+          >
+            Skip — Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FFFBF3] flex items-center justify-center py-8 px-4">
       <div className="w-full max-w-2xl">
@@ -542,7 +763,7 @@ export default function ProfileSetup() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-3">
             <h1 className="text-3xl font-black text-[#003366] uppercase tracking-tight">
-              {role === "DONOR" ? "💼 Donor Profile" : "🎓 Student Profile"}
+              📋 Profile
             </h1>
           </div>
           <p className="text-[#003366]/70 font-bold text-sm">
@@ -598,7 +819,7 @@ export default function ProfileSetup() {
               </div>
             )}
 
-            {/* ── STUDENT STEPS ── */}
+            {/* ── STUDENT / FACULTY STEPS ── */}
             {role !== "DONOR" && (
               <div className="space-y-5">
                 {step === 0 && (
@@ -606,16 +827,19 @@ export default function ProfileSetup() {
                     <Field label="I am a" required>
                       <select
                         className={selectCls}
-                        value={role}
+                        value={roleChosen ? role : ""}
                         onChange={(e) =>
                           handleRoleChange(e.target.value as Role)
                         }
+                        disabled={isRoleLocked}
                       >
+                        <option value="" disabled>
+                          — Select your role —
+                        </option>
                         <option value="USER">🎓 Student</option>
                         <option value="DONOR">💼 Donor / Supporter</option>
-                        <option value="STUDENT_PRESIDENT">
-                          🏛️ Student President
-                        </option>
+                        <option value="FACULTY">🏫 Faculty / Professor</option>
+                        <option value="ALUMNI">🎓 Alumni</option>
                       </select>
                     </Field>
                     <Field label="Full Name" required>
@@ -679,29 +903,31 @@ export default function ProfileSetup() {
                 )}
                 {step === 1 && (
                   <>
-                    <Field label="College / University Name" required>
+                    <Field label={role === "FACULTY" ? "Institution / University" : role === "ALUMNI" ? "Alma Mater" : "College / University Name"} required>
                       <input
                         className={inputCls}
                         value={sCollege}
                         onChange={(e) => setSCollege(e.target.value)}
-                        placeholder="IIT Madras"
+                        placeholder={role === "FACULTY" ? "e.g. Stanford University" : "e.g. IIT Madras"}
                       />
                     </Field>
-                    <Field label="Year of Study" required>
-                      <select
-                        className={selectCls}
-                        value={sYear}
-                        onChange={(e) =>
-                          setSYear(e.target.value as YearOfStudy)
-                        }
-                      >
-                        <option value="">Select year</option>
-                        <option value="FIRST">1st Year</option>
-                        <option value="SECOND">2nd Year</option>
-                        <option value="THIRD">3rd Year</option>
-                        <option value="FINAL">Final Year</option>
-                      </select>
-                    </Field>
+                    {role === "USER" && (
+                      <Field label="Year of Study" required>
+                        <select
+                          className={selectCls}
+                          value={sYear}
+                          onChange={(e) =>
+                            setSYear(e.target.value as YearOfStudy)
+                          }
+                        >
+                          <option value="">Select year</option>
+                          <option value="FIRST">1st Year</option>
+                          <option value="SECOND">2nd Year</option>
+                          <option value="THIRD">3rd Year</option>
+                          <option value="FINAL">Final Year</option>
+                        </select>
+                      </Field>
+                    )}
                     <Field label="Skills / Interests">
                       <SkillsInput skills={sSkills} onChange={setSSkills} />
                     </Field>
@@ -822,16 +1048,19 @@ export default function ProfileSetup() {
                     <Field label="I am a" required>
                       <select
                         className={selectCls}
-                        value={role}
+                        value={roleChosen ? role : ""}
                         onChange={(e) =>
                           handleRoleChange(e.target.value as Role)
                         }
+                        disabled={isRoleLocked}
                       >
+                        <option value="" disabled>
+                          — Select your role —
+                        </option>
                         <option value="USER">🎓 Student</option>
                         <option value="DONOR">💼 Donor / Supporter</option>
-                        <option value="STUDENT_PRESIDENT">
-                          🏛️ Student President
-                        </option>
+                        <option value="FACULTY">🏫 Faculty / Professor</option>
+                        <option value="ALUMNI">🎓 Alumni</option>
                       </select>
                     </Field>
                     <Field label="Full Name" required>
@@ -1110,13 +1339,16 @@ export default function ProfileSetup() {
                     ? "🎉 Complete Setup"
                     : "Save & Continue →"}
               </button>
-              <button
-                onClick={handleSkip}
-                className="px-5 py-3 font-black text-sm uppercase tracking-wide text-[#003366]/50 bg-white"
-                style={{ border: "3px solid #003366", opacity: 0.6 }}
-              >
-                Skip
-              </button>
+              {/* Skip is hidden on step 0 — role selection is mandatory */}
+              {step > 0 && (
+                <button
+                  onClick={handleSkip}
+                  className="px-5 py-3 font-black text-sm uppercase tracking-wide text-[#003366]/50 bg-white"
+                  style={{ border: "3px solid #003366", opacity: 0.6 }}
+                >
+                  Skip
+                </button>
+              )}
             </div>
 
             {/* Tricolor footer */}

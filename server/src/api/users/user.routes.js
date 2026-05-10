@@ -2,6 +2,7 @@ const express = require("express");
 const userController = require("./user.controller");
 const { activateRole } = require("../../rbac//activaterole.controler");
 const { suppressUpgradeCard } = require("../../api/users/suppressUpgradeCard");
+const mentorController = require("../mentor/mentor.controller");
 const { protect, restrictTo } = require("../../middleware/auth.middleware");
 
 const router = express.Router();
@@ -10,6 +11,9 @@ router.use(protect);
 
 // USER routes
 router.get("/me", userController.getMe);
+
+// ── Current user's mentor application status ──
+router.get("/me/mentor-application", mentorController.getMyApplication);
 
 // ── Role activation (self-service) ──
 router.post("/activate-role", activateRole);

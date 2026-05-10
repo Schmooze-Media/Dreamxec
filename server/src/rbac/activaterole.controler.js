@@ -65,7 +65,7 @@ exports.activateRole = catchAsync(async (req, res, next) => {
   if (role === "ALUMNI") {
     console.log(req.user);
     // Only DONOR can activate ALUMNI ──
-    if (req.user.role !== "DONOR") {
+    if (!req.user.roles?.includes("DONOR") && req.user.role !== "DONOR") {
       return next(
         new AppError(
           "Only donors can activate the Alumni role. Please ensure you are logged in as a donor.",
@@ -90,17 +90,21 @@ exports.activateRole = catchAsync(async (req, res, next) => {
       return next(new AppError("Donor profile not found.", 404));
     }
 
-    // Already ALUMNI? ──
-    if (donor.role === "ALUMNI") {
+    // Already ALUMNI? ── Check the User model's roles array
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+      select: { roles: true },
+    });
+    if (existingUser?.roles?.includes("ALUMNI")) {
       return res.status(200).json({
         status: "success",
         message: "Your Alumni role is already active.",
-        data: { role: donor.role },
+        data: { roles: existingUser.roles },
       });
     }
 
     // Run eligibility check ──
-    const isEligible = true;
+    const { isEligible, reasons } = checkAlumniEligibility(donor);
 
     if (!isEligible) {
       const missing = [];
@@ -116,30 +120,36 @@ exports.activateRole = catchAsync(async (req, res, next) => {
       );
     }
 
-    // Upgrade role to ALUMNI ──
-    // Upgrade donor to alumni
-    const updated = await prisma.donor.update({
-      where: { id },
-      data: {
-        verified: true,
-        openToConnect: true,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        institution: true,
-        graduationYear: true,
-      },
-    });
+    // Upgrade: add ALUMNI to user.roles + mark donor verified ──
+    const [updatedUser, updatedDonor] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id },
+        data: { roles: { push: "ALUMNI" } },
+        select: { id: true, roles: true },
+      }),
+      prisma.donor.update({
+        where: { id },
+        data: {
+          verified: true,
+          openToConnect: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          institution: true,
+          graduationYear: true,
+        },
+      }),
+    ]);
 
     return res.status(200).json({
       status: "success",
       message:
         "Alumni role activated successfully! Welcome to the Alumni network.",
       data: {
-        role: updated.role, // "ALUMNI"
-        profile: updated,
+        roles: updatedUser.roles,
+        profile: updatedDonor,
         redirectTo: "/donor/dashboard",
       },
     });

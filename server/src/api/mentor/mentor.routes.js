@@ -56,12 +56,6 @@ router.get("/:id", mentorController.getMentorApplication);
 router.patch("/:id/status", mentorController.updateMentorApplicationStatus);
 
 /**
- * PATCH /api/mentor/:id/approve
- * Approve mentor application and assign role
- */
-router.patch("/:id/approve", mentorController.approveMentorApplication);
-
-/**
  * PATCH /api/mentor/:id/score
  * Score a mentor application
  * Body: { score: number (0-100) }
@@ -73,14 +67,5 @@ router.patch("/:id/score", mentorController.scoreMentorApplication);
  * Delete a mentor application
  */
 router.delete("/:id", mentorController.deleteMentorApplication);
-
-router.post('/apply', protect, mentorController.submitApplication);
-router.get('/my-application', protect, mentorController.getMyApplication);
-
-// Admin Routes
-router.use(protect, requirePermission(Permissions.ALL)); // Assuming ADMIN has Permissions.ALL
-router.get('/applications', mentorController.getAllApplications);
-router.get('/applications/:id', mentorController.getApplicationDetails);
-router.patch('/applications/:id', mentorController.updateApplicationStatus);
 
 module.exports = router;

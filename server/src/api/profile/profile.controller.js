@@ -191,7 +191,7 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
   // HANDLE ROLE UPDATE
   // ─────────────────────────────────────────
   if (req.body.role !== undefined) {
-    const allowedRoles = ["USER", "DONOR", "STUDENT_PRESIDENT"];
+    const allowedRoles = ["USER", "DONOR", "FACULTY", "ALUMNI"];
 
     if (!allowedRoles.includes(req.body.role)) {
       return next(new AppError("Invalid role selected.", 400));
@@ -222,7 +222,9 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
   const isStudent =
     roles.includes("USER") ||
     roles.includes("STUDENT") ||
-    roles.includes("STUDENT_PRESIDENT");
+    roles.includes("STUDENT_PRESIDENT") ||
+    roles.includes("FACULTY") ||
+    roles.includes("ALUMNI");
 
   // ─────────────────────────────────────────
   // DISALLOW EMAIL CHANGE

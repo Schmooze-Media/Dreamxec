@@ -295,7 +295,24 @@ interface NavbarProps {
 
 // helper
 const hasRole = (user: any, role: string) =>
-  Array.isArray(user?.roles) && user.roles.includes(role);
+  Array.isArray(user?.roles) && user.roles.some((r: string) => r.toUpperCase() === role.toUpperCase());
+
+const getDisplayRole = (user: any) => {
+  if (!user?.roles) return "User";
+  const roles = user.roles.map((r: string) => r.toUpperCase());
+  if (roles.includes("ADMIN")) return "Admin";
+  if (roles.includes("DEAN_HEAD")) return "Dean";
+  if (roles.includes("DEAN_ACADEMICS")) return "Dean of Academics";
+  if (roles.includes("DEAN_STUDENT_WELFARE")) return "Dean of Student Welfare";
+  if (roles.includes("FACULTY")) return "Faculty";
+  if (roles.includes("STUDENT_PRESIDENT")) return "President";
+  if (roles.includes("ALUMNI")) return "Alumni";
+  if (roles.includes("MENTOR")) return "Mentor";
+  if (roles.includes("PREMIUM_DONOR")) return "Premium Donor";
+  if (roles.includes("DONOR")) return "Donor";
+  if (roles.includes("STUDENT")) return "Student";
+  return "User";
+};
 
 export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -306,7 +323,7 @@ export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
 
   const isStudentType =
     currentUser &&
-    (hasRole(currentUser, "student") ||
+    (hasRole(currentUser, "STUDENT") ||
       hasRole(currentUser, "STUDENT_PRESIDENT"));
 
   // profile completion
@@ -317,8 +334,8 @@ export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
     }
 
     const showCompletion =
-      hasRole(currentUser, "donor") ||
-      hasRole(currentUser, "student") ||
+      hasRole(currentUser, "DONOR") ||
+      hasRole(currentUser, "STUDENT") ||
       hasRole(currentUser, "STUDENT_PRESIDENT");
 
     if (!showCompletion) {
@@ -369,65 +386,40 @@ export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
           <div className="flex items-center gap-3">
             {currentUser && (
               <>
-                {/* STUDENT / PRESIDENT */}
-                {isStudentType && (
-                  <button
-                    onClick={() => navigate("/profile")}
-                    className="hidden md:flex items-center gap-2 bg-dreamxec-beige border-2 border-dreamxec-navy rounded-xl px-3 py-2"
-                  >
-                    <div className="relative w-8 h-8">
-                      <div className="w-8 h-8 bg-dreamxec-orange rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">
-                          {currentUser.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-
-                      {completionPct !== null && completionPct < 100 && (
-                        <span className="absolute -bottom-1 -right-1 text-[9px] bg-orange-500 text-white px-1 rounded-full">
-                          {completionPct}%
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col text-left">
-                      <span className="font-bold text-sm">
-                        {currentUser.name}
-                      </span>
-                      <span className="text-xs opacity-70">
-                        {hasRole(currentUser, "STUDENT_PRESIDENT")
-                          ? "President"
-                          : "Student"}
-                      </span>
-                    </div>
-                  </button>
-                )}
-
-                {/* DONOR / ADMIN */}
-                {!isStudentType && (
-                  <div
-                    className="hidden md:flex items-center gap-2 bg-dreamxec-beige border-2 border-dreamxec-navy rounded-xl px-3 py-2 cursor-pointer"
-                    onClick={() =>
-                      hasRole(currentUser, "donor")
-                        ? navigate("/profile/setup")
-                        : undefined
+                {/* USER PROFILE BUBBLE */}
+                <div
+                  className="hidden md:flex items-center gap-2 bg-dreamxec-beige border-2 border-dreamxec-navy rounded-xl px-3 py-2 cursor-pointer"
+                  onClick={() => {
+                    if (isStudentType) {
+                      navigate("/profile");
+                    } else if (hasRole(currentUser, "DONOR") || hasRole(currentUser, "ALUMNI") || hasRole(currentUser, "MENTOR") || hasRole(currentUser, "FACULTY")) {
+                      navigate("/profile/setup");
                     }
-                  >
+                  }}
+                >
+                  <div className="relative w-8 h-8">
                     <div className="w-8 h-8 bg-dreamxec-orange rounded-full flex items-center justify-center">
                       <span className="text-white font-bold text-sm">
                         {currentUser.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
 
-                    <div className="flex flex-col text-left">
-                      <span className="font-bold text-sm">
-                        {currentUser.name}
+                    {completionPct !== null && completionPct < 100 && (
+                      <span className="absolute -bottom-1 -right-1 text-[9px] bg-orange-500 text-white px-1 rounded-full">
+                        {completionPct}%
                       </span>
-                      <span className="text-xs opacity-70">
-                        {hasRole(currentUser, "DONOR") ? "Donor" : "Admin"}
-                      </span>
-                    </div>
+                    )}
                   </div>
-                )}
+
+                  <div className="flex flex-col text-left">
+                    <span className="font-bold text-sm">
+                      {currentUser.name}
+                    </span>
+                    <span className="text-xs opacity-70">
+                      {getDisplayRole(currentUser)}
+                    </span>
+                  </div>
+                </div>
 
                 <button
                   onClick={onLogout}
@@ -453,6 +445,42 @@ export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
           <div className="flex flex-col gap-3 p-4">
             {currentUser ? (
               <>
+                {/* USER PROFILE BUBBLE - MOBILE */}
+                <div
+                  className="flex items-center gap-2 bg-dreamxec-beige border-2 border-dreamxec-navy rounded-xl px-3 py-2 cursor-pointer mb-2"
+                  onClick={() => {
+                    if (isStudentType) {
+                      navigate("/profile");
+                    } else if (hasRole(currentUser, "DONOR") || hasRole(currentUser, "ALUMNI") || hasRole(currentUser, "MENTOR") || hasRole(currentUser, "FACULTY")) {
+                      navigate("/profile/setup");
+                    }
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <div className="relative w-8 h-8">
+                    <div className="w-8 h-8 bg-dreamxec-orange rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">
+                        {currentUser.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+
+                    {completionPct !== null && completionPct < 100 && (
+                      <span className="absolute -bottom-1 -right-1 text-[9px] bg-orange-500 text-white px-1 rounded-full">
+                        {completionPct}%
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col text-left">
+                    <span className="font-bold text-sm">
+                      {currentUser.name}
+                    </span>
+                    <span className="text-xs opacity-70">
+                      {getDisplayRole(currentUser)}
+                    </span>
+                  </div>
+                </div>
+
                 {/* STUDENT */}
                 {hasRole(currentUser, "STUDENT") && (
                   <>

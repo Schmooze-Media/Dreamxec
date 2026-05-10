@@ -206,3 +206,23 @@ exports.deleteMentorApplication = catchAsync(async (req, res, next) => {
     message: "Mentor application deleted",
   });
 });
+
+/**
+ * Get the current user's mentor application (self-service)
+ * GET /api/users/me/mentor-application
+ */
+exports.getMyApplication = catchAsync(async (req, res, next) => {
+  const application = await prisma.mentorApplication.findFirst({
+    where: { email: req.user.email },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!application) {
+    return next(new AppError("No mentor application found.", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    data: application,
+  });
+});
