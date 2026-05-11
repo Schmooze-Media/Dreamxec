@@ -1,8 +1,20 @@
 // src/types/index.ts
-// export type UserRole = "student" | "admin" | "DONOR" | "donor" | "STUDENT_PRESIDENT";
+
 export type AccountStatus = "ACTIVE" | "BLOCKED" | "SUSPENDED" | "UNDER_REVIEW";
 
-export type ProjectStatus = "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "PAUSED" | "FROZEN" | "pending" | "approved" | "rejected" | "completed" | "paused" | "frozen";
+export type ProjectStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "COMPLETED"
+  | "PAUSED"
+  | "FROZEN"
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "completed"
+  | "paused"
+  | "frozen";
 
 export interface PaginationMeta {
   total: number;
@@ -12,7 +24,7 @@ export interface PaginationMeta {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[],
+  data: T[];
   pagination: PaginationMeta;
 }
 
@@ -26,21 +38,6 @@ export interface Club {
   college: string;
   slug: string;
   verified: boolean;
-}
-
-/* =========================================================
-   Campaign Sub-Types
-========================================================= */
-
-export interface TeamMember {
-  name: string;
-  role: string;
-  image?: string; // Cloudinary URL
-}
-
-export interface FAQ {
-  question: string;
-  answer: string;
 }
 
 /* =========================================================
@@ -79,7 +76,6 @@ export interface User {
 
 /* =========================================================
    Campaign Types (User Projects)
-========================================================= */
 /* =========================================================
    Campaign Sub-Types
 ========================================================= */
@@ -87,7 +83,7 @@ export interface User {
 export interface TeamMember {
   name: string;
   role: string;
-  image?: string; // Cloudinary URL
+  image?: string;
 }
 
 export interface FAQ {
@@ -112,11 +108,7 @@ export interface MilestoneSubmission {
   createdAt: string;
 }
 
-export type MilestoneStatus =
-  | "PENDING"
-  | "SUBMITTED"
-  | "APPROVED"
-  | "REJECTED";
+export type MilestoneStatus = "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED";
 
 export interface Milestone {
   id: string;
@@ -124,68 +116,75 @@ export interface Milestone {
   description?: string;
   durationDays: number;
   budget: number;
-
   order: number;
-
   status: MilestoneStatus;
-
   activatedAt?: string;
   dueDate?: string;
   approvedAt?: string;
-
   reminder3Sent?: boolean;
   reminder1Sent?: boolean;
   overdueSent?: boolean;
   ratingPenaltyDays?: number;
-
   submissions?: MilestoneSubmission[];
 }
+
+/* =========================================================
+   Campaign Types (User Projects)
+========================================================= */
 
 export interface Campaign {
   id: string;
   title: string;
   clubId: string | null;
-  club: {
+  club?: {
     id: string;
     name: string;
     college: string;
     slug: string;
-  };
+  } | null;
   description: string;
-
   goalAmount: number;
   currentAmount: number;
-
   status: "approved" | "pending" | "rejected";
-  createdAt: Date;
-
+  createdAt: Date | string;
   rejectionReason?: string;
   reapprovalCount?: number;
-
-  /* ✅ NEW BACKEND FIELDS */
-
   campaignType?: "INDIVIDUAL" | "TEAM";
-
   teamMembers?: TeamMember[];
-
   faqs?: FAQ[];
   rating?: number;
   youtubeUrl?: string;
-
   category?: string;
   imageUrl?: string;
   campaignMedia?: string[];
   presentationDeckUrl?: string | null;
-
   createdBy?: string | { id: string };
-
   userId?: string;
   slug?: string;
-
-
-
-  // ✅ Milestone-based timeline
+  facultyApproved?: boolean;
+  facultyId?: string;
+  facultyApprovedAt?: string;
+  faculty?: {
+    name: string;
+  };
   milestones?: Milestone[];
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  accountStatus: AccountStatus;
+  emailVerified: boolean;
+  studentVerified: boolean;
+  isClubPresident: boolean;
+  isClubMember: boolean;
+  clubVerified: boolean;
+  clubIds: string[];
+  createdAt: string;
+  updatedAt: string;
+  approvedCampaigns?: Campaign[];
 }
 
 /* =========================================================
@@ -197,28 +196,22 @@ export interface Project {
   title: string;
   imageUrl?: string;
   description: string;
-  organization?: string; // mapped from organizationName
-  companyName?: string; // Alias for organization used by components
-
+  organization?: string;
+  companyName?: string;
   donor?: {
     id: string;
     name: string;
     email: string;
     organizationName: string;
   };
-
-  createdBy?: string; // Donor ID who created the project
-  interestedUsers?: Array<{ id: string; name: string; email: string }>; // Users who applied
-
+  createdBy?: string;
+  interestedUsers?: Array<{ id: string; name: string; email: string }>;
   skillsRequired: string[];
-  timeline: string | { startDate: Date | string; endDate: Date | string } | null; // DB string or parsed object
-
+  timeline: string | { startDate: Date | string; endDate: Date | string } | null;
   totalBudget?: number;
   allocatedFunds?: number;
-
   status: ProjectStatus;
   rejectionReason?: string;
-
   createdAt: string | Date;
   updatedAt?: string;
 }
@@ -226,17 +219,13 @@ export interface Project {
 export interface ProjectApplication {
   id: string;
   projectId: string;
-
   userId: string;
   userName: string;
   userEmail: string;
-
   coverLetter: string;
   skills: string[];
-
   status: "pending" | "accepted" | "rejected";
   rejectionReason?: string;
-
   appliedAt: Date;
 }
 
@@ -251,7 +240,6 @@ export interface Student {
   university: string;
   avatar?: string;
 }
-
 
 /* =========================================================
    Admin Specific Types
@@ -285,15 +273,15 @@ export interface DashboardStats {
     slaBreaches: number;
     frozenCampaigns: number;
     pendingMilestones: number;
-  }
+  };
 }
 
 export interface AuditLog {
-  id: string,
-  action: string,
-  entityType: string,
-  entityId: string,
-  performedBy: string,
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  performedBy: string;
   details?: any;
   createdAt: string;
 }
