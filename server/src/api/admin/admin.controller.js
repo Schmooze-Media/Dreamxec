@@ -1397,3 +1397,75 @@ exports.assignFacultyRole = catchAsync(async (req, res, next) => {
   });
   res.json({ success: true });
 });
+
+// ##################################################
+// FACULTY VERIFICATION MANAGEMENT
+// ##################################################
+
+// ADMIN: Get all pending faculty verification requests
+exports.getPendingFacultyVerifications = catchAsync(async (req, res, next) => {
+  const requests = await prisma.facultyVerification.findMany({
+    where: { status: 'PENDING' },
+    include: {
+      user: { select: { id: true, name: true, email: true } }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  res.status(200).json({
+    status: 'success',
+    results: requests.length,
+    data: { requests }
+  });
+});
+
+// ADMIN: Approve a faculty verification request
+exports.approveFacultyVerification = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  const request = await prisma.facultyVerification.findUnique({
+    where: { id },
+    include: { user: true }
+  });
+
+  if (!request) {
+    return next(new AppError('Faculty verification request not found', 404));
+  }
+
+  await prisma.$transaction([
+    prisma.facultyVerification.update({
+      where: { id },
+      data: { status: 'APPROVED' }
+    }),
+    prisma.user.update({
+      where: { id: request.userId },
+      data: {
+        roles: { push: Roles.FACULTY },
+        facultyVerified: true,
+        facultyIdCardUrl: request.facultyIdCardUrl
+      }
+    })
+  ]);
+
+  res.status(200).json({ status: 'success', message: 'Faculty request approved.' });
+});
+
+// ADMIN: Reject a faculty verification request
+exports.rejectFacultyVerification = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  const request = await prisma.facultyVerification.findUnique({
+    where: { id }
+  });
+
+  if (!request) {
+    return next(new AppError('Faculty verification request not found', 404));
+  }
+
+  await prisma.facultyVerification.update({
+    where: { id },
+    data: { status: 'REJECTED' }
+  });
+
+  res.status(200).json({ status: 'success', message: 'Faculty request rejected.' });
+});

@@ -482,7 +482,7 @@ export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
                 </div>
 
                 {/* STUDENT */}
-                {hasRole(currentUser, "STUDENT") && (
+                {(hasRole(currentUser, "STUDENT") || hasRole(currentUser, "USER")) && !hasRole(currentUser, "DONOR") && !hasRole(currentUser, "ADMIN") && !hasRole(currentUser, "STUDENT_PRESIDENT") && (
                   <>
                     <a href="/dashboard">DASHBOARD</a>
                     <a href="/campaigns">CAMPAIGNS</a>

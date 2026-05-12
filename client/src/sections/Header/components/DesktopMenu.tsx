@@ -35,7 +35,7 @@ export const DesktopMenu = ({ currentUser, onLogin }: DesktopMenuProps) => {
 
 
       {/* Role-specific links */}
-      {can(currentUser?.roles || [], Permissions.DASHBOARD_STUDENT_VIEW) && !can(currentUser?.roles || [], Permissions.CLUB_MANAGE) && (
+      {can(currentUser?.roles || [], Permissions.DASHBOARD_STUDENT_VIEW) && !can(currentUser?.roles || [], Permissions.CLUB_MANAGE) && !can(currentUser?.roles || [], Permissions.DASHBOARD_DONOR_VIEW) && (
         <>
           <a
             href="/dashboard"

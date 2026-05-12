@@ -4,8 +4,11 @@ const authController = require('../../middleware/auth.middleware');
 const facultyVerificationController = require('./facultyVerification.controller');
 const { requirePermission, Permissions } = require('../../rbac');
 
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+
 // Both routes require the user to be logged in as a normal user first
-router.post('/send-otp', authController.protect, facultyVerificationController.sendFacultyOtp);
+router.post('/send-otp', authController.protect, upload.single('idCard'), facultyVerificationController.sendFacultyOtp);
 router.post('/verify-otp', authController.protect, facultyVerificationController.verifyFacultyOtp);
 // NEW: Magic Link Routes
 // 1. Sending is restricted to people who have the FACULTY_APPROVE permission (Admins, Presidents, Donors)

@@ -6,6 +6,7 @@ const { Roles } = require("../../rbac");
 const sendEmail = require("../../services/email.service");
 // Assuming you have a redis client exported, or adjust to match your redis.service.js
 const redisClient = require("../../services/redis.service");
+const uploadToS3 = require("../../utils/uploadToS3");
 
 // 1. Send OTP
 // 1. Send OTP
@@ -14,6 +15,10 @@ exports.sendFacultyOtp = catchAsync(async (req, res, next) => {
 
   if (!institutionalEmail) {
     return next(new AppError("Please provide your institutional email.", 400));
+  }
+
+  if (!req.file) {
+    return next(new AppError("Please upload an ID card.", 400));
   }
 
   const isEduDomain =
@@ -32,9 +37,13 @@ exports.sendFacultyOtp = catchAsync(async (req, res, next) => {
   // Generate a 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // Save OTP in Redis (expires in 1 day / 86400 seconds)
+  // Upload the ID card to S3
+  const idCardUrl = await uploadToS3(req.file, "dreamxec/faculty-verification");
+
+  // Save OTP and ID Card URL in Redis (expires in 1 day / 86400 seconds)
   const redisKey = `faculty_otp:${req.user.id}:${institutionalEmail}`;
-  await redisClient.setEx(redisKey, 86400, otp);
+  const payload = JSON.stringify({ otp, idCardUrl });
+  await redisClient.setEx(redisKey, 86400, payload);
 
   // 🔥 DEV MODE: Print the OTP to the terminal so you can test the UI!
   console.log(`\n========================================`);
@@ -79,18 +88,36 @@ exports.verifyFacultyOtp = catchAsync(async (req, res, next) => {
   }
 
   const redisKey = `faculty_otp:${req.user.id}:${institutionalEmail}`;
-  const storedOtp = await redisClient.get(redisKey);
+  const storedPayloadString = await redisClient.get(redisKey);
 
-  if (!storedOtp || storedOtp !== otp) {
+  if (!storedPayloadString) {
     return next(new AppError("Invalid or expired OTP.", 400));
   }
 
-  // OTP is valid! Upgrade the user's role using the RBAC array
-  const updatedUser = await prisma.user.update({
-    where: { id: req.user.id },
-    data: {
-      roles: { push: Roles.FACULTY },
-      facultyVerified: true,
+  let storedPayload;
+  try {
+    storedPayload = JSON.parse(storedPayloadString);
+  } catch (e) {
+    storedPayload = { otp: storedPayloadString, idCardUrl: null };
+  }
+
+  if (storedPayload.otp !== otp) {
+    return next(new AppError("Invalid or expired OTP.", 400));
+  }
+
+  // OTP is valid! Create a pending FacultyVerification request for the Admin to approve
+  await prisma.facultyVerification.upsert({
+    where: { userId: req.user.id },
+    update: {
+      institutionalEmail,
+      facultyIdCardUrl: storedPayload.idCardUrl || "",
+      status: "PENDING",
+    },
+    create: {
+      userId: req.user.id,
+      institutionalEmail,
+      facultyIdCardUrl: storedPayload.idCardUrl || "",
+      status: "PENDING",
     },
   });
 
@@ -110,8 +137,7 @@ exports.verifyFacultyOtp = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    message: "Faculty identity verified successfully!",
-    role: updatedUser.role,
+    message: "Verification request submitted for admin approval!",
   });
 });
 

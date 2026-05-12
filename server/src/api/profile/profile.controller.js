@@ -145,6 +145,8 @@ exports.getMyProfile = catchAsync(async (req, res, next) => {
       roles: true,
       emailVerified: true,
       studentVerified: true,
+      facultyVerified: true,
+      facultyVerification: { select: { status: true } },
       accountStatus: true,
       profilePicture: true,
       phone: true,
@@ -400,6 +402,7 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
       portfolioUrl,
       githubUrl,
       linkedinUrl,
+      yearOfGraduation,
     } = req.body;
 
     // Validate phone
@@ -442,6 +445,10 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
 
     if (yearOfStudy !== undefined) {
       updateData.yearOfStudy = yearOfStudy;
+    }
+
+    if (yearOfGraduation !== undefined) {
+      updateData.yearOfGraduation = parseInt(yearOfGraduation);
     }
 
     if (address !== undefined) updateData.address = address;

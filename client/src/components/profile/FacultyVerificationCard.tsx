@@ -9,6 +9,7 @@ export default function FacultyVerificationCard() {
   const { user } = useAuth();
   const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
+  const [idCard, setIdCard] = useState<File | null>(null);
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -28,14 +29,36 @@ export default function FacultyVerificationCard() {
     );
   }
 
+  // Show pending state if they have submitted but admin hasn't approved
+  if (user?.facultyVerification?.status === 'PENDING') {
+    return (
+      <div className="p-4 bg-yellow-50 border-2 border-yellow-600 shadow-[4px_4px_0px_0px_#ca8a04] flex items-center gap-3 max-w-md">
+        <span className="text-2xl">⏳</span>
+        <div>
+          <h4 className="font-black text-yellow-800 uppercase tracking-wide">Pending Approval</h4>
+          <p className="text-sm text-yellow-700 font-bold">Your verification request is currently under review by an Admin.</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API_BASE}/faculty-verification/send-otp`, { institutionalEmail: email }, {
-        headers: { Authorization: `Bearer ${token}` }
+      const formData = new FormData();
+      formData.append('institutionalEmail', email);
+      if (idCard) {
+        formData.append('idCard', idCard);
+      }
+
+      await axios.post(`${API_BASE}/faculty-verification/send-otp`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
       });
       setStep(2);
       setMessage({ type: 'success', text: 'OTP sent! Please check your institutional inbox.' });
@@ -72,7 +95,7 @@ export default function FacultyVerificationCard() {
         Faculty Onboarding
       </h2>
       <p className="text-sm text-dreamxec-navy/70 mb-5 font-bold">
-        Verify your institutional email (.edu or .ac.in) to unlock Campaign Approval rights.
+        Verify your institutional email (.edu or .ac.in) and ID card to unlock Campaign Approval rights.
       </p>
 
       {step === 1 ? (
@@ -90,9 +113,21 @@ export default function FacultyVerificationCard() {
               className="w-full p-3 bg-gray-50 border-2 border-dreamxec-navy font-bold text-sm focus:outline-none focus:border-dreamxec-orange"
             />
           </div>
+          <div>
+            <label className="block text-xs font-black uppercase tracking-widest text-dreamxec-navy mb-1">
+              Upload ID Card
+            </label>
+            <input
+              type="file"
+              required
+              accept="image/*,.pdf"
+              onChange={(e) => setIdCard(e.target.files?.[0] || null)}
+              className="w-full p-2 bg-gray-50 border-2 border-dreamxec-navy font-bold text-sm focus:outline-none focus:border-dreamxec-orange file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-dreamxec-orange file:text-white file:font-black file:uppercase file:tracking-widest cursor-pointer"
+            />
+          </div>
           <button
             type="submit"
-            disabled={loading || !email}
+            disabled={loading || !email || !idCard}
             className="w-full py-3 bg-dreamxec-orange text-white font-black uppercase tracking-widest text-sm border-2 border-dreamxec-navy shadow-[3px_3px_0px_0px_#003366] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all disabled:opacity-50"
           >
             {loading ? 'Sending...' : 'Send OTP'}

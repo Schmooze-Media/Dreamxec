@@ -851,7 +851,8 @@ type Tab =
   | "donations"
   | "wishlist"
   | "mentorship"
-  | "profile";
+  | "profile"
+  | "alumni";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN DASHBOARD INNER
@@ -1256,6 +1257,12 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
             active={selectedTab === "mentorship"}
             badge={mentorAppStatus === "PENDING" || mentorAppStatus === "REVIEWED" ? 1 : 0}
             onClick={() => switchTab("mentorship")}
+          />
+          <SideNavItem
+            icon="star"
+            label="Alumni"
+            active={selectedTab === "alumni"}
+            onClick={() => switchTab("alumni")}
           />
           <SideNavItem
             icon="check"
@@ -2260,6 +2267,17 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
                   })}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ══════ ALUMNI ══════ */}
+          {selectedTab === "alumni" && (
+            <div className="space-y-6">
+              <EmptyState
+                icon="🎓"
+                title="Alumni Network"
+                description="Alumni directory and exclusive networking features are coming soon."
+              />
             </div>
           )}
         </div>

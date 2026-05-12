@@ -119,6 +119,7 @@ model User {
   clubVerified         Boolean    @default(false)
   studentVerified      Boolean    @default(false)
   facultyVerified      Boolean    @default(false)
+  facultyIdCardUrl     String?
   donations            Donation[]
   comments CampaignComment[] @relation("UserComments")
 
@@ -136,6 +137,7 @@ model User {
   // Academic
   college        String?
   yearOfStudy    YearOfStudy?
+  yearOfGraduation Int?
 
   // Social & Bio
   instagram      String?
@@ -169,6 +171,7 @@ model User {
   applications        Application[] // Applications to donor projects
   clubsPresided       Club[]               @relation("ClubPresident")
   studentVerification StudentVerification?
+  facultyVerification FacultyVerification?
 
   // reverse relation (ClubMember.user)
   clubMembers ClubMember[] // optional helper
@@ -750,6 +753,23 @@ model StudentVerification {
 
   status String @default("PENDING") // PENDING, VERIFIED, REJECTED
 
+  userId String @unique @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// -----------------------------
+// FACULTY VERIFICATION MODEL
+// -----------------------------
+model FacultyVerification {
+  id               String @id @default(auto()) @map("_id") @db.ObjectId
+  institutionalEmail String
+  facultyIdCardUrl   String
+
+  status String @default("PENDING") // PENDING, APPROVED, REJECTED
+  
   userId String @unique @db.ObjectId
   user   User   @relation(fields: [userId], references: [id])
 

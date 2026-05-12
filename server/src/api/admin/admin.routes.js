@@ -75,6 +75,22 @@ router.patch(
 );
 
 // --------------------
+// FACULTY VERIFICATION
+// --------------------
+router.get(
+  "/faculty-verifications",
+  adminController.getPendingFacultyVerifications,
+);
+router.patch(
+  "/faculty-verifications/:id/approve",
+  adminController.approveFacultyVerification,
+);
+router.patch(
+  "/faculty-verifications/:id/reject",
+  adminController.rejectFacultyVerification,
+);
+
+// --------------------
 // AUDIT LOGS
 // --------------------
 router.get("/audit-logs", adminController.getAuditLogs);

@@ -112,6 +112,7 @@ import AdminClubs from "./components/admin/AdminClubs";
 import AdminFinancials from "./components/admin/AdminFinancials";
 import AdminMilestones from "./components/admin/AdminMilestone";
 import AdminStudentVerifications from "./components/admin/AdminStudentVerification";
+import AdminFacultyVerifications from "./components/admin/AdminFacultyVerifications";
 import AdminAuditLogs from "./components/admin/AdminAuditLogs";
 import AdminDonors from "./components/admin/AdminDonors";
 import AdminApplications from "./components/admin/AdminApplications";
@@ -1219,6 +1220,15 @@ function AppContent() {
                                 element={
                                   <AdminRoute>
                                     <AdminStudentVerifications />
+                                  </AdminRoute>
+                                }
+                              />
+
+                              <Route
+                                path="/admin/faculty-verifications"
+                                element={
+                                  <AdminRoute>
+                                    <AdminFacultyVerifications />
                                   </AdminRoute>
                                 }
                               />

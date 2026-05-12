@@ -211,6 +211,11 @@ export default function AdminSidebar() {
       path: "/admin/student-verifications",
       icon: <Icons.Identity />,
     },
+    {
+      label: "Faculty Verify",
+      path: "/admin/faculty-verifications",
+      icon: <Icons.Identity />,
+    },
     { label: "Milestones", path: "/admin/milestones", icon: <Icons.Flag /> },
     {
       label: "Club Requests",

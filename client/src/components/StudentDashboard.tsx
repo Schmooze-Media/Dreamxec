@@ -13,6 +13,7 @@ import { X } from 'lucide-react';
 import { usePermission } from '../rbac/usePermission';
 import { Permissions } from '../rbac/permissions';
 import FacultyVerificationCard from './profile/FacultyVerificationCard';
+import MentorshipApplication from './MentorshipApplication';
 
 /* ─────────────────────────────────────────────
    ICONS
@@ -43,12 +44,12 @@ const PlusIcon = ({ className }: { className?: string }) => (
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
-const TrendingUpIcon = ({ className }: { className?: string , style?: string }) => (
+const TrendingUpIcon = ({ className }: { className?: string, style?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
     <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" />
   </svg>
 );
-const ClockIcon = ({ className }: { className?: string , style?: string }) => (
+const ClockIcon = ({ className }: { className?: string, style?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
     <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
   </svg>
@@ -95,6 +96,12 @@ const ArrowUpIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const HeartIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+  </svg>
+);
+
 /* ─────────────────────────────────────────────
    TYPES
 ───────────────────────────────────────────── */
@@ -136,17 +143,17 @@ function NavItem({
       style={
         active
           ? {
-              background: '#FF7F00',
-              color: '#003366',
-              border: '3px solid #003366',
-              boxShadow: '4px 4px 0 #003366',
-              transform: 'translate(-2px,-2px)',
-            }
+            background: '#FF7F00',
+            color: '#003366',
+            border: '3px solid #003366',
+            boxShadow: '4px 4px 0 #003366',
+            transform: 'translate(-2px,-2px)',
+          }
           : {
-              background: 'transparent',
-              color: '#fed7aa',
-              border: '3px solid transparent',
-            }
+            background: 'transparent',
+            color: '#fed7aa',
+            border: '3px solid transparent',
+          }
       }
       onMouseEnter={e => {
         if (!active) {
@@ -217,7 +224,7 @@ function KpiCard({
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { bg: string; color: string; border: string }> = {
     approved: { bg: '#f0fdf4', color: '#166534', border: '#0B9C2C' },
-    pending:  { bg: '#fffbeb', color: '#92400e', border: '#FF7F00' },
+    pending: { bg: '#fffbeb', color: '#92400e', border: '#FF7F00' },
     rejected: { bg: '#fef2f2', color: '#991b1b', border: '#dc2626' },
   };
   const s = config[status.toLowerCase()] ?? config.pending;
@@ -253,6 +260,7 @@ export default function StudentDashboard({
   const { can } = usePermission();
   const isFaculty = user?.roles?.includes('FACULTY') || false;
   const isVerifiedFaculty = user?.facultyVerified || false;
+  const isAlumni = user?.roles?.includes('ALUMNI') || false;
 
   const [selectedTab, setSelectedTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -349,7 +357,7 @@ export default function StudentDashboard({
   const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
-    
+
     setIsUploadingPic(true);
     try {
       const response = await uploadProfilePicture(file);
@@ -423,11 +431,11 @@ export default function StudentDashboard({
               )}
               {/* Overlay for hover */}
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                 {isUploadingPic ? (
-                    <span className="text-[10px] text-white">...</span>
-                 ) : (
-                    <span className="text-[10px] text-white font-bold">Edit</span>
-                 )}
+                {isUploadingPic ? (
+                  <span className="text-[10px] text-white">...</span>
+                ) : (
+                  <span className="text-[10px] text-white font-bold">Edit</span>
+                )}
               </div>
               <input
                 type="file"
@@ -501,12 +509,44 @@ export default function StudentDashboard({
               onClick={() => { setSelectedTab('president'); setPresidentTab('dashboard'); setSidebarOpen(false); }}
             />
           )}
+          {isFaculty && (
+            <>
+              <NavItem
+                icon={<HeartIcon className="w-5 h-5" />}
+                label="Mentorship"
+                active={selectedTab === 'mentorship'}
+                onClick={() => { setSelectedTab('mentorship'); setSidebarOpen(false); }}
+              />
+              <NavItem
+                icon={<UsersIcon className="w-5 h-5" />}
+                label="Alumni"
+                active={selectedTab === 'alumni'}
+                onClick={() => { setSelectedTab('alumni'); setSidebarOpen(false); }}
+              />
+            </>
+          )}
+          {isAlumni && (
+            <>
+              <NavItem
+                icon={<HeartIcon className="w-5 h-5" />}
+                label="Mentorship"
+                active={selectedTab === 'mentorship'}
+                onClick={() => { setSelectedTab('mentorship'); setSidebarOpen(false); }}
+              />
+              <NavItem
+                icon={<AwardIcon className="w-5 h-5" />}
+                label="Donor"
+                active={selectedTab === 'donor'}
+                onClick={() => { setSelectedTab('donor'); setSidebarOpen(false); }}
+              />
+            </>
+          )}
         </nav>
 
         {/* Bottom actions */}
         <div className="p-4 space-y-2" style={{ borderTop: '3px solid #FF7F00' }}>
           {/* Student-only actions */}
-          {!isFaculty && !clubVerified && !isClubPresident && (
+          {!isFaculty && !isAlumni && !clubVerified && !isClubPresident && (
             <>
               <button
                 onClick={() => { handlePresidentClick(); setSidebarOpen(false); }}
@@ -676,7 +716,7 @@ export default function StudentDashboard({
                       Action Required: {isFaculty ? 'Verify Faculty Identity' : 'Verify Your Account'}
                     </p>
                     <p className="text-xs font-medium text-[#003366]/70 mt-0.5">
-                      {isFaculty 
+                      {isFaculty
                         ? 'Verify your institutional email to unlock campaign approval rights and platform access.'
                         : 'Complete student verification to unlock campaign creation and full platform access.'}
                     </p>
@@ -1016,6 +1056,15 @@ export default function StudentDashboard({
               {presidentTab === 'upload' && <UploadMembers />}
             </div>
           )}
+
+          {/* ════════════════════════
+              FACULTY PANEL
+          ════════════════════════ */}
+          {selectedTab === 'mentorship' && (isFaculty || isAlumni) && (
+            <div className="space-y-6">
+              <MentorshipApplication />
+            </div>
+          )}
         </div>
       </main>
 
@@ -1029,8 +1078,8 @@ export default function StudentDashboard({
       {showFacultyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="relative animate-in zoom-in-95 duration-200">
-            <button 
-              onClick={() => setShowFacultyModal(false)} 
+            <button
+              onClick={() => setShowFacultyModal(false)}
               className="absolute -top-3 -right-3 z-10 w-8 h-8 flex items-center justify-center bg-white border-2 border-[#003366] text-[#003366] hover:bg-gray-100 transition-colors shadow-[2px_2px_0px_0px_#FF7F00]"
               aria-label="Close"
             >

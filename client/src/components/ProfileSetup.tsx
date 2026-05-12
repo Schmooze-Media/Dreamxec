@@ -270,6 +270,7 @@ export default function ProfileSetup() {
   const [sDob, setSDob] = useState("");
   const [sCollege, setSCollege] = useState("");
   const [sYear, setSYear] = useState<YearOfStudy | "">("");
+  const [sYearOfGraduation, setSYearOfGraduation] = useState("");
   const [sAddress, setSAddress] = useState("");
   const [sInstagram, setSInstagram] = useState("");
   const [sFacebook, setSFacebook] = useState("");
@@ -328,7 +329,7 @@ export default function ProfileSetup() {
           const p = profile as any;
           const rolesArray = p.roles || [(r as string)?.toUpperCase()];
           const upperRoles = rolesArray.map((r: string) => r?.toUpperCase());
-          
+
           let apiRole: Role = "USER";
           if (upperRoles.includes("DONOR")) apiRole = "DONOR";
           else if (upperRoles.includes("FACULTY")) apiRole = "FACULTY";
@@ -372,6 +373,7 @@ export default function ProfileSetup() {
             setSDob(p.dateOfBirth ? p.dateOfBirth.slice(0, 10) : "");
             setSCollege(p.college || "");
             setSYear(p.yearOfStudy || "");
+            setSYearOfGraduation(p.yearOfGraduation ? String(p.yearOfGraduation) : "");
             setSAddress(p.address || "");
             setSInstagram(p.instagram || "");
             setSFacebook(p.facebook || "");
@@ -468,6 +470,7 @@ export default function ProfileSetup() {
         1: {
           college: sCollege,
           yearOfStudy: sYear || undefined,
+          yearOfGraduation: sYearOfGraduation ? parseInt(sYearOfGraduation) : undefined,
           skills: sSkills,
           projectTitle: sProjectTitle,
           fundingRequired: sFunding ? parseFloat(sFunding) : undefined,
@@ -519,6 +522,7 @@ export default function ProfileSetup() {
         if (!sCollege.trim()) return "College/University name is required.";
         // Only require year of study for Students (USER)
         if (role === "USER" && !sYear) return "Please select your year of study.";
+        if (role === "ALUMNI" && !sYearOfGraduation) return "Please enter your year of graduation.";
       }
     }
     return "";
@@ -622,7 +626,7 @@ export default function ProfileSetup() {
       <div className="min-h-screen bg-[#FFFBF3] flex items-center justify-center py-8 px-4">
         <div className="w-full max-w-2xl flex flex-col items-center">
           <FacultyVerificationCard />
-          
+
           <button
             onClick={() => { window.location.href = "/dashboard"; }}
             className="mt-6 w-full max-w-md py-3 font-black text-sm uppercase tracking-wide text-[#003366]/50 bg-white text-center"
@@ -929,6 +933,17 @@ export default function ProfileSetup() {
                         </select>
                       </Field>
                     )}
+                    {role === "ALUMNI" && (
+                      <Field label="Year of Graduation" required>
+                        <input
+                          className={inputCls}
+                          type="number"
+                          value={sYearOfGraduation}
+                          onChange={(e) => setSYearOfGraduation(e.target.value)}
+                          placeholder="e.g. 2024"
+                        />
+                      </Field>
+                    )}
                     <Field label="Skills / Interests">
                       <SkillsInput skills={sSkills} onChange={setSSkills} />
                     </Field>
@@ -1146,34 +1161,33 @@ export default function ProfileSetup() {
                         10-character alphanumeric (e.g. ABCDE1234F)
                       </p>
                     </Field>
+                    <Field label="Alumni of (Institution / University)">
+                      <input
+                        className={inputCls}
+                        value={dInstitution}
+                        onChange={(e) => setDInstitution(e.target.value)}
+                        placeholder="e.g. IIT Bombay, Delhi University"
+                      />
+                    </Field>
+                    <Field label="Year of Graduation">
+                      <select
+                        className={selectCls}
+                        value={dGradYear}
+                        onChange={(e) => setDGradYear(e.target.value)}
+                      >
+                        <option value="">Select year</option>
+                        {Array.from({ length: 45 }, (_, i) => {
+                          const year = new Date().getFullYear() - i;
+                          return (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </Field>
                   </>
                 )}
-                <Field label="Alumni of (Institution / University)">
-                  <input
-                    className={inputCls}
-                    value={dInstitution}
-                    onChange={(e) => setDInstitution(e.target.value)}
-                    placeholder="e.g. IIT Bombay, Delhi University"
-                  />
-                </Field>
-
-                <Field label="Year of Graduation">
-                  <select
-                    className={selectCls}
-                    value={dGradYear}
-                    onChange={(e) => setDGradYear(e.target.value)}
-                  >
-                    <option value="">Select year</option>
-                    {Array.from({ length: 45 }, (_, i) => {
-                      const year = new Date().getFullYear() - i;
-                      return (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </Field>
                 {step === 2 && (
                   <>
                     <Field label="Education">

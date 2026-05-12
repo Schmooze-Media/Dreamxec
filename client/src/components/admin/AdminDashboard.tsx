@@ -257,7 +257,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* 4. Quick Links Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div onClick={() => navigate("/admin/verifications")} className="card-pastel rounded-xl p-6 hover:scale-105 transition-transform cursor-pointer group bg-white">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-dreamxec-navy text-lg font-bold font-display group-hover:text-dreamxec-orange transition-colors">Club Verifications</p>
@@ -276,6 +276,16 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <p className="text-xl font-bold text-dreamxec-navy opacity-70 font-sans mt-2">View Referrals →</p>
+            </div>
+
+            <div onClick={() => navigate("/admin/faculty-verifications")} className="card-pastel rounded-xl p-6 hover:scale-105 transition-transform cursor-pointer group bg-white">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-dreamxec-navy text-lg font-bold font-display group-hover:text-blue-500 transition-colors">Faculty Verifications</p>
+                <div className="bg-white border-4 border-dreamxec-navy rounded-full w-12 h-12 flex items-center justify-center shadow-pastel-navy group-hover:shadow-pastel-blue">
+                  <UsersIcon className="w-6 h-6 text-dreamxec-navy group-hover:text-blue-500" />
+                </div>
+              </div>
+              <p className="text-xl font-bold text-dreamxec-navy opacity-70 font-sans mt-2">Approve Faculty →</p>
             </div>
           </div>
 

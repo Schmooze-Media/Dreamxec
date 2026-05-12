@@ -274,6 +274,32 @@ export const rejectStudentVerification = async (
 };
 
 /* =========================================================
+   Faculty Verifications
+========================================================= */
+
+export const getPendingFacultyVerifications = async (): Promise<ApiResponse<any>> => {
+  return apiRequest(`/admin/faculty-verifications`, {
+    method: "GET",
+  });
+};
+
+export const approveFacultyVerification = async (
+  id: string,
+): Promise<ApiResponse<any>> => {
+  return apiRequest(`/admin/faculty-verifications/${id}/approve`, {
+    method: "PATCH",
+  });
+};
+
+export const rejectFacultyVerification = async (
+  id: string,
+): Promise<ApiResponse<any>> => {
+  return apiRequest(`/admin/faculty-verifications/${id}/reject`, {
+    method: "PATCH",
+  });
+};
+
+/* =========================================================
    Audit Logs
 ========================================================= */
 
