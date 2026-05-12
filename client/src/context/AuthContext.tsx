@@ -140,6 +140,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     loadUser();
+
+    const handleAuthSync = () => {
+      loadUser();
+    };
+
+    window.addEventListener("auth-sync", handleAuthSync);
+    return () => window.removeEventListener("auth-sync", handleAuthSync);
   }, []);
 
   const handleLoginClick = useCallback(() => {

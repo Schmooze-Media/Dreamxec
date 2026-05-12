@@ -32,10 +32,15 @@ export interface ApiError {
 // ===============================
 export const getToken = (): string | null => localStorage.getItem("token");
 
-export const setToken = (token: string): void =>
+export const setToken = (token: string): void => {
   localStorage.setItem("token", token);
+  window.dispatchEvent(new Event("auth-sync"));
+};
 
-export const removeToken = (): void => localStorage.removeItem("token");
+export const removeToken = (): void => {
+  localStorage.removeItem("token");
+  window.dispatchEvent(new Event("auth-sync"));
+};
 
 // ===============================
 // EXTENDED REQUEST TYPE

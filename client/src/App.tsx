@@ -182,6 +182,25 @@ const SimpleRestricted = ({ message }: { message: string }) => (
 
 // ─── Main App Content Component ────────────────────────────────────────────────
 
+const AuthRoute = ({
+  user,
+  children,
+}: {
+  user: User | null;
+  children: React.ReactNode;
+}) => {
+  if (user) {
+    if (user.profileComplete === false) return <Navigate to="/profile/setup" replace />;
+    if (user.role === "student") return <Navigate to="/dashboard" replace />;
+    if (user.role === "donor") return <Navigate to="/donor/dashboard" replace />;
+    if (user.role === "admin") return <Navigate to="/admin" replace />;
+    if (user.role === "STUDENT_PRESIDENT")
+      return <Navigate to="/president" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
+};
+
 function AppContent() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [userCampaigns, setUserCampaigns] = useState<Campaign[]>([]);
@@ -260,6 +279,14 @@ function AppContent() {
     };
 
     loadUser();
+
+    const handleAuthSync = () => {
+      console.log("auth-sync event triggered, reloading user...");
+      loadUser();
+    };
+
+    window.addEventListener("auth-sync", handleAuthSync);
+    return () => window.removeEventListener("auth-sync", handleAuthSync);
   }, []);
 
   useEffect(() => {
@@ -713,7 +740,7 @@ function AppContent() {
         if (userData.profileComplete === false) {
           navigate("/profile/setup");
           return;
-        } 
+        }
 
         const origin = (location.state as any)?.from;
         if (origin) {
@@ -1309,7 +1336,7 @@ function AppContent() {
                               <Route
                                 path="/auth"
                                 element={
-                                  !user ? (
+                                  <AuthRoute user={user}>
                                     <AuthPage
                                       onLogin={handleLogin}
                                       onSignup={handleSignup}
@@ -1320,9 +1347,7 @@ function AppContent() {
                                       onHeaderLogin={handleLoginClick}
                                       onLogout={handleLogout}
                                     />
-                                  ) : (
-                                    <Navigate to="/" />
-                                  )
+                                  </AuthRoute>
                                 }
                               />
 
@@ -1330,16 +1355,38 @@ function AppContent() {
                               <Route
                                 path="/login"
                                 element={
-                                  <AuthPage
-                                    onLogin={handleLogin}
-                                    onSignup={handleSignup}
-                                    onGoogleAuth={handleGoogleAuth}
-                                    onLinkedInAuth={handleLinkedInAuth}
-                                    onForgotPassword={handleForgotPassword}
-                                    currentUser={user}
-                                    onHeaderLogin={handleLoginClick}
-                                    onLogout={handleLogout}
-                                  />
+                                  <AuthRoute user={user}>
+                                    <AuthPage
+                                      onLogin={handleLogin}
+                                      onSignup={handleSignup}
+                                      onGoogleAuth={handleGoogleAuth}
+                                      onLinkedInAuth={handleLinkedInAuth}
+                                      onForgotPassword={handleForgotPassword}
+                                      currentUser={user}
+                                      onHeaderLogin={handleLoginClick}
+                                      onLogout={handleLogout}
+                                    />
+                                  </AuthRoute>
+                                }
+                              />
+
+                              {/* Signup alias */}
+                              <Route
+                                path="/signup"
+                                element={
+                                  <AuthRoute user={user}>
+                                    <AuthPage
+                                      onLogin={handleLogin}
+                                      onSignup={handleSignup}
+                                      onGoogleAuth={handleGoogleAuth}
+                                      onLinkedInAuth={handleLinkedInAuth}
+                                      onForgotPassword={handleForgotPassword}
+                                      currentUser={user}
+                                      onHeaderLogin={handleLoginClick}
+                                      onLogout={handleLogout}
+                                      initialMode="signup"
+                                    />
+                                  </AuthRoute>
                                 }
                               />
 
