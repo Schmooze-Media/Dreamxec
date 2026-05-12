@@ -10,6 +10,7 @@ import PresidentCampaigns from "./president/PresidentCampaigns";
 import UploadMembers from "./president/UploadMembers";
 import AddMemberManually from "./president/AddMemberManually";
 import { X } from 'lucide-react';
+import transferService from '../services/transferService';
 
 /* ─────────────────────────────────────────────
    ICONS

@@ -497,7 +497,7 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
 
                   {/* Right: Actions */}
                   <div className="flex flex-col justify-center gap-3 md:min-w-[240px]">
-                    {canActionTransfer || (isAdmin && activeTransfer.status === 'PENDING_PRESIDENT') ? (
+                    {canActionTransfer || (isUserAdmin && activeTransfer.status === 'PENDING_PRESIDENT') ? (
                       <>
                         <div className="space-y-2">
                           <label className="text-[9px] font-black text-dreamxec-navy uppercase tracking-widest ml-1">Decision Note (Optional)</label>

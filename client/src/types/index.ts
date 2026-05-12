@@ -50,6 +50,7 @@ export interface FAQ {
 export type UserRole =
   | "student"
   | "admin"
+  | "ADMIN"
   | "donor"
   | "DONOR"
   | "STUDENT_PRESIDENT";
