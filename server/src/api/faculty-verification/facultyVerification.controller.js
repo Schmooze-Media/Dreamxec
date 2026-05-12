@@ -8,9 +8,8 @@ const sendEmail = require("../../services/email.service");
 const redisClient = require("../../services/redis.service");
 const uploadToS3 = require("../../utils/uploadToS3");
 
-// 1. Send OTP
-// 1. Send OTP
-exports.sendFacultyOtp = catchAsync(async (req, res, next) => {
+// 1. Submit Faculty Request
+exports.submitFacultyRequest = catchAsync(async (req, res, next) => {
   const { institutionalEmail } = req.body;
 
   if (!institutionalEmail) {
@@ -34,89 +33,21 @@ exports.sendFacultyOtp = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Generate a 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
   // Upload the ID card to S3
   const idCardUrl = await uploadToS3(req.file, "dreamxec/faculty-verification");
 
-  // Save OTP and ID Card URL in Redis (expires in 1 day / 86400 seconds)
-  const redisKey = `faculty_otp:${req.user.id}:${institutionalEmail}`;
-  const payload = JSON.stringify({ otp, idCardUrl });
-  await redisClient.setEx(redisKey, 86400, payload);
-
-  // 🔥 DEV MODE: Print the OTP to the terminal so you can test the UI!
-  console.log(`\n========================================`);
-  console.log(`🎓 [DEV] FACULTY OTP: ${otp}`);
-  console.log(`========================================\n`);
-
-  try {
-    // Attempt to send the email
-    await sendEmail({
-      email: institutionalEmail,
-      subject: "DreamXec - Verify your Faculty Account",
-      message: `Your verification code is: ${otp}. It will expire in 24 hours.`,
-      html: `
-        <div style="font-family: sans-serif; padding: 20px;">
-          <h2 style="color: #003366;">DreamXec Faculty Verification</h2>
-          <p>Your verification code is: <strong style="font-size: 24px; color: #FF7F00;">${otp}</strong></p>
-          <p>This code will expire in <strong>24 hours</strong>.</p>
-        </div>
-      `,
-    });
-  } catch (error) {
-    // If SendGrid fails (like Maximum Credits Exceeded), we log it but DO NOT crash.
-    console.warn(
-      "⚠️ SendGrid blocked the email, but the OTP was saved to Redis successfully.",
-    );
-  }
-
-  // Always tell the frontend it was successful so the UI moves to the OTP input box
-  res.status(200).json({
-    status: "success",
-    message:
-      "OTP processed. Check your email (or server terminal in Dev Mode).",
-  });
-});
-
-// 2. Verify OTP & Upgrade Role
-exports.verifyFacultyOtp = catchAsync(async (req, res, next) => {
-  const { institutionalEmail, otp } = req.body;
-
-  if (!institutionalEmail || !otp) {
-    return next(new AppError("Please provide both email and OTP.", 400));
-  }
-
-  const redisKey = `faculty_otp:${req.user.id}:${institutionalEmail}`;
-  const storedPayloadString = await redisClient.get(redisKey);
-
-  if (!storedPayloadString) {
-    return next(new AppError("Invalid or expired OTP.", 400));
-  }
-
-  let storedPayload;
-  try {
-    storedPayload = JSON.parse(storedPayloadString);
-  } catch (e) {
-    storedPayload = { otp: storedPayloadString, idCardUrl: null };
-  }
-
-  if (storedPayload.otp !== otp) {
-    return next(new AppError("Invalid or expired OTP.", 400));
-  }
-
-  // OTP is valid! Create a pending FacultyVerification request for the Admin to approve
+  // Create a pending FacultyVerification request for the Admin to approve
   await prisma.facultyVerification.upsert({
     where: { userId: req.user.id },
     update: {
       institutionalEmail,
-      facultyIdCardUrl: storedPayload.idCardUrl || "",
+      facultyIdCardUrl: idCardUrl || "",
       status: "PENDING",
     },
     create: {
       userId: req.user.id,
       institutionalEmail,
-      facultyIdCardUrl: storedPayload.idCardUrl || "",
+      facultyIdCardUrl: idCardUrl || "",
       status: "PENDING",
     },
   });
@@ -124,16 +55,13 @@ exports.verifyFacultyOtp = catchAsync(async (req, res, next) => {
   // Log the action for security audits
   await prisma.auditLog.create({
     data: {
-      action: "FACULTY_VERIFIED",
+      action: "FACULTY_VERIFICATION_REQUESTED",
       entity: "User",
       entityId: req.user.id,
       performedBy: req.user.id,
       details: { emailUsed: institutionalEmail },
     },
   });
-
-  // Clean up Redis
-  await redisClient.del(redisKey);
 
   res.status(200).json({
     status: "success",

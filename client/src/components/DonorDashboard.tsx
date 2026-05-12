@@ -1264,13 +1264,6 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
             active={selectedTab === "alumni"}
             onClick={() => switchTab("alumni")}
           />
-          <SideNavItem
-            icon="check"
-            label="My Profile"
-            active={selectedTab === "profile"}
-            badge={profileComplete ? 0 : 1}
-            onClick={() => navigate("/profile/setup")}
-          />
         </nav>
 
         {/* Create Project CTA */}

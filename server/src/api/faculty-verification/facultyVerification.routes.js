@@ -8,8 +8,7 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 
 // Both routes require the user to be logged in as a normal user first
-router.post('/send-otp', authController.protect, upload.single('idCard'), facultyVerificationController.sendFacultyOtp);
-router.post('/verify-otp', authController.protect, facultyVerificationController.verifyFacultyOtp);
+router.post('/submit-request', authController.protect, upload.single('idCard'), facultyVerificationController.submitFacultyRequest);
 // NEW: Magic Link Routes
 // 1. Sending is restricted to people who have the FACULTY_APPROVE permission (Admins, Presidents, Donors)
 router.post(
