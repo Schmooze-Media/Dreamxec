@@ -59,6 +59,7 @@ export const mapFrontendRole = (
     donor: 'DONOR',
     DONOR: 'DONOR',
     admin: 'ADMIN',
+    ADMIN: 'ADMIN',
     STUDENT_PRESIDENT: 'STUDENT_PRESIDENT',
   };
 
