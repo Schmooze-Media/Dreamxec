@@ -116,6 +116,7 @@ import AdminDonors from "./components/admin/AdminDonors";
 import AdminApplications from "./components/admin/AdminApplications";
 import apiRequest, { getToken } from "./services/api";
 import AdminCampaigns from "./components/admin/AdminCampaigns";
+import AdminTransfers from "./components/admin/AdminTransfers";
 
 type UserProjectsResponse = {
   userProjects: any;
@@ -325,6 +326,12 @@ function AppContent() {
 
   useEffect(() => {
     if (!user?.id) return;
+    // Only students and presidents own user-projects — skip for admin/donor
+    if (user.role === 'admin' || user.role === 'ADMIN' || user.role === 'donor' || user.role === 'DONOR') {
+      setUserCampaigns([]);
+      setLoadingCampaigns(false);
+      return;
+    }
 
     const fetchUserCampaigns = async () => {
       try {
@@ -353,7 +360,7 @@ function AppContent() {
     };
 
     fetchUserCampaigns();
-  }, [user?.id]);
+  }, [user?.id, user?.role]);
 
   // ✅ Project filters (same fixes applied)
 
@@ -1474,6 +1481,27 @@ function AppContent() {
                                         onLogout={handleLogout}
                                       />
                                       <AdminCampaigns />
+                                    </>
+                                  ) : (
+                                    <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">
+                                      <p className="text-dreamxec-navy text-xl font-bold">
+                                        Access Restricted
+                                      </p>
+                                    </div>
+                                  )
+                                }
+                              />
+                              <Route
+                                path="/admin/transfers"
+                                element={
+                                  user?.role === "admin" ? (
+                                    <>
+                                      <Header
+                                        currentUser={user}
+                                        onLogin={handleLoginClick}
+                                        onLogout={handleLogout}
+                                      />
+                                      <AdminTransfers />
                                     </>
                                   ) : (
                                     <div className="min-h-screen flex items-center justify-center bg-dreamxec-cream">

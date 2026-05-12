@@ -16,6 +16,7 @@
     "@sentry/tracing": "^7.120.4",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
+    "bullmq": "^5.76.7",
     "cloudinary": "^2.8.0",
     "compression": "^1.8.1",
     "connect-redis": "^7.1.1",

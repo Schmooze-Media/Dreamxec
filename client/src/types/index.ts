@@ -186,6 +186,11 @@ export interface Campaign {
 
   // ✅ Milestone-based timeline
   milestones?: Milestone[];
+
+  // 🔄 Transfer System
+  transferStatus?: "NONE" | "TRANSFER_PENDING" | "TRANSFER_EXECUTING" | "TRANSFER_RECOVERY";
+  activeTransferId?: string | null;
+  lastTransferredAt?: string | null;
 }
 
 /* =========================================================

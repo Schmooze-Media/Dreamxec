@@ -260,6 +260,8 @@ export default function StudentDashboard({
   const navigate = useNavigate();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const [userTransfers, setUserTransfers] = useState<any[]>([]);
+  const [loadingTransfers, setLoadingTransfers] = useState(false);
 
   const isPartOfClub = isClubPresident || isClubMember;
   const canCreateCampaign = studentVerified && isPartOfClub;
@@ -299,7 +301,22 @@ export default function StudentDashboard({
 
   useEffect(() => {
     if (selectedTab === 'president' && !isClubPresident) setSelectedTab('overview');
+    if (selectedTab === 'transactions') {
+      fetchTransfers();
+    }
   }, [selectedTab, isClubPresident]);
+
+  const fetchTransfers = async () => {
+    setLoadingTransfers(true);
+    try {
+      const data = await transferService.getMyTransfers();
+      setUserTransfers(data);
+    } catch (err) {
+      console.error('Failed to fetch transfers:', err);
+    } finally {
+      setLoadingTransfers(false);
+    }
+  };
 
   const filteredCampaigns = campaigns.filter(c => {
     const matchesSearch =
@@ -324,6 +341,7 @@ export default function StudentDashboard({
     if (t === 'overview') return 'Overview';
     if (t === 'campaigns') return 'Campaigns';
     if (t === 'milestones') return 'Milestones';
+    if (t === 'transactions') return 'Transactions';
     if (t === 'president') return 'President Panel';
     return '';
   };
@@ -474,6 +492,12 @@ export default function StudentDashboard({
             label="Milestones"
             active={selectedTab === 'milestones'}
             onClick={() => { setSelectedTab('milestones'); setSidebarOpen(false); }}
+          />
+          <NavItem
+            icon={<TrendingUpIcon className="w-5 h-5" />}
+            label="Transactions"
+            active={selectedTab === 'transactions'}
+            onClick={() => { setSelectedTab('transactions'); setSidebarOpen(false); }}
           />
           {isClubPresident && (
             <NavItem
@@ -964,6 +988,77 @@ export default function StudentDashboard({
                 </div>
               )}
             </>
+          )}
+
+          {selectedTab === 'transactions' && (
+            <div className="space-y-6">
+              <div className="bg-white p-6" style={{ border: '3px solid #003366', boxShadow: '6px 6px 0 #FF7F00' }}>
+                <h3 className="text-xl font-black text-[#003366] uppercase mb-6 flex items-center gap-3">
+                  Campaign Transfers <div className="h-1 w-12 bg-[#FF7F00]" />
+                </h3>
+
+                {loadingTransfers ? (
+                  <div className="py-12 text-center text-gray-400 font-bold animate-pulse uppercase tracking-widest">Loading transactions...</div>
+                ) : userTransfers.length === 0 ? (
+                  <div className="py-12 text-center text-gray-500 font-medium font-bold uppercase tracking-tight">No transfer history found.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b-2 border-gray-100">
+                          <th className="py-4 font-black text-[10px] uppercase tracking-widest text-[#003366]/40">Date</th>
+                          <th className="py-4 font-black text-[10px] uppercase tracking-widest text-[#003366]/40">Campaign</th>
+                          <th className="py-4 font-black text-[10px] uppercase tracking-widest text-[#003366]/40">Type</th>
+                          <th className="py-4 font-black text-[10px] uppercase tracking-widest text-[#003366]/40">Other Party</th>
+                          <th className="py-4 font-black text-[10px] uppercase tracking-widest text-[#003366]/40">Status</th>
+                          <th className="py-4 text-right font-black text-[10px] uppercase tracking-widest text-[#003366]/40">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {userTransfers.map((t: any) => {
+                          const isSender = t.fromUserId === user?.id;
+                          return (
+                            <tr key={t.id} className="group hover:bg-[#fff7ed]/20 transition-colors">
+                              <td className="py-4 text-xs font-bold text-gray-500">{new Date(t.createdAt).toLocaleDateString()}</td>
+                              <td className="py-4">
+                                <p className="text-sm font-black text-[#003366] truncate max-w-[200px]">{t.campaign?.title}</p>
+                              </td>
+                              <td className="py-4">
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${isSender ? 'text-red-500' : 'text-green-600'}`}>
+                                  {isSender ? 'Sent' : 'Received'}
+                                </span>
+                              </td>
+                              <td className="py-4">
+                                <p className="text-xs font-bold text-[#003366]/70">
+                                  {isSender ? (t.targetUser?.name || t.targetUser?.email) : (t.originalOwner?.name || t.originalOwner?.email)}
+                                </p>
+                              </td>
+                              <td className="py-4">
+                                <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter border-2 ${
+                                  t.status === 'COMPLETED' ? 'bg-green-50 text-green-700 border-green-200' : 
+                                  t.status.includes('REJECTED') ? 'bg-red-50 text-red-700 border-red-200' :
+                                  'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                }`}>
+                                  {t.status.replace(/_/g, ' ')}
+                                </span>
+                              </td>
+                              <td className="py-4 text-right">
+                                <button 
+                                  onClick={() => navigate(`/projects/${t.campaignId}`)}
+                                  className="text-[10px] font-black uppercase tracking-widest text-[#FF7F00] hover:underline"
+                                >
+                                  View
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* ════════════════════════

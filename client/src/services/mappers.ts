@@ -147,6 +147,9 @@ export const mapUserProjectToCampaign = (
         approvedAt: m.approvedAt,
         submissions: m.submissions || [],
       })) || [],
+
+    transferStatus: userProject.transferStatus ?? 'NONE',
+    activeTransferId: userProject.activeTransferId ?? null,
   };
 };
 

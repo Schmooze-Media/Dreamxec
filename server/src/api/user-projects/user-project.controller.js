@@ -397,7 +397,9 @@ exports.getUserProject = catchAsync(async (req, res, next) => {
     ? `project:${identifier}`
     : `project:slug:${identifier}`;
 
-  const cached = await getCache(cacheKey);
+  // Authenticated users always bypass cache — they need fresh transferStatus / ownership data
+  const isAuthenticated = !!req.user;
+  const cached = isAuthenticated ? null : await getCache(cacheKey);
 
   if (cached) {
     console.log(`[Cache] HIT ${cacheKey}`);

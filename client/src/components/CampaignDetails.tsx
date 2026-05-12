@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import type { Campaign, User } from '../types';
 import { FooterContent } from '../sections/Footer/components/FooterContent';
 import { getUserProject } from '../services/userProjectService';
@@ -22,6 +23,9 @@ import CommentSection from "./comments/CommentSection";
 import { Resizable } from "re-resizable";
 import PublicMilestoneEcosystem from './milestones/PublicMilestoneEcosystem';
 import SEO from "../components/SEO";
+import TransferModal from './transfers/TransferModal';
+import TransferHistory from './transfers/TransferHistory';
+import transferService, { CampaignTransfer } from '../services/transferService';
 
 interface CampaignDetailsProps {
   currentUser: User | null;
@@ -205,6 +209,9 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
   const showMobileCTA = campaign?.status === 'approved';
   const [deckWidth, setDeckWidth] = useState<number | string>('100%');
   const isDesktop = useIsDesktop();
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [activeTransfer, setActiveTransfer] = useState<CampaignTransfer | null>(null);
+  const [transferLoading, setTransferLoading] = useState(false);
 
   const refreshCampaign = async () => {
     const res = await getUserProject(id!);
@@ -234,6 +241,42 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
     };
     fetchCampaign();
   }, [id]);
+
+  useEffect(() => {
+    const fetchActiveTransfer = async () => {
+      if (campaign?.transferStatus === 'TRANSFER_PENDING' && campaign.activeTransferId) {
+        try {
+          const transfers = await transferService.getTransferHistory(campaign.id);
+          const active = transfers.find(t => t.id === campaign.activeTransferId);
+          if (active) setActiveTransfer(active);
+        } catch (err) {
+          console.error('Failed to fetch active transfer', err);
+        }
+      } else {
+        setActiveTransfer(null);
+      }
+    };
+    fetchActiveTransfer();
+  }, [campaign?.id, campaign?.transferStatus, campaign?.activeTransferId]);
+
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    if (activeTransfer) {
+      const interval = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute
+      return () => clearInterval(interval);
+    }
+  }, [activeTransfer]);
+
+  const userRole = currentUser?.role?.toUpperCase();
+  const isOwner = currentUser?.id === campaign?.userId;
+  const isTarget = currentUser?.id === activeTransfer?.toUserId;
+  const isUserPresident = userRole === 'STUDENT_PRESIDENT';
+  const isUserAdmin = userRole === 'ADMIN' || userRole === 'admin';
+  
+  const isPresidentActionable = isUserPresident && activeTransfer?.status === 'PENDING_PRESIDENT';
+  const isAdminActionable = isUserAdmin && (activeTransfer?.status === 'PENDING_ADMIN' || activeTransfer?.status === 'PENDING_PRESIDENT');
+  const canActionTransfer = isTarget || isPresidentActionable || isAdminActionable;
 
   useEffect(() => {
     const checkWishlistStatus = async () => {
@@ -371,6 +414,183 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
 
         {/* ── MAIN ── */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 pb-24 sm:pb-28 lg:pb-12">
+          
+          {/* 🔄 PREMIUM TRANSFER BANNER */}
+          {activeTransfer && (
+            <div 
+              className="mb-8 p-0 bg-white overflow-hidden animate-in slide-in-from-top-4 duration-700"
+              style={{ border: '4px solid #003366', boxShadow: '10px 10px 0 #003366' }}
+            >
+              <div className="flex flex-col lg:flex-row">
+                {/* Left: Status & Icon */}
+                <div className="bg-dreamxec-navy p-6 flex flex-row lg:flex-col items-center justify-between lg:justify-center gap-4 lg:w-48 flex-shrink-0">
+                  <div className="w-16 h-16 bg-white flex items-center justify-center rotate-3 border-4 border-dreamxec-orange" style={{ boxShadow: '4px 4px 0 #FF7F00' }}>
+                    <span className="text-dreamxec-navy text-3xl font-black">⇄</span>
+                  </div>
+                  <div className="text-center lg:mt-4">
+                    <p className="text-[10px] font-black text-dreamxec-orange uppercase tracking-[0.2em]">Governance</p>
+                    <p className="text-xs font-black text-white uppercase tracking-widest mt-1">Transfer</p>
+                  </div>
+                </div>
+
+                {/* Center: Details & Timer */}
+                <div className="flex-1 p-6 sm:p-8 flex flex-col md:flex-row justify-between gap-8 bg-amber-50/50">
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="w-3 h-3 bg-dreamxec-orange animate-pulse" />
+                        <h3 className="text-lg sm:text-xl font-black text-dreamxec-navy uppercase tracking-tight">Active Ownership Transfer</h3>
+                      </div>
+                      <p className="text-sm font-bold text-dreamxec-navy/70 leading-relaxed max-w-xl">
+                        This campaign is undergoing a secure ownership transition. 
+                        Sensitive actions like milestones and withdrawals are locked for safety.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 items-end">
+                      <div className="px-3 py-1.5 bg-white border-2 border-dreamxec-navy shadow-[3px_3px_0_#003366]">
+                        <p className="text-[9px] font-black text-dreamxec-navy/50 uppercase tracking-widest">Current Phase</p>
+                        <p className="text-xs font-black text-dreamxec-navy uppercase">{activeTransfer.status.replace(/_/g, ' ')}</p>
+                      </div>
+
+                      {/* Phase Progress Bar */}
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        {[
+                          { id: 'PENDING_TARGET', label: 'Acceptance' },
+                          { id: 'PENDING_PRESIDENT', label: 'President' },
+                          { id: 'PENDING_ADMIN', label: 'Admin' }
+                        ].map((phase, idx) => {
+                          const statusOrder = ['PENDING_TARGET', 'PENDING_PRESIDENT', 'PENDING_ADMIN', 'COMPLETED'];
+                          const currentIdx = statusOrder.indexOf(activeTransfer.status);
+                          const isDone = currentIdx > idx;
+                          const isCurrent = currentIdx === idx;
+                          
+                          return (
+                            <div key={phase.id} className="flex items-center gap-1.5">
+                              <div 
+                                className={`w-3 h-3 border-2 border-dreamxec-navy transition-all ${isDone ? 'bg-dreamxec-green' : isCurrent ? 'bg-dreamxec-orange animate-pulse' : 'bg-gray-200'}`}
+                                title={phase.label}
+                              />
+                              {idx < 2 && <div className={`w-4 h-0.5 bg-dreamxec-navy/20 ${isDone ? 'bg-dreamxec-navy' : ''}`} />}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="px-3 py-1.5 bg-white border-2 border-dreamxec-navy shadow-[3px_3px_0_#FF7F00]">
+                        <p className="text-[9px] font-black text-dreamxec-navy/50 uppercase tracking-widest">Expires In</p>
+                        <p className="text-xs font-black text-dreamxec-orange uppercase">
+                          {(() => {
+                            const expiry = new Date(activeTransfer.currentStageExpiresAt).getTime();
+                            const now = new Date().getTime();
+                            const diff = expiry - now;
+                            if (diff <= 0) return 'Expired';
+                            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                            return `${days}d ${hours}h ${minutes}m`;
+                          })()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Actions */}
+                  <div className="flex flex-col justify-center gap-3 md:min-w-[240px]">
+                    {canActionTransfer || (isAdmin && activeTransfer.status === 'PENDING_PRESIDENT') ? (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-dreamxec-navy uppercase tracking-widest ml-1">Decision Note (Optional)</label>
+                          <textarea 
+                            id="transfer-note"
+                            placeholder="Add your note here..."
+                            className="w-full px-3 py-2 text-xs font-bold text-dreamxec-navy bg-white border-2 border-dreamxec-navy focus:outline-none focus:border-dreamxec-orange transition-colors resize-none h-16"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button 
+                            disabled={transferLoading}
+                            onClick={async () => {
+                              if (!window.confirm('Confirm approval for this transfer?')) return;
+                              setTransferLoading(true);
+                              const note = (document.getElementById('transfer-note') as HTMLTextAreaElement)?.value || '';
+                              try {
+                                if (isTarget) await transferService.acceptTransfer(campaign.id, activeTransfer.id, note);
+                                else await transferService.approveTransfer(campaign.id, activeTransfer.id, note, isUserPresident ? 'STUDENT_PRESIDENT' : 'ADMIN');
+                                toast.success('Transfer stage approved');
+                                refreshCampaign();
+                              } catch (err: any) { 
+                                toast.error(err.message || 'Failed to approve'); 
+                              } finally { setTransferLoading(false); }
+                            }}
+                            className="flex-1 py-3 bg-dreamxec-green text-white font-black uppercase tracking-widest text-[10px] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] active:translate-x-[0px] active:translate-y-[0px] disabled:opacity-50"
+                            style={{ border: '3px solid #003366', boxShadow: '4px 4px 0 #003366' }}
+                          >
+                            {transferLoading ? '...' : (isTarget ? 'Accept Request' : 'Approve Stage')}
+                          </button>
+                          <button 
+                            disabled={transferLoading}
+                            onClick={async () => {
+                              const reason = prompt("Reason for rejection:");
+                              if (!reason) return;
+                              setTransferLoading(true);
+                              try {
+                                await transferService.rejectTransfer(campaign.id, activeTransfer.id, reason, isTarget ? 'TARGET' : (isUserPresident ? 'STUDENT_PRESIDENT' : 'ADMIN'));
+                                toast.success('Transfer rejected');
+                                refreshCampaign();
+                              } catch (err: any) { 
+                                toast.error(err.message || 'Failed to reject'); 
+                              } finally { setTransferLoading(false); }
+                            }}
+                            className="py-3 px-4 bg-white text-red-600 font-black uppercase tracking-widest text-[10px] transition-all hover:bg-red-50 disabled:opacity-50"
+                            style={{ border: '3px solid #003366', boxShadow: '4px 4px 0 #dc2626' }}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                        {isAdminActionable && activeTransfer.status === 'PENDING_PRESIDENT' && (
+                          <p className="text-[9px] font-black text-dreamxec-orange uppercase tracking-widest text-center animate-pulse">
+                            Admin Bypass Available
+                          </p>
+                        )}
+                      </>
+                    ) : isOwner ? (
+                      <div className="text-right">
+                        <button 
+                          disabled={transferLoading}
+                          onClick={async () => {
+                            if (!window.confirm('Are you sure you want to cancel this transfer?')) return;
+                            setTransferLoading(true);
+                            try {
+                              await transferService.cancelTransfer(campaign.id, activeTransfer.id);
+                              toast.success('Transfer cancelled');
+                              await refreshCampaign();
+                            } catch (err) {
+                              toast.error('Failed to cancel transfer');
+                            } finally { setTransferLoading(false); }
+                          }}
+                          className="w-full py-3 bg-white text-red-600 font-black uppercase tracking-widest text-[10px] transition-all hover:bg-red-50 disabled:opacity-50"
+                          style={{ border: '3px solid #dc2626', boxShadow: '4px 4px 0 #dc2626' }}
+                        >
+                          Cancel Request
+                        </button>
+                        <p className="mt-2 text-[9px] font-bold text-dreamxec-navy/40 uppercase tracking-widest">
+                          Awaiting decision from {activeTransfer.status.split('_').pop()}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-white p-4 border-2 border-dreamxec-navy shadow-[4px_4px_0_#003366] text-center">
+                        <p className="text-[10px] text-dreamxec-navy font-black uppercase tracking-widest leading-tight">
+                          Governance lock active.<br/>Actions restricted.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
 
           {/* Back Button */}
           <button
@@ -678,16 +898,21 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
                   onLogin={onLogin}
                 />
               </NeoCard>
+
+              {/* 🔄 TRANSFER HISTORY (Owner Only) */}
+              {isOwner && (
+                <NeoCard className="p-4 sm:p-5 md:p-6" accentColor="#003366">
+                  <SectionHeading>Transfer History</SectionHeading>
+                  <TransferHistory campaignId={campaign.id} />
+                </NeoCard>
+              )}
             </div>
 
             {/* ════════════════════════════════
               RIGHT COLUMN — Funding Card
           ════════════════════════════════ */}
             <div className="w-full lg:w-[360px] xl:w-[400px] flex-shrink-0 space-y-4 sm:space-y-5 lg:sticky lg:top-24 self-start">
-
-
               <NeoCard className="p-4 sm:p-5 md:p-6" accentColor="#FF7F00">
-
                 {/* Raised amount */}
                 <div className="mb-4 sm:mb-5 pb-4 sm:pb-5 border-b-2 border-dreamxec-navy/20">
                   <p className="text-3xl sm:text-4xl md:text-5xl font-black text-dreamxec-navy tracking-tighter break-all">
@@ -700,32 +925,14 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
 
                 {/* Progress Bar */}
                 <div className="mb-4 sm:mb-5">
-                  <div className="w-full h-5 sm:h-6 bg-gray-100 overflow-hidden" style={{ border: '3px solid #003366' }}>
-                    <div
-                      className="h-full bg-dreamxec-green relative flex items-center justify-end pr-1 transition-all duration-700"
-                      style={{ width: `${Math.max(progressPercentage, 4)}%` }}
-                    >
-                      <span className="text-white text-[9px] sm:text-[10px] font-black">{progressPercentage.toFixed(0)}%</span>
-                    </div>
+                  <div className="h-2 w-full bg-dreamxec-navy/10 overflow-hidden" style={{ border: '1px solid #003366', boxShadow: '2px 2px 0 #003366' }}>
+                    <div className="h-full bg-[#FF7F00] transition-all duration-1000 ease-out" style={{ width: `${Math.min(100, (campaign.currentAmount / campaign.goalAmount) * 100)}%` }} />
                   </div>
                 </div>
-
-                {/* Stats grid */}
-                <div className="mb-4 sm:mb-5">
-                  <div
-                    className="p-3 sm:p-4 text-center"
-                    style={{ border: '3px solid #FF7F00', boxShadow: '4px 4px 0 #003366', background: '#fff7ed' }}
-                  >
-                    <p className="text-xl sm:text-2xl font-black text-dreamxec-navy">₹{remainingAmount.toLocaleString()}</p>
-                    <p className="text-[10px] sm:text-xs text-dreamxec-navy/60 font-black uppercase tracking-widest mt-0.5">Remaining</p>
-                  </div>
-                </div>
-
-                {/* Performance Score */}
-                <div className="mb-4 sm:mb-5 p-3 sm:p-4" style={{ border: '2px dashed #FF7F00', background: '#fff7ed' }}>
-                  <p className="text-xs font-black text-dreamxec-navy uppercase tracking-wide mb-2">Performance Score</p>
-                  <div className="flex items-center gap-0.5 sm:gap-1">
-                    {[1, 2, 3, 4, 5].map(star => (
+                {/* Rating */}
+                <div className="mb-4 sm:mb-5 pb-4 sm:pb-5 border-b-2 border-dreamxec-navy/20">
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
                       <svg key={star} viewBox="0 0 24 24" fill={(campaign.rating ?? 5) >= star ? '#FF7F00' : 'none'} stroke="#FF7F00" strokeWidth="2" className="w-4 h-4 sm:w-5 sm:h-5">
                         <polygon points="12 2 15 8 22 9 17 14 18 21 12 18 6 21 7 14 2 9 9 8 12 2" />
                       </svg>
@@ -783,7 +990,6 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
                         icon: <svg className="w-4 h-4 mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" /></svg>,
                         action: () => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out "${campaign.title}" on DreamXec! `)}${encodeURIComponent(window.location.href)}`, '_blank'),
                       },
-
                     ].map(({ bg, icon, action }, i) => (
                       <button
                         key={i}
@@ -796,8 +1002,22 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
                     ))}
                   </div>
                 </div>
-              </NeoCard>
 
+                {/* 🔄 OWNER ACTIONS */}
+                {isOwner && (
+                  <div className="mt-6 space-y-3 pt-6 border-t-2 border-dreamxec-navy/20">
+                    <p className="text-[10px] font-black text-dreamxec-navy uppercase tracking-widest mb-2">Campaign Governance</p>
+                    <button
+                      onClick={() => setShowTransferModal(true)}
+                      disabled={campaign.transferStatus !== 'NONE'}
+                      className="w-full py-3 bg-white text-dreamxec-navy font-black uppercase tracking-widest text-xs transition-all hover:bg-dreamxec-navy hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ border: '3px solid #003366', boxShadow: '4px 4px 0 #003366' }}
+                    >
+                      {campaign.transferStatus !== 'NONE' ? 'Transfer in Progress' : 'Transfer Ownership'}
+                    </button>
+                  </div>
+                )}
+              </NeoCard>
               {/* Team Members */}
               {campaign.campaignType === 'TEAM' && campaign.teamMembers?.length > 0 && (
                 <NeoCard className="p-4 sm:p-5 md:p-6" accentColor="#0B9C2C">
@@ -841,6 +1061,17 @@ export default function CampaignDetails({ currentUser, campaigns, onLogin, onLog
           email={email}
           setEmail={setEmail}
         />
+
+        {showTransferModal && (
+          <TransferModal
+            campaign={campaign}
+            onClose={() => setShowTransferModal(false)}
+            onSuccess={() => {
+              setShowTransferModal(false);
+              refreshCampaign();
+            }}
+          />
+        )}
 
 
 

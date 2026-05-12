@@ -50,6 +50,11 @@ const profileRoutes = require("./src/api/profile/profile.routes");
 const mentorRoutes = require("./src/api/mentor/mentor.routes");
 const collegesRoutes = require("./src/api/colleges/colleges.routes");
 
+// Transfer Worker & Cron
+const { startTransferExpiryCron } = require("./src/api/user-projects/transfers/transfer.cron");
+// Importing the worker ensures it starts listening to the queue
+require("./src/api/user-projects/transfers/transfer.worker");
+
 // Passport config
 require("./src/config/passport");
 
@@ -252,6 +257,10 @@ app.listen(PORT, () => {
     .then(() => {
       console.log("Database connected successfully");
       console.log(`🚀 Server running on port ${PORT}`);
+
+      // Start Transfer Expiry Cron
+      startTransferExpiryCron();
+      console.log("⏰ Transfer Expiry Cron started");
     })
     .catch((err) => console.error("Database connection failed:", err));
 });

@@ -183,14 +183,21 @@ exports.deleteDonorProject = catchAsync(async (req, res, next) => {
 exports.getDonorProject = catchAsync(async (req, res, next) => {
   const donorProject = await prisma.donorProject.findUnique({
     where: { id: req.params.id },
-    include: {
-      donor: { select: { id: true, name: true, organizationName: true } },
-    },
   });
 
   if (!donorProject) {
     return next(new AppError('Donor project not found', 404));
   }
+
+  const donor = await prisma.donor.findUnique({
+    where: { id: donorProject.donorId },
+    select: { id: true, name: true, organizationName: true },
+  });
+
+  if (!donor) {
+    return next(new AppError('Donor project not found (orphaned)', 404));
+  }
+  donorProject.donor = donor;
 
   if (donorProject.status !== 'APPROVED') {
     if (
@@ -216,13 +223,26 @@ exports.getDonorProject = catchAsync(async (req, res, next) => {
    PUBLIC: GET ALL APPROVED PROJECTS
 ====================================================== */
 exports.getPublicDonorProjects = catchAsync(async (req, res, next) => {
-  const donorProjects = await prisma.donorProject.findMany({
+  const rawProjects = await prisma.donorProject.findMany({
     where: { status: 'APPROVED' },
-    include: {
-      donor: { select: { id: true, name: true, organizationName: true } },
-    },
     orderBy: { createdAt: 'desc' },
+  }).catch(() => []);
+
+  const donorIds = [...new Set(rawProjects.map((p) => p.donorId))];
+  const donors = await prisma.donor.findMany({
+    where: { id: { in: donorIds } },
+    select: { id: true, name: true, organizationName: true },
   });
+
+  const donorMap = {};
+  donors.forEach((d) => (donorMap[d.id] = d));
+
+  const donorProjects = rawProjects
+    .filter((p) => donorMap[p.donorId])
+    .map((p) => {
+      p.donor = donorMap[p.donorId];
+      return p;
+    });
 
   res.status(200).json({
     status: 'success',
@@ -235,13 +255,25 @@ exports.getPublicDonorProjects = catchAsync(async (req, res, next) => {
    DONOR: GET OWN PROJECTS
 ====================================================== */
 exports.getMyDonorProjects = catchAsync(async (req, res, next) => {
-  const donorProjects = await prisma.donorProject.findMany({
+  const rawProjects = await prisma.donorProject.findMany({
     where: { donorId: req.user.id },
-    include: {
-      donor: { select: { id: true, name: true, organizationName: true } },
-    },
     orderBy: { createdAt: 'desc' },
+  }).catch(() => []);
+
+  const donors = await prisma.donor.findMany({
+    where: { id: req.user.id },
+    select: { id: true, name: true, organizationName: true },
   });
+
+  const donorMap = {};
+  donors.forEach((d) => (donorMap[d.id] = d));
+
+  const donorProjects = rawProjects
+    .filter((p) => donorMap[p.donorId])
+    .map((p) => {
+      p.donor = donorMap[p.donorId];
+      return p;
+    });
 
   res.status(200).json({
     status: 'success',

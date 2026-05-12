@@ -17,6 +17,8 @@ export interface ApiResponse<T> {
   token?: string;
   otp?: string;
   results?: number;
+  total?: number;
+  pages?: number;
   pagination?: { nextCursor: string | null; hasNextPage: boolean };
 }
 
@@ -97,7 +99,7 @@ async function apiRequest<T>(
     // ===============================
     // 🔐 HANDLE 401
     // ===============================
-    if (response.status === 401) {
+    if (response.status === 401 && !endpoint.includes('/auth/login')) {
       removeToken();
       throw new Error("Your session has expired. Please login again.");
     }
@@ -139,5 +141,20 @@ async function apiRequest<T>(
     throw new Error("Network error. Please check your connection.");
   }
 }
+
+// ===============================
+// ATTACH HELPERS
+// ===============================
+apiRequest.get = <T>(endpoint: string, options: ExtendedRequestInit = {}) => 
+  apiRequest<T>(endpoint, { ...options, method: 'GET' });
+
+apiRequest.post = <T>(endpoint: string, body?: any, options: ExtendedRequestInit = {}) => 
+  apiRequest<T>(endpoint, { ...options, method: 'POST', body: body ? JSON.stringify(body) : undefined });
+
+apiRequest.patch = <T>(endpoint: string, body?: any, options: ExtendedRequestInit = {}) => 
+  apiRequest<T>(endpoint, { ...options, method: 'PATCH', body: body ? JSON.stringify(body) : undefined });
+
+apiRequest.delete = <T>(endpoint: string, options: ExtendedRequestInit = {}) => 
+  apiRequest<T>(endpoint, { ...options, method: 'DELETE' });
 
 export default apiRequest;

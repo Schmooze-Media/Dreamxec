@@ -145,7 +145,7 @@ exports.getAllProjects = catchAsync(async (req, res, next) => {
   const [
     userProjects,
     totalUserProjects,
-    donorProjects,
+    rawDonorProjects,
     totalDonorProjects
   ] = await prisma.$transaction([
     prisma.userProject.findMany({
@@ -163,17 +163,26 @@ exports.getAllProjects = catchAsync(async (req, res, next) => {
 
     prisma.donorProject.findMany({
       where: donorProjectFilter,
-      include: {
-        donor: {
-          select: { id: true, name: true, email: true, organizationName: true }
-        }
-      },
       orderBy: { createdAt: 'desc' },
       skip,
       take: limit
     }),
     prisma.donorProject.count({ where: donorProjectFilter })
   ]);
+
+  const donorIds = [...new Set(rawDonorProjects.map((p) => p.donorId))];
+  const donors = await prisma.donor.findMany({
+    where: { id: { in: donorIds } },
+    select: { id: true, name: true, email: true, organizationName: true },
+  });
+
+  const donorMap = {};
+  donors.forEach((d) => (donorMap[d.id] = d));
+
+  const donorProjects = rawDonorProjects.map((p) => {
+    p.donor = donorMap[p.donorId] || null;
+    return p;
+  });
 
   res.status(200).json({
     status: 'success',
@@ -1363,4 +1372,47 @@ exports.getProjectFullDetails = catchAsync(async (req, res, next) => {
   if (!project) return next(new AppError('Project not found', 404));
 
   res.status(200).json({ status: 'success', data: { project } });
+});
+exports.getAllTransfers = catchAsync(async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const filter = {};
+  if (req.query.status && req.query.status !== 'ALL') {
+    filter.status = req.query.status;
+  }
+
+  console.log('[AdminController] getAllTransfers filter:', filter);
+
+  try {
+    const [transfers, total] = await Promise.all([
+      prisma.campaignTransfer.findMany({
+        where: filter,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          campaign: { select: { id: true, title: true } },
+          originalOwner: { select: { id: true, name: true, email: true } },
+          targetUser: { select: { id: true, name: true, email: true } }
+        }
+      }),
+      prisma.campaignTransfer.count({ where: filter })
+    ]);
+
+    console.log('[AdminController] Found transfers:', transfers.length);
+
+    res.status(200).json({
+      status: 'success',
+      results: transfers.length,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      data: { transfers }
+    });
+  } catch (err) {
+    console.error('[AdminController] getAllTransfers ERROR:', err);
+    return next(err);
+  }
 });
