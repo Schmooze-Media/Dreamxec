@@ -258,9 +258,9 @@ export default function StudentDashboard({
   onCreateCampaignDemo,
 }: StudentDashboardProps) {
   const { can } = usePermission();
-  const isFaculty = user?.roles?.includes('FACULTY') || false;
-  const isVerifiedFaculty = user?.facultyVerified || false;
   const isAlumni = user?.roles?.includes('ALUMNI') || false;
+  const isFaculty = (user?.roles?.includes('FACULTY') || false) && !isAlumni;
+  const isVerifiedFaculty = user?.facultyVerified || false;
 
   const [selectedTab, setSelectedTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -285,8 +285,8 @@ export default function StudentDashboard({
     if (user.roles.includes('ADMIN')) return 'Admin';
     if (user.roles.includes('STUDENT_PRESIDENT')) return 'President';
     if (user.roles.includes('DONOR') || user.roles.includes('PREMIUM_DONOR')) return 'Donor';
-    if (user.roles.includes('FACULTY')) return 'Faculty';
     if (user.roles.includes('ALUMNI')) return 'Alumni';
+    if (user.roles.includes('FACULTY')) return 'Faculty';
     return 'Student';
   };
 
@@ -351,6 +351,7 @@ export default function StudentDashboard({
     if (t === 'campaigns') return 'Campaigns';
     if (t === 'milestones') return 'Milestones';
     if (t === 'president') return 'President Panel';
+    if (t === 'mentorship') return 'Mentorship';
     return '';
   };
 
@@ -404,7 +405,9 @@ export default function StudentDashboard({
             </div>
             <div>
               <p className="font-black text-base text-white uppercase tracking-widest leading-none">DreamXec</p>
-              <p className="text-[10px] font-bold text-orange-300 uppercase tracking-[0.2em]">Student Portal</p>
+              <p className="text-[10px] font-bold text-orange-300 uppercase tracking-[0.2em]">
+                {isAlumni ? 'Alumni Portal' : isFaculty ? 'Faculty Portal' : 'Student Portal'}
+              </p>
             </div>
           </div>
           <button
@@ -450,7 +453,24 @@ export default function StudentDashboard({
               <p className="font-black text-sm text-white uppercase tracking-wide truncate">{studentName}</p>
               <p className="text-[10px] text-orange-300 font-bold uppercase tracking-widest">{getUserTitle()} Account</p>
               <div className="mt-2">
-                {studentVerified ? (
+                {isAlumni ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest"
+                      style={{ background: '#0B9C2C', color: '#fff', border: '2px solid #fff' }}
+                    >
+                      <CheckCircleIcon className="w-3 h-3" /> Alumni
+                    </span>
+                    {user?.yearOfGraduation && (
+                      <span
+                        className="inline-flex px-2 py-0.5 text-[10px] font-black uppercase tracking-widest"
+                        style={{ background: '#FF7F00', color: '#003366', border: '2px solid #fff' }}
+                      >
+                        Passed out {user.yearOfGraduation}
+                      </span>
+                    )}
+                  </div>
+                ) : studentVerified ? (
                   <span
                     className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest"
                     style={{ background: '#0B9C2C', color: '#fff', border: '2px solid #fff' }}
@@ -488,19 +508,23 @@ export default function StudentDashboard({
             active={selectedTab === 'overview'}
             onClick={() => { setSelectedTab('overview'); setSidebarOpen(false); }}
           />
-          <NavItem
-            icon={<FolderIcon className="w-5 h-5" />}
-            label="Campaigns"
-            active={selectedTab === 'campaigns'}
-            badge={campaigns.length}
-            onClick={() => { setSelectedTab('campaigns'); setSidebarOpen(false); }}
-          />
-          <NavItem
-            icon={<ClockIcon className="w-5 h-5" />}
-            label="Milestones"
-            active={selectedTab === 'milestones'}
-            onClick={() => { setSelectedTab('milestones'); setSidebarOpen(false); }}
-          />
+          {!isAlumni && (
+            <>
+              <NavItem
+                icon={<FolderIcon className="w-5 h-5" />}
+                label="Campaigns"
+                active={selectedTab === 'campaigns'}
+                badge={campaigns.length}
+                onClick={() => { setSelectedTab('campaigns'); setSidebarOpen(false); }}
+              />
+              <NavItem
+                icon={<ClockIcon className="w-5 h-5" />}
+                label="Milestones"
+                active={selectedTab === 'milestones'}
+                onClick={() => { setSelectedTab('milestones'); setSidebarOpen(false); }}
+              />
+            </>
+          )}
           {isClubPresident && (
             <NavItem
               icon={<UsersIcon className="w-5 h-5" />}
@@ -509,35 +533,29 @@ export default function StudentDashboard({
               onClick={() => { setSelectedTab('president'); setPresidentTab('dashboard'); setSidebarOpen(false); }}
             />
           )}
+          {(isFaculty || isAlumni) && (
+            <NavItem
+              icon={<HeartIcon className="w-5 h-5" />}
+              label="Mentorship"
+              active={selectedTab === 'mentorship'}
+              onClick={() => { setSelectedTab('mentorship'); setSidebarOpen(false); }}
+            />
+          )}
+          {isAlumni && (
+            <NavItem
+              icon={<AwardIcon className="w-5 h-5" />}
+              label="Donor"
+              active={selectedTab === 'donor'}
+              onClick={() => {}}
+            />
+          )}
           {isFaculty && (
             <>
-              <NavItem
-                icon={<HeartIcon className="w-5 h-5" />}
-                label="Mentorship"
-                active={selectedTab === 'mentorship'}
-                onClick={() => { setSelectedTab('mentorship'); setSidebarOpen(false); }}
-              />
               <NavItem
                 icon={<UsersIcon className="w-5 h-5" />}
                 label="Alumni"
                 active={selectedTab === 'alumni'}
                 onClick={() => { setSelectedTab('alumni'); setSidebarOpen(false); }}
-              />
-            </>
-          )}
-          {isAlumni && (
-            <>
-              <NavItem
-                icon={<HeartIcon className="w-5 h-5" />}
-                label="Mentorship"
-                active={selectedTab === 'mentorship'}
-                onClick={() => { setSelectedTab('mentorship'); setSidebarOpen(false); }}
-              />
-              <NavItem
-                icon={<AwardIcon className="w-5 h-5" />}
-                label="Donor"
-                active={selectedTab === 'donor'}
-                onClick={() => { setSelectedTab('donor'); setSidebarOpen(false); }}
               />
             </>
           )}
@@ -700,163 +718,219 @@ export default function StudentDashboard({
           {selectedTab === 'overview' && (
             <>
               {/* Verification alert */}
-              {((!isFaculty && !studentVerified) || (isFaculty && !isVerifiedFaculty)) && (
-                <div
-                  className="flex flex-col sm:flex-row sm:items-center gap-4 p-4"
-                  style={{ background: '#fffbeb', border: '3px solid #FF7F00', boxShadow: '5px 5px 0 #003366' }}
-                >
+              {isAlumni ? (
+                <>
                   <div
-                    className="w-10 h-10 flex items-center justify-center flex-shrink-0"
-                    style={{ background: '#FF7F00', border: '2px solid #003366' }}
+                    className="bg-white p-6 sm:p-8"
+                    style={{ border: '4px solid #003366', boxShadow: '8px 8px 0 #0B9C2C' }}
                   >
-                    <ClockIcon className="w-5 h-5 text-[#003366]" />
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-widest text-[#0B9C2C]">
+                          Alumni Dashboard
+                        </p>
+                        <h1 className="mt-2 text-3xl font-black uppercase tracking-tight text-[#003366] sm:text-4xl">
+                          Welcome, {studentName || 'Alumni'}
+                        </h1>
+                        <p className="mt-2 max-w-2xl text-sm font-bold text-[#003366]/70">
+                          Support student innovators through mentorship, endorsements, and alumni network opportunities.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => navigate('/campaigns')}
+                        className="w-full px-5 py-3 text-sm font-black uppercase tracking-widest text-white transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] sm:w-auto"
+                        style={{ background: '#003366', border: '3px solid #003366', boxShadow: '4px 4px 0 #FF7F00' }}
+                      >
+                        Browse Campaigns
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-black text-sm text-[#003366] uppercase tracking-wide">
-                      Action Required: {isFaculty ? 'Verify Faculty Identity' : 'Verify Your Account'}
-                    </p>
-                    <p className="text-xs font-medium text-[#003366]/70 mt-0.5">
-                      {isFaculty
-                        ? 'Verify your institutional email to unlock campaign approval rights and platform access.'
-                        : 'Complete student verification to unlock campaign creation and full platform access.'}
-                    </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      ['🎓', 'Alumni Status', 'Verified alumni access is active.'],
+                      ['🤝', 'Mentorship', 'Apply to guide student founders.'],
+                      ['⭐', 'Endorsements', 'Endorse credible student campaigns.'],
+                    ].map(([icon, title, body]) => (
+                      <div
+                        key={title}
+                        className="bg-white p-5"
+                        style={{ border: '3px solid #003366', boxShadow: '5px 5px 0 #FF7F00' }}
+                      >
+                        <div className="text-3xl">{icon}</div>
+                        <h2 className="mt-3 text-base font-black uppercase tracking-wide text-[#003366]">
+                          {title}
+                        </h2>
+                        <p className="mt-1 text-sm font-bold text-[#003366]/70">
+                          {body}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                  <button
-                    onClick={() => isFaculty ? setShowFacultyModal(true) : setIsVerificationModalOpen(true)}
-                    className="flex-shrink-0 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white transition-all hover:translate-x-[-2px] hover:translate-y-[-2px]"
-                    style={{ background: '#003366', border: '3px solid #003366', boxShadow: '4px 4px 0 #FF7F00' }}
+                </>
+              ) : (
+                <>
+                  {/* Verification alert */}
+                  {((!isFaculty && !studentVerified) || (isFaculty && !isVerifiedFaculty)) && (
+                    <div
+                      className="flex flex-col sm:flex-row sm:items-center gap-4 p-4"
+                      style={{ background: '#fffbeb', border: '3px solid #FF7F00', boxShadow: '5px 5px 0 #003366' }}
+                    >
+                      <div
+                        className="w-10 h-10 flex items-center justify-center flex-shrink-0"
+                        style={{ background: '#FF7F00', border: '2px solid #003366' }}
+                      >
+                        <ClockIcon className="w-5 h-5 text-[#003366]" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-black text-sm text-[#003366] uppercase tracking-wide">
+                          Action Required: {isFaculty ? 'Verify Faculty Identity' : 'Verify Your Account'}
+                        </p>
+                        <p className="text-xs font-medium text-[#003366]/70 mt-0.5">
+                          {isFaculty
+                            ? 'Verify your institutional email to unlock campaign approval rights and platform access.'
+                            : 'Complete student verification to unlock campaign creation and full platform access.'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => isFaculty ? setShowFacultyModal(true) : setIsVerificationModalOpen(true)}
+                        className="flex-shrink-0 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white transition-all hover:translate-x-[-2px] hover:translate-y-[-2px]"
+                        style={{ background: '#003366', border: '3px solid #003366', boxShadow: '4px 4px 0 #FF7F00' }}
+                      >
+                        Verify Now →
+                      </button>
+                    </div>
+                  )}
+
+                  {/* KPI Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <KpiCard
+                      label="Total Raised"
+                      value={`₹${analytics.totalRaised > 0 ? (analytics.totalRaised / 1000).toFixed(1) + 'K' : '0'}`}
+                      sub="From approved campaigns"
+                      icon={<TrendingUpIcon className="w-5 h-5" style={{ color: '#0B9C2C' } as any} />}
+                      accent="#0B9C2C"
+                    />
+                    <KpiCard
+                      label="Active"
+                      value={analytics.approvedCount}
+                      sub="Running campaigns"
+                      icon={<CheckCircleIcon className="w-5 h-5" style={{ color: '#003366' } as any} />}
+                      accent="#003366"
+                    />
+                    <KpiCard
+                      label="Pending"
+                      value={analytics.pendingCount}
+                      sub="Under review"
+                      icon={<ClockIcon className="w-5 h-5" style={{ color: '#FF7F00' } as any} />}
+                      accent="#FF7F00"
+                    />
+                    <KpiCard
+                      label="Rejected"
+                      value={analytics.rejectedCount}
+                      sub="Needs attention"
+                      icon={<XCircleIcon className="w-5 h-5" style={{ color: '#dc2626' } as any} />}
+                      accent="#dc2626"
+                    />
+                  </div>
+
+                  {/* Action Cards */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {/* Create Campaign */}
+                    <button
+                      onClick={handleCreateCampaign}
+                      disabled={!canCreateCampaign}
+                      className="flex flex-col gap-4 p-6 text-left transition-all duration-150"
+                      style={
+                        canCreateCampaign
+                          ? { background: '#fff', border: '3px solid #003366', boxShadow: '6px 6px 0 #0B9C2C', cursor: 'pointer' }
+                          : { background: '#f5f5f5', border: '3px dashed #003366', opacity: 0.5, cursor: 'not-allowed' }
+                      }
+                      onMouseEnter={e => canCreateCampaign && ((e.currentTarget as HTMLElement).style.transform = 'translate(-3px,-3px)')}
+                      onMouseLeave={e => canCreateCampaign && ((e.currentTarget as HTMLElement).style.transform = 'translate(0,0)')}
+                    >
+                      <div
+                        className="w-12 h-12 flex items-center justify-center"
+                        style={{ background: canCreateCampaign ? '#0B9C2C' : '#ccc', border: '3px solid #003366' }}
+                      >
+                        <PlusIcon className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-black text-sm text-[#003366] uppercase tracking-wide">Create New Campaign</p>
+                        <p className="text-xs font-medium text-[#003366]/60 mt-1">Launch a fundraising initiative for your club</p>
+                      </div>
+                    </button>
+
+                    {/* Demo Mode */}
+                    <button
+                      onClick={() => navigate('/create-demo-campaign')}
+                      className="flex flex-col gap-4 p-6 text-left transition-all duration-150"
+                      style={{ background: '#fff7ed', border: '3px solid #FF7F00', boxShadow: '6px 6px 0 #003366' }}
+                      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.transform = 'translate(-3px,-3px)')}
+                      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.transform = 'translate(0,0)')}
+                    >
+                      <div
+                        className="w-12 h-12 flex items-center justify-center text-2xl"
+                        style={{ background: '#FF7F00', border: '3px solid #003366' }}
+                      >
+                        🎓
+                      </div>
+                      <div>
+                        <p className="font-black text-sm text-[#003366] uppercase tracking-wide">Try Demo Mode</p>
+                        <p className="text-xs font-medium text-[#003366]/60 mt-1">Explore campaign creation without commitment</p>
+                      </div>
+                    </button>
+
+                    {/* View All */}
+                    <button
+                      onClick={() => setSelectedTab('campaigns')}
+                      className="flex flex-col gap-4 p-6 text-left transition-all duration-150"
+                      style={{ background: '#fff', border: '3px solid #003366', boxShadow: '6px 6px 0 #FF7F00' }}
+                      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.transform = 'translate(-3px,-3px)')}
+                      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.transform = 'translate(0,0)')}
+                    >
+                      <div
+                        className="w-12 h-12 flex items-center justify-center"
+                        style={{ background: '#003366', border: '3px solid #003366' }}
+                      >
+                        <FolderIcon className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-black text-sm text-[#003366] uppercase tracking-wide">View All Campaigns</p>
+                        <p className="text-xs font-medium text-[#003366]/60 mt-1">Access and manage your portfolio</p>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Tip Banner */}
+                  <div
+                    className="flex items-start gap-4 p-5"
+                    style={{ background: '#003366', border: '3px solid #FF7F00', boxShadow: '6px 6px 0 #FF7F00' }}
                   >
-                    Verify Now →
-                  </button>
-                </div>
+                    <div
+                      className="w-11 h-11 flex items-center justify-center text-xl flex-shrink-0"
+                      style={{ background: '#FF7F00', border: '3px solid #fff' }}
+                    >
+                      💡
+                    </div>
+                    <div>
+                      <p className="font-black text-sm text-[#FF7F00] uppercase tracking-widest mb-1">Pro Tip</p>
+                      <p className="text-xs font-medium text-orange-200 leading-relaxed">
+                        High-performing campaigns include clear goals, compelling storytelling, high-quality visuals, and regular updates.
+                        Campaigns with detailed budgets see <span className="font-black text-white">40% higher</span> funding rates.
+                      </p>
+                    </div>
+                  </div>
+                </>
               )}
-
-              {/* KPI Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                <KpiCard
-                  label="Total Raised"
-                  value={`₹${analytics.totalRaised > 0 ? (analytics.totalRaised / 1000).toFixed(1) + 'K' : '0'}`}
-                  sub="From approved campaigns"
-                  icon={<TrendingUpIcon className="w-5 h-5" style={{ color: '#0B9C2C' } as any} />}
-                  accent="#0B9C2C"
-                />
-                <KpiCard
-                  label="Active"
-                  value={analytics.approvedCount}
-                  sub="Running campaigns"
-                  icon={<CheckCircleIcon className="w-5 h-5" style={{ color: '#003366' } as any} />}
-                  accent="#003366"
-                />
-                <KpiCard
-                  label="Pending"
-                  value={analytics.pendingCount}
-                  sub="Under review"
-                  icon={<ClockIcon className="w-5 h-5" style={{ color: '#FF7F00' } as any} />}
-                  accent="#FF7F00"
-                />
-                <KpiCard
-                  label="Rejected"
-                  value={analytics.rejectedCount}
-                  sub="Needs attention"
-                  icon={<XCircleIcon className="w-5 h-5" style={{ color: '#dc2626' } as any} />}
-                  accent="#dc2626"
-                />
-              </div>
-
-              {/* Action Cards */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Create Campaign */}
-                <button
-                  onClick={handleCreateCampaign}
-                  disabled={!canCreateCampaign}
-                  className="flex flex-col gap-4 p-6 text-left transition-all duration-150"
-                  style={
-                    canCreateCampaign
-                      ? { background: '#fff', border: '3px solid #003366', boxShadow: '6px 6px 0 #0B9C2C', cursor: 'pointer' }
-                      : { background: '#f5f5f5', border: '3px dashed #003366', opacity: 0.5, cursor: 'not-allowed' }
-                  }
-                  onMouseEnter={e => canCreateCampaign && ((e.currentTarget as HTMLElement).style.transform = 'translate(-3px,-3px)')}
-                  onMouseLeave={e => canCreateCampaign && ((e.currentTarget as HTMLElement).style.transform = 'translate(0,0)')}
-                >
-                  <div
-                    className="w-12 h-12 flex items-center justify-center"
-                    style={{ background: canCreateCampaign ? '#0B9C2C' : '#ccc', border: '3px solid #003366' }}
-                  >
-                    <PlusIcon className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-black text-sm text-[#003366] uppercase tracking-wide">Create New Campaign</p>
-                    <p className="text-xs font-medium text-[#003366]/60 mt-1">Launch a fundraising initiative for your club</p>
-                  </div>
-                </button>
-
-                {/* Demo Mode */}
-                <button
-                  onClick={() => navigate('/create-demo-campaign')}
-                  className="flex flex-col gap-4 p-6 text-left transition-all duration-150"
-                  style={{ background: '#fff7ed', border: '3px solid #FF7F00', boxShadow: '6px 6px 0 #003366' }}
-                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.transform = 'translate(-3px,-3px)')}
-                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.transform = 'translate(0,0)')}
-                >
-                  <div
-                    className="w-12 h-12 flex items-center justify-center text-2xl"
-                    style={{ background: '#FF7F00', border: '3px solid #003366' }}
-                  >
-                    🎓
-                  </div>
-                  <div>
-                    <p className="font-black text-sm text-[#003366] uppercase tracking-wide">Try Demo Mode</p>
-                    <p className="text-xs font-medium text-[#003366]/60 mt-1">Explore campaign creation without commitment</p>
-                  </div>
-                </button>
-
-                {/* View All */}
-                <button
-                  onClick={() => setSelectedTab('campaigns')}
-                  className="flex flex-col gap-4 p-6 text-left transition-all duration-150"
-                  style={{ background: '#fff', border: '3px solid #003366', boxShadow: '6px 6px 0 #FF7F00' }}
-                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.transform = 'translate(-3px,-3px)')}
-                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.transform = 'translate(0,0)')}
-                >
-                  <div
-                    className="w-12 h-12 flex items-center justify-center"
-                    style={{ background: '#003366', border: '3px solid #003366' }}
-                  >
-                    <FolderIcon className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-black text-sm text-[#003366] uppercase tracking-wide">View All Campaigns</p>
-                    <p className="text-xs font-medium text-[#003366]/60 mt-1">Access and manage your portfolio</p>
-                  </div>
-                </button>
-              </div>
-
-              {/* Tip Banner */}
-              <div
-                className="flex items-start gap-4 p-5"
-                style={{ background: '#003366', border: '3px solid #FF7F00', boxShadow: '6px 6px 0 #FF7F00' }}
-              >
-                <div
-                  className="w-11 h-11 flex items-center justify-center text-xl flex-shrink-0"
-                  style={{ background: '#FF7F00', border: '3px solid #fff' }}
-                >
-                  💡
-                </div>
-                <div>
-                  <p className="font-black text-sm text-[#FF7F00] uppercase tracking-widest mb-1">Pro Tip</p>
-                  <p className="text-xs font-medium text-orange-200 leading-relaxed">
-                    High-performing campaigns include clear goals, compelling storytelling, high-quality visuals, and regular updates.
-                    Campaigns with detailed budgets see <span className="font-black text-white">40% higher</span> funding rates.
-                  </p>
-                </div>
-              </div>
             </>
           )}
 
           {/* ════════════════════════
               CAMPAIGNS TAB
           ════════════════════════ */}
-          {selectedTab === 'campaigns' && (
+          {selectedTab === 'campaigns' && !isAlumni && (
             <>
               {/* Filter bar */}
               <div

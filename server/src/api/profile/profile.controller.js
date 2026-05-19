@@ -21,7 +21,7 @@ function calcStudentCompletion(u) {
     u.gender,
     u.dateOfBirth,
     u.college,
-    u.yearOfStudy,
+    u.roles?.includes("ALUMNI") ? u.yearOfGraduation : u.yearOfStudy,
     u.address,
     u.bio,
     u.skills?.length > 0,
@@ -159,6 +159,7 @@ exports.getMyProfile = catchAsync(async (req, res, next) => {
       linkedinId: true,
       college: true,
       yearOfStudy: true,
+      yearOfGraduation: true,
       address: true,
       instagram: true,
       facebook: true,
@@ -209,9 +210,15 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
     });
 
     const existingRoles = currentUser?.roles || [];
+    const profileRoles = ["USER", "STUDENT", "FACULTY", "ALUMNI"];
 
-    // Add new role without removing existing roles
-    const updatedRoles = [...new Set([...existingRoles, req.body.role])];
+    const updatedRoles =
+      req.body.role === "DONOR"
+        ? [...new Set([...existingRoles, req.body.role])]
+        : [
+            ...existingRoles.filter((role) => !profileRoles.includes(role)),
+            req.body.role,
+          ];
 
     await prisma.user.update({
       where: { id },

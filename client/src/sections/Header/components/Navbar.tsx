@@ -304,9 +304,9 @@ const getDisplayRole = (user: any) => {
   if (roles.includes("DEAN_HEAD")) return "Dean";
   if (roles.includes("DEAN_ACADEMICS")) return "Dean of Academics";
   if (roles.includes("DEAN_STUDENT_WELFARE")) return "Dean of Student Welfare";
-  if (roles.includes("FACULTY")) return "Faculty";
   if (roles.includes("STUDENT_PRESIDENT")) return "President";
   if (roles.includes("ALUMNI")) return "Alumni";
+  if (roles.includes("FACULTY")) return "Faculty";
   if (roles.includes("MENTOR")) return "Mentor";
   if (roles.includes("PREMIUM_DONOR")) return "Premium Donor";
   if (roles.includes("DONOR")) return "Donor";
@@ -482,7 +482,7 @@ export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
                 </div>
 
                 {/* STUDENT */}
-                {(hasRole(currentUser, "STUDENT") || hasRole(currentUser, "USER")) && !hasRole(currentUser, "DONOR") && !hasRole(currentUser, "ADMIN") && !hasRole(currentUser, "STUDENT_PRESIDENT") && (
+                {(hasRole(currentUser, "STUDENT") || hasRole(currentUser, "USER")) && !hasRole(currentUser, "DONOR") && !hasRole(currentUser, "ALUMNI") && !hasRole(currentUser, "ADMIN") && !hasRole(currentUser, "STUDENT_PRESIDENT") && !hasRole(currentUser, "FACULTY") && (
                   <>
                     <a href="/dashboard">DASHBOARD</a>
                     <a href="/campaigns">CAMPAIGNS</a>
@@ -506,6 +506,24 @@ export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
                   <>
                     <a href="/admin">ADMIN DASHBOARD</a>
                     <a href="/campaigns">CAMPAIGNS</a>
+                  </>
+                )}
+
+                {/* FACULTY */}
+                {hasRole(currentUser, "FACULTY") && (
+                  <>
+                    <a href="/dashboard">DASHBOARD</a>
+                    <a href="/campaigns">CAMPAIGNS</a>
+                    <Link to="/clubs">CLUBS</Link>
+                  </>
+                )}
+
+                {/* ALUMNI */}
+                {hasRole(currentUser, "ALUMNI") && (
+                  <>
+                    <a href="/dashboard">DASHBOARD</a>
+                    <a href="/campaigns">CAMPAIGNS</a>
+                    <Link to="/clubs">CLUBS</Link>
                   </>
                 )}
 

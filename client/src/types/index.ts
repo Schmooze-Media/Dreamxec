@@ -80,9 +80,13 @@ export interface User {
 
   accountStatus: AccountStatus;
   profileComplete: boolean;
+  yearOfGraduation?: number;
   emailVerified: boolean;
   studentVerified: boolean;
   facultyVerified?: boolean;
+  facultyVerification?: {
+    status?: string;
+  };
   isClubPresident: boolean;
   isClubMember: boolean;
   clubVerified: boolean;

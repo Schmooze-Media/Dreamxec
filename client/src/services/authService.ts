@@ -18,6 +18,7 @@ export interface User {
   facultyVerified?: boolean;
   accountStatus?: "ACTIVE" | "BLOCKED" | "SUSPENDED" | "UNDER_REVIEW";
   profileComplete: boolean;
+  yearOfGraduation?: number;
 }
 
 export interface RegisterData {

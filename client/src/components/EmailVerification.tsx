@@ -50,7 +50,9 @@ export default function EmailVerification({ onVerificationSuccess }: EmailVerifi
           // Redirect to dashboard after 2 seconds
           setTimeout(() => {
             const userRoles = data.data?.user?.roles || [];
-            if (can(userRoles, Permissions.DASHBOARD_DONOR_VIEW)) {
+            if (userRoles.includes('ALUMNI')) {
+              navigate('/dashboard');
+            } else if (can(userRoles, Permissions.DASHBOARD_DONOR_VIEW)) {
               navigate('/donor/dashboard');
             } else if (can(userRoles, Permissions.USER_MANAGE)) {
               navigate('/admin');

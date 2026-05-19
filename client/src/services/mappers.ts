@@ -41,6 +41,10 @@ export const mapBackendRole = (
     return "STUDENT_PRESIDENT";
   }
 
+  if (normalized.includes("ALUMNI")) {
+    return "ALUMNI";
+  }
+
   if (normalized.includes("PREMIUM_DONOR") || normalized.includes("DONOR")) {
     return "donor";
   }

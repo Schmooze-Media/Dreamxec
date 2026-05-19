@@ -192,6 +192,7 @@ const AuthRoute = ({
   if (user) {
     if (user.profileComplete === false) return <Navigate to="/profile/setup" replace />;
     if (user.role === "student") return <Navigate to="/dashboard" replace />;
+    if (user.role === "ALUMNI") return <Navigate to="/dashboard" replace />;
     if (user.role === "donor") return <Navigate to="/donor/dashboard" replace />;
     if (user.role === "admin") return <Navigate to="/admin" replace />;
     if (user.role === "STUDENT_PRESIDENT")
@@ -263,6 +264,7 @@ function AppContent() {
             studentVerified: response.data.user?.studentVerified,
             accountStatus: response.data.user?.accountStatus || "ACTIVE",
             profileComplete: response.data.user?.profileComplete ?? false,
+            yearOfGraduation: response.data.user?.yearOfGraduation,
           };
           console.log("✅ User loaded from token:", userData);
           setUser(userData);
@@ -348,7 +350,7 @@ function AppContent() {
   // Load user-specific data for donors only
   useEffect(() => {
     const loadUserData = async () => {
-      if (hasRole(user, "donor")) {
+      if (hasRole(user, "DONOR") && !hasRole(user, "ALUMNI")) {
         try {
           console.log("💼 Loading donor projects...");
           const response = await getMyDonorProjects();
@@ -370,7 +372,7 @@ function AppContent() {
   // Load user applications for students
   useEffect(() => {
     const loadUserApplications = async () => {
-      if (hasRole(user, "student")) {
+      if (hasRole(user, "USER") || hasRole(user, "STUDENT")) {
         try {
           console.log("📝 Loading user applications for student:", user!.name);
           const response = await getMyApplications();
@@ -660,6 +662,7 @@ function AppContent() {
           studentVerified: response.data.user?.studentVerified,
           accountStatus: response.data.user?.accountStatus || "ACTIVE",
           profileComplete: response.data.user?.profileComplete ?? false,
+          yearOfGraduation: response.data.user?.yearOfGraduation,
         };
 
         setUser(userData);
@@ -672,6 +675,8 @@ function AppContent() {
 
         const frontendRole = userData.role;
         if (frontendRole === "student") {
+          navigate("/dashboard");
+        } else if (frontendRole === "ALUMNI") {
           navigate("/dashboard");
         } else if (frontendRole === "donor") {
           navigate("/donor/dashboard");
@@ -729,6 +734,7 @@ function AppContent() {
           studentVerified: response.data.user?.studentVerified,
           accountStatus: response.data.user?.accountStatus || "ACTIVE",
           profileComplete: response.data.user?.profileComplete ?? false,
+          yearOfGraduation: response.data.user?.yearOfGraduation,
         };
 
         setUser(userData);
@@ -750,6 +756,8 @@ function AppContent() {
 
         const frontendRole = userData.role;
         if (frontendRole === "student") {
+          navigate("/dashboard");
+        } else if (frontendRole === "ALUMNI") {
           navigate("/dashboard");
         } else if (frontendRole === "donor") {
           navigate("/donor/dashboard");
@@ -823,6 +831,7 @@ function AppContent() {
       studentVerified: backendUser?.studentVerified,
       accountStatus: backendUser?.accountStatus || "ACTIVE",
       profileComplete: backendUser?.profileComplete ?? false,
+      yearOfGraduation: backendUser?.yearOfGraduation,
     };
     setUser(userData);
   };
@@ -979,10 +988,12 @@ function AppContent() {
 
   // ─── Derived booleans (use hasRole / getPrimaryRole everywhere) ──────────────
 
-  const isStudent = hasRole(user, "STUDENT") || hasRole(user, "USER") || hasRole(user, "FACULTY") || hasRole(user, "ALUMNI");
+  const isAlumni = hasRole(user, "ALUMNI");
+  const isStudent = hasRole(user, "STUDENT") || hasRole(user, "USER") || hasRole(user, "FACULTY") || isAlumni;
   const isStudentPresident = hasRole(user, "STUDENT_PRESIDENT");
   const isStudentOrPresident = isStudent || isStudentPresident;
   const isDonor = hasRole(user, "DONOR");
+  const isDonorOnly = isDonor && !isAlumni;
   const isAdmin = hasRole(user, "ADMIN");
 
   // ─── Shared header props ────────────────────────────────────────────────────
@@ -1457,7 +1468,7 @@ function AppContent() {
                               <Route
                                 path="/donor/dashboard"
                                 element={
-                                  isDonor ? (
+                                  isDonorOnly ? (
                                     <>
                                       <Header {...headerProps} />
                                       <DonorDashboard
@@ -1516,7 +1527,7 @@ function AppContent() {
                               <Route
                                 path="/donor/create"
                                 element={
-                                  isDonor ? (
+                                  isDonorOnly ? (
                                     <>
                                       <Header {...headerProps} />
                                       <CreateProject
@@ -1536,7 +1547,7 @@ function AppContent() {
                               <Route
                                 path="/donor/projects"
                                 element={
-                                  isDonor ? (
+                                  isDonorOnly ? (
                                     <>
                                       <Header {...headerProps} />
                                       <DonorProjects

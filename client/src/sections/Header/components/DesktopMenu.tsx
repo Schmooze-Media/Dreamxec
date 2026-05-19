@@ -7,6 +7,9 @@ interface DesktopMenuProps {
   onLogin?: () => void;
 }
 
+const hasRole = (user: any, role: string) =>
+  Array.isArray(user?.roles) && user.roles.some((r: string) => r.toUpperCase() === role.toUpperCase());
+
 export const DesktopMenu = ({ currentUser, onLogin }: DesktopMenuProps) => {
   return (
     <nav className="flex items-center text-dreamxec-berkeley-blue gap-6">
@@ -35,7 +38,7 @@ export const DesktopMenu = ({ currentUser, onLogin }: DesktopMenuProps) => {
 
 
       {/* Role-specific links */}
-      {can(currentUser?.roles || [], Permissions.DASHBOARD_STUDENT_VIEW) && !can(currentUser?.roles || [], Permissions.CLUB_MANAGE) && !can(currentUser?.roles || [], Permissions.DASHBOARD_DONOR_VIEW) && (
+      {currentUser && (hasRole(currentUser, "STUDENT") || hasRole(currentUser, "USER")) && !hasRole(currentUser, "DONOR") && !hasRole(currentUser, "ALUMNI") && !hasRole(currentUser, "ADMIN") && !hasRole(currentUser, "STUDENT_PRESIDENT") && !hasRole(currentUser, "FACULTY") && (
         <>
           <a
             href="/dashboard"
@@ -52,7 +55,7 @@ export const DesktopMenu = ({ currentUser, onLogin }: DesktopMenuProps) => {
         </>
       )}
 
-      {can(currentUser?.roles || [], Permissions.CLUB_MANAGE) && (
+      {currentUser && hasRole(currentUser, "STUDENT_PRESIDENT") && (
         <>
           <a
             href="/dashboard"
@@ -69,21 +72,39 @@ export const DesktopMenu = ({ currentUser, onLogin }: DesktopMenuProps) => {
         </>
       )}
 
-      {can(currentUser?.roles || [], Permissions.USER_MANAGE) && (
+      {currentUser && hasRole(currentUser, "ADMIN") && (
         <a
           href="/admin"
           className="text-dreamxec-navy font-bold text-lg hover:text-dreamxec-orange transition-colors font-display"
         >
-          ADMIN
+          ADMIN DASHBOARD
         </a>
       )}
 
-      {can(currentUser?.roles || [], Permissions.DASHBOARD_DONOR_VIEW) && (
+      {currentUser && hasRole(currentUser, "FACULTY") && (
+        <a
+          href="/dashboard"
+          className="text-dreamxec-navy font-bold text-lg hover:text-dreamxec-orange transition-colors font-display"
+        >
+          DASHBOARD
+        </a>
+      )}
+
+      {currentUser && hasRole(currentUser, "ALUMNI") && (
+        <a
+          href="/dashboard"
+          className="text-dreamxec-navy font-bold text-lg hover:text-dreamxec-orange transition-colors font-display"
+        >
+          DASHBOARD
+        </a>
+      )}
+
+      {currentUser && hasRole(currentUser, "DONOR") && (
         <a
           href="/donor/dashboard"
           className="text-dreamxec-navy font-bold text-lg hover:text-dreamxec-orange transition-colors font-display"
         >
-          DASHBOARD
+          MY PROJECTS
         </a>
       )}
 
