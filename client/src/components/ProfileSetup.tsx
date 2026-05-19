@@ -236,9 +236,9 @@ export default function ProfileSetup() {
     if (!user) return "USER";
     const roles = (user as any).roles || [(user as any).role];
     const upperRoles = roles.map((r: string) => r?.toUpperCase());
+    if (upperRoles.includes("ALUMNI")) return "ALUMNI";
     if (upperRoles.includes("DONOR")) return "DONOR";
     if (upperRoles.includes("FACULTY")) return "FACULTY";
-    if (upperRoles.includes("ALUMNI")) return "ALUMNI";
     return "USER";
   };
 
@@ -259,7 +259,7 @@ export default function ProfileSetup() {
   const [showActivationCards, setShowActivationCards] = useState(false);
   const [showFacultyVerification, setShowFacultyVerification] = useState(false);
   const [activatingAlumni, setActivatingAlumni] = useState(false);
-  const [isRoleLocked, setIsRoleLocked] = useState(false);
+  const [isRoleLocked, setIsRoleLocked] = useState(true);
 
   // ── Student form state ──
   // Pre-fill name from auth context (entered at signup)
@@ -320,6 +320,7 @@ export default function ProfileSetup() {
           if (profile.profileComplete === true) {
             const resolvedRole = (r as string)?.toUpperCase();
             if (resolvedRole === "DONOR") navigate("/donor/dashboard");
+            else if (resolvedRole === "ALUMNI") navigate("/dashboard");
             else if (resolvedRole === "FACULTY") navigate("/dashboard");
             else navigate("/dashboard");
             return;
@@ -331,9 +332,9 @@ export default function ProfileSetup() {
           const upperRoles = rolesArray.map((r: string) => r?.toUpperCase());
 
           let apiRole: Role = "USER";
-          if (upperRoles.includes("DONOR")) apiRole = "DONOR";
+          if (upperRoles.includes("ALUMNI")) apiRole = "ALUMNI";
+          else if (upperRoles.includes("DONOR")) apiRole = "DONOR";
           else if (upperRoles.includes("FACULTY")) apiRole = "FACULTY";
-          else if (upperRoles.includes("ALUMNI")) apiRole = "ALUMNI";
 
           setRole(apiRole);
           // Any authenticated user has a role — mark as chosen
@@ -598,7 +599,7 @@ export default function ProfileSetup() {
         { withCredentials: true, headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
       setSuccessMsg("🎓 Alumni role activated! Welcome to the Alumni network.");
-      setTimeout(() => navigate("/donor/dashboard"), 1500);
+      setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err: any) {
       setError(err?.response?.data?.message || "Failed to activate Alumni role.");
     } finally {

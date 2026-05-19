@@ -871,7 +871,9 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [selectedTab, setSelectedTab] = useState<Tab>("overview");
+  const [selectedTab, setSelectedTab] = useState<Tab>(
+    userRoles?.includes("ALUMNI") ? "alumni" : "overview",
+  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [myDonations, setMyDonations] = useState<Donation[]>([]);
   const [loadingDonations, setLoadingDonations] = useState(true);
@@ -1067,6 +1069,7 @@ const DonorDashboardInner: React.FC<DonorDashboardProps> = ({
     wishlist: "My Wishlist",
     mentorship: "Mentorship",
     profile: "Profile",
+    alumni: "Alumni Network",
   };
 
   // ── Load mentor application status (for sidebar badge) ──

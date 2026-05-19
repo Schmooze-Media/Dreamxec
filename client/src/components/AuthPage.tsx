@@ -227,6 +227,7 @@ interface AuthPageProps {
   currentUser?: { name: string; roles?: string[]; role?: UserRole } | null;
   onHeaderLogin?: () => void;
   onLogout?: () => void;
+  initialMode?: "login" | "signup";
 }
 
 /* ─────────────────────────────────────────────
@@ -241,8 +242,9 @@ export default function AuthPage({
   currentUser,
   onHeaderLogin,
   onLogout,
+  initialMode = "login",
 }: AuthPageProps) {
-  const [isSignup, setIsSignup] = useState(false);
+  const [isSignup, setIsSignup] = useState(initialMode === "signup");
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [role, setRole] = useState<"student" | "donor">("student");
   const [showBackgroundImages, setShowBackgroundImages] = useState(false);

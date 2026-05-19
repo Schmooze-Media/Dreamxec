@@ -44,6 +44,7 @@ interface BackendUser {
   studentVerified?: boolean;
   facultyVerified?: boolean;
   accountStatus?: "ACTIVE" | "BLOCKED" | "SUSPENDED" | "UNDER_REVIEW";
+  yearOfGraduation?: number;
 }
 
 interface AuthContextType {
@@ -105,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     studentVerified: backendUser?.studentVerified || false,
     facultyVerified: backendUser?.facultyVerified || false,
     accountStatus: backendUser.accountStatus || "ACTIVE",
+    yearOfGraduation: backendUser.yearOfGraduation,
   });
 
   // Load user from token on mount

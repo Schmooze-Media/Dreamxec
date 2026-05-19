@@ -33,7 +33,7 @@ export default function AuthCallback() {
         }
 
         const user = response.data.profile;
-        const frontendRole = mapBackendRole(response.data.role.toUpperCase() as 'USER' | 'DONOR' | 'ADMIN' | 'STUDENT_PRESIDENT');
+        const frontendRole = mapBackendRole(response.data.role.toUpperCase());
 
         const profileComplete = user.profileComplete;
         console.log(user, frontendRole)
@@ -44,6 +44,8 @@ export default function AuthCallback() {
 
         // 5. Role-based redirect
         if (frontendRole === 'student') {
+          navigate('/dashboard');
+        } else if (frontendRole === 'ALUMNI') {
           navigate('/dashboard');
         } else if (frontendRole === 'donor') {
           navigate('/donor/dashboard');
