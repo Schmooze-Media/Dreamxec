@@ -492,7 +492,7 @@ export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
                 )}
 
                 {/* PRESIDENT */}
-                {hasRole(currentUser, "STUDENT_PRESIDENT") && (
+                {hasRole(currentUser, "STUDENT_PRESIDENT") && !hasRole(currentUser, "ADMIN") && (
                   <>
                     <a href="/dashboard">DASHBOARD</a>
                     <a href="/campaigns">CAMPAIGNS</a>
@@ -510,7 +510,7 @@ export const Navbar = ({ currentUser, onLogin, onLogout }: NavbarProps) => {
                 )}
 
                 {/* DONOR */}
-                {hasRole(currentUser, "DONOR") && (
+                {hasRole(currentUser, "DONOR") && !hasRole(currentUser, "ADMIN") && (
                   <>
                     <a href="/donor/dashboard">MY PROJECTS</a>
                     <a href="/campaigns">CAMPAIGNS</a>

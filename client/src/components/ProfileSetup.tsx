@@ -339,15 +339,8 @@ export default function ProfileSetup() {
           // Any authenticated user has a role — mark as chosen
           setRoleChosen(true);
           setCompletionPct(pct);
-          if (p.phone) {
-            setIsRoleLocked(true);
-          } else if (p.googleId || p.linkedinId) {
-            // OAuth first-time setup: unlock role picker
-            setIsRoleLocked(false);
-          } else {
-            // Email/Password first-time setup: lock role picker
-            setIsRoleLocked(true);
-          }
+          // Lock the role if they have already saved step 0 (which means p.phone is present)
+          setIsRoleLocked(!!p.phone);
           // Use the normalized apiRole for branching (not the raw `r` which may vary in case)
           if (apiRole === "DONOR") {
             // Use saved name OR fall back to the name from signup
