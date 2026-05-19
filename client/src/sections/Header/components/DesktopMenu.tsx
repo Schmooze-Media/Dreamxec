@@ -55,7 +55,7 @@ export const DesktopMenu = ({ currentUser, onLogin }: DesktopMenuProps) => {
         </>
       )}
 
-      {can(currentUser?.roles || [], Permissions.CLUB_MANAGE) && (
+      {can(currentUser?.roles || [], Permissions.CLUB_MANAGE) && !can(currentUser?.roles || [], Permissions.USER_MANAGE) && (
         <>
           <a
             href="/dashboard"
@@ -90,7 +90,7 @@ export const DesktopMenu = ({ currentUser, onLogin }: DesktopMenuProps) => {
         </a>
       )}
 
-      {can(currentUser?.roles || [], Permissions.DASHBOARD_DONOR_VIEW) && (
+      {can(currentUser?.roles || [], Permissions.DASHBOARD_DONOR_VIEW) && !can(currentUser?.roles || [], Permissions.USER_MANAGE) && (
         <a
           href="/dashboard"
           className="text-dreamxec-navy font-bold text-lg hover:text-dreamxec-orange transition-colors font-display"
