@@ -297,6 +297,16 @@ model UserProject {
   //admin notes
   adminNotes AdminNote[]
 
+  // --- NEW FIELDS FOR LAUNCH PHASE ---
+  
+  // 0 = Launch Phase, 1+ = User-defined Milestones
+  currentMilestone    Int           @default(0) 
+  
+  // Launch Phase
+  lpIsActive          Boolean       @default(false)
+  lpStartDate         DateTime?
+  lpEndDate           DateTime?
+
   @@index([userId])
   @@index([status])
   @@index([clubId, status])

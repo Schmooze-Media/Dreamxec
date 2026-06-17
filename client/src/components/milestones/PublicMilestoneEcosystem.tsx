@@ -16,13 +16,46 @@ export default function PublicMilestoneEcosystem({ campaign }: Props) {
     return () => clearInterval(interval);
   }, []);
 
-  const { totalMilestones, completedMilestones, overallProgress, activeMilestone, totalBudget } = useMemo(() => {
-    const total = milestones.length;
-    const completed = milestones.filter((m: any) => m.status === "APPROVED").length;
-    const active = milestones.find((m: any) => m.status !== "APPROVED");
+  // const { totalMilestones, completedMilestones, overallProgress, activeMilestone, totalBudget } = useMemo(() => {
+  //   const total = milestones.length;
+  //   const completed = milestones.filter((m: any) => m.status === "APPROVED").length;
+  //   const active = milestones.find((m: any) => m.status !== "APPROVED");
+  //   const budget = milestones.reduce((sum: number, m: any) => sum + (m.budget || 0), 0);
+  //   return { totalMilestones: total, completedMilestones: completed, overallProgress: total ? (completed / total) * 100 : 0, activeMilestone: active, totalBudget: budget };
+  // }, [milestones]);
+
+  const { allMilestones, totalMilestones, completedMilestones, activeMilestone, totalBudget, isLaunchPhase } = useMemo(() => {
+    
+    const launchPhase = {
+      id: "launch-0",
+      title: "Launch Phase",
+      status: campaign.currentMilestone === 0 ? "ACTIVE" : "APPROVED",
+      dueDate: campaign.lpEndDate,
+      isSystem: true,
+      budget: 0,
+      description: "Your campaign is live! We are raising funds before execution starts."
+    };
+
+    const combined = [launchPhase, ...milestones];
+    
+    const total = combined.length;
+    
+    const completed = combined.filter((m: any) => m.status === "APPROVED").length;
+    
+    const active = combined[campaign.currentMilestone];
+    
     const budget = milestones.reduce((sum: number, m: any) => sum + (m.budget || 0), 0);
-    return { totalMilestones: total, completedMilestones: completed, overallProgress: total ? (completed / total) * 100 : 0, activeMilestone: active, totalBudget: budget };
-  }, [milestones]);
+
+    return { 
+      allMilestones: combined, 
+      totalMilestones: total, 
+      completedMilestones: completed, 
+      activeMilestone: active, 
+      totalBudget: budget,
+      isLaunchPhase: campaign.currentMilestone === 0
+    };
+  }, [milestones, campaign]);
+
 
   const formatCountdown = (dueDate?: string) => {
     if (!dueDate) return null;
@@ -35,6 +68,25 @@ export default function PublicMilestoneEcosystem({ campaign }: Props) {
 
   return (
     <div className="space-y-5 sm:space-y-6">
+
+      {/* ── LAUNCH PHASE SPECIFIC HEADER ── */}
+      {isLaunchPhase && (
+        <div
+        className="p-4 sm:p-5 bg-white"
+        style={{ border: '3px solid #003366', boxShadow: '6px 6px 0 #FF7F00' }}
+      >
+          <div className="flex justify-between items-center">
+             <div>
+               <h2 className="text-xl font-black text-[#003366] uppercase tracking-tight"> Launch Phase</h2>
+               <p className="text-xs font-bold text-[#003366]/60 uppercase tracking-widest">Your campaign is live & funding is enabled</p>
+             </div>
+             <div className="text-right">
+                <p className="text-[10px] font-black text-[#FF7F00] uppercase tracking-widest">Execution starts in:</p>
+                <p className="text-lg font-black text-[#003366] tabular-nums">{formatCountdown(campaign.lpEndDate)}</p>
+             </div>
+          </div>
+        </div>
+      )}
 
       {/* ── OVERALL PROGRESS HEADER ── */}
       <div

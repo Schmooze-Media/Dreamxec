@@ -4,6 +4,7 @@ const AppError = require('../../utils/AppError');
 const sendEmail = require('../../services/email.service');
 const { publishEvent } = require('../../services/eventPublisher.service');
 const EVENTS = require('../../config/events');
+const { getCurrentMilestone}  = require('../../utils/milestoneHelper');
 
 // USER: Create a project
 exports.createProject = catchAsync(async (req, res, next) => {
@@ -103,17 +104,41 @@ exports.deleteMyProject = catchAsync(async (req, res, next) => {
 });
 
 // PUBLIC / OWNER: Get a single project's details
+// exports.getProject = catchAsync(async (req, res, next) => {
+//   const project = await prisma.project.findUnique({
+//     where: { id: req.params.id },
+//     include: { owner: { select: { id: true, name: true } } },
+//   });
+
+//   if (!project) {
+//     return next(new AppError('Project not found', 404));
+//   }
+
+//   // If project is not approved, only its owner can see it
+//   if (project.status !== 'APPROVED') {
+//     if (!req.user || project.owner.id !== req.user.id) {
+//       return next(
+//         new AppError('You do not have permission to view this project.', 403)
+//       );
+//     }
+//   }
+
+//   res.status(200).json({ status: 'success', data: { project } });
+// });
+
 exports.getProject = catchAsync(async (req, res, next) => {
   const project = await prisma.project.findUnique({
     where: { id: req.params.id },
-    include: { owner: { select: { id: true, name: true } } },
+    include: { 
+      owner: { select: { id: true, name: true } },
+      milestones: { orderBy: { order: 'asc' } } 
+    },
   });
 
   if (!project) {
     return next(new AppError('Project not found', 404));
   }
 
-  // If project is not approved, only its owner can see it
   if (project.status !== 'APPROVED') {
     if (!req.user || project.owner.id !== req.user.id) {
       return next(
@@ -122,7 +147,20 @@ exports.getProject = catchAsync(async (req, res, next) => {
     }
   }
 
-  res.status(200).json({ status: 'success', data: { project } });
+  const projectData = {
+    ...project,
+    launchPhase: {
+      isActive: project.lpIsActive,
+      startDate: project.lpStartDate,
+      endDate: project.lpEndDate
+    },
+    resolvedMilestone: getCurrentMilestone(project)
+  };
+
+  res.status(200).json({ 
+    status: 'success', 
+    data: { project: projectData } 
+  });
 });
 
 // PUBLIC: Get all approved projects

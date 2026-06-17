@@ -167,7 +167,6 @@ export interface Campaign {
   campaignType?: "INDIVIDUAL" | "TEAM";
 
   teamMembers?: TeamMember[];
-
   faqs?: FAQ[];
   rating?: number;
   youtubeUrl?: string;
@@ -182,10 +181,15 @@ export interface Campaign {
   userId?: string;
   slug?: string;
 
-
-
-  // ✅ Milestone-based timeline
   milestones?: Milestone[];
+
+  // 0 = Launch Phase, 1+ = User-defined Milestones
+  currentMilestone?: number;
+
+  // Launch Phase
+  lpIsActive?: boolean;
+  lpStartDate?: string;
+  lpEndDate?: string;
 }
 
 /* =========================================================

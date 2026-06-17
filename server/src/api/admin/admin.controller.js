@@ -228,9 +228,20 @@ exports.verifyUserProject = catchAsync(async (req, res, next) => {
     updateData.rejectionReason = reason || null;
   }
 
+
   if (status === 'APPROVED') {
+    const now = new Date();
+    const lpEndDate = new Date();
+    lpEndDate.setDate(now.getDate() + 30 * 24 * 60 * 60 * 1000); // 30-day Launch Phase 
+
     updateData.rejectionReason = null;
     updateData.rating = 5; // ✅ Initialize rating (0–5 scale)
+    
+    // ✅ Initialize Launch Phase
+    updateData.currentMilestone = 0;
+    updateData.lpIsActive = true;
+    updateData.lpStartDate = now;
+    updateData.lpEndDate = lpEndDate;
   }
 
   // ------------------------------------------
@@ -246,34 +257,39 @@ exports.verifyUserProject = catchAsync(async (req, res, next) => {
     // ------------------------------------------
     // Activate first milestone on approval
     // ------------------------------------------
-    if (status === 'APPROVED') {
+    
 
-      const firstMilestone = await tx.milestone.findFirst({
-        where: { projectId: updatedProject.id },
-        orderBy: { order: 'asc' } // use order, not createdAt
-      });
+    // ---------REMOVED ACTIVATION OF FIRST MILESTONE---------
 
-      if (firstMilestone && !firstMilestone.activatedAt) {
 
-        const now = new Date();
+    // if (status === 'APPROVED') {
 
-        const dueDate = new Date();
-        dueDate.setDate(now.getDate() + firstMilestone.durationDays);
+    //   const firstMilestone = await tx.milestone.findFirst({
+    //     where: { projectId: updatedProject.id },
+    //     orderBy: { order: 'asc' } // use order, not createdAt
+    //   });
 
-        await tx.milestone.update({
-          where: { id: firstMilestone.id },
-          data: {
-            activatedAt: now,
-            dueDate,
-            status: 'PENDING',
-            reminder3Sent: false,
-            reminder1Sent: false,
-            overdueSent: false,
-            ratingPenaltyDays: 0
-          }
-        });
-      }
-    }
+    //   if (firstMilestone && !firstMilestone.activatedAt) {
+
+    //     const now = new Date();
+
+    //     const dueDate = new Date();
+    //     dueDate.setDate(now.getDate() + firstMilestone.durationDays);
+
+    //     await tx.milestone.update({
+    //       where: { id: firstMilestone.id },
+    //       data: {
+    //         activatedAt: now,
+    //         dueDate,
+    //         status: 'PENDING',
+    //         reminder3Sent: false,
+    //         reminder1Sent: false,
+    //         overdueSent: false,
+    //         ratingPenaltyDays: 0
+    //       }
+    //     });
+    //   }
+    // }
 
     // ------------------------------------------
     // Audit log
