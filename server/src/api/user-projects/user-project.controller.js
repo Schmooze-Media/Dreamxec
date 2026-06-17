@@ -1,3 +1,39 @@
+// Faculty Approval Controller
+exports.approveByFaculty = catchAsync(async (req, res, next) => {
+  const campaignId = req.params.id;
+  const facultyId = req.user.id;
+
+  // 1. Fetch the campaign
+  const campaign = await prisma.userProject.findUnique({
+    where: { id: campaignId },
+  });
+
+  if (!campaign) {
+    return next(new AppError('Campaign not found', 404));
+  }
+
+  // 2. Prevent duplicate approvals
+  if (campaign.facultyApproved) {
+    return next(new AppError('This campaign is already faculty approved.', 400));
+  }
+
+  // 3. Update the campaign
+  const updatedCampaign = await prisma.userProject.update({
+    where: { id: campaignId },
+    data: {
+      facultyApproved: true,
+      facultyId: facultyId,
+      facultyApprovedAt: new Date(),
+    },
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      campaign: updatedCampaign,
+    },
+  });
+});
 const prisma = require('../../config/prisma');
 const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/AppError');

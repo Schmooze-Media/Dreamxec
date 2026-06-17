@@ -1,3 +1,12 @@
+// Faculty/ADMIN campaign approval
+const { approveByFaculty } = require('./user-project.controller');
+
+router.patch(
+  '/:id/faculty-approve',
+  protect,
+  restrictTo('FACULTY', 'ADMIN'),
+  approveByFaculty
+);
 const express = require('express');
 const router = express.Router();
 

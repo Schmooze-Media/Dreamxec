@@ -1,66 +1,39 @@
+import React from 'react';
 import type { Campaign } from '../types';
+
+// Cloudinary Optimizer (Fix for Issue #155)
+const optimizeCloudinaryUrl = (url?: string, width = 400) => {
+  if (!url) return '';
+  if (!url.includes('cloudinary.com')) return url;
+  if (url.includes('f_auto') || url.includes('q_auto')) return url;
+  return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width},c_fill/`);
+};
 
 interface CampaignCardProps {
   campaign: Campaign;
   href: string;
 }
 
-//cloudinary optimisation
-const optimizeCloudinaryUrl = (url?: string, width = 400) => {
-  if (!url) return '';
-  if (!url.includes('cloudinary.com')) return url;
-
-  //prevent double-transforming
-  if (url.includes('f_auto') || url.includes('q_auto')) return url;
-  return url.replace('/upload', `/upload/f_auto,q_auto,w_${width},c_fill/`)
-}
-
 export default function CampaignCard({ campaign, href }: CampaignCardProps) {
   const currentAmount = campaign.currentAmount ?? 0;
   const goalAmount = campaign.goalAmount ?? 0;
-  const progressPercentage =
-    goalAmount > 0 ? Math.min((currentAmount / goalAmount) * 100, 100) : 0;
+  const progressPercentage = goalAmount > 0 ? Math.min((currentAmount / goalAmount) * 100, 100) : 0;
   const rating = campaign.rating ?? 5;
-  const totalMilestones = campaign.milestones?.length ?? 0;
-  const isComplete = progressPercentage >= 100;
 
   return (
-    <a
-      href={href}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: '16px',
-        overflow: 'visible',
-        background: '#fff',
-        border: '2.5px solid #111',
-        boxShadow: '6px 6px 0px #111',
-        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-        textDecoration: 'none',
-        color: 'inherit',
-        width: '100%',
-        maxWidth: '340px',
-        cursor: 'pointer',
-        position: 'relative',
-        fontFamily: "'DM Sans', system-ui, sans-serif",
-      }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translate(-3px, -3px)';
-        (e.currentTarget as HTMLElement).style.boxShadow = '9px 9px 0px #111';
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translate(0, 0)';
-        (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0px #111';
-      }}
-      onMouseDown={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translate(3px, 3px)';
-        (e.currentTarget as HTMLElement).style.boxShadow = '3px 3px 0px #111';
-      }}
-      onMouseUp={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translate(-3px, -3px)';
-        (e.currentTarget as HTMLElement).style.boxShadow = '9px 9px 0px #111';
-      }}
+    <a 
+      href={href} 
+      className="block bg-white transition-all duration-200 hover:translate-x-[-4px] hover:translate-y-[-4px] group relative"
+      style={{ border: '3px solid #003366', boxShadow: '6px 6px 0 #FF7F00', borderRadius: '16px' }}
     >
+      {/* ── FACULTY APPROVED BADGE ── */}
+      {campaign.facultyApproved && (
+        <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full shadow-md z-10 flex items-center gap-1.5 border-2 border-blue-800 text-[10px] font-black uppercase tracking-widest">
+          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+          Verified
+        </div>
+      )}
+
       {/* ── IMAGE ── */}
       <div
         style={{
@@ -70,7 +43,6 @@ export default function CampaignCard({ campaign, href }: CampaignCardProps) {
           overflow: 'hidden',
           borderRadius: '13px 13px 0 0',
           borderBottom: '2.5px solid #111',
-          flexShrink: 0,
         }}
       >
         {campaign.imageUrl ? (
@@ -78,203 +50,45 @@ export default function CampaignCard({ campaign, href }: CampaignCardProps) {
             src={optimizeCloudinaryUrl(campaign.imageUrl, 400)}
             alt={campaign.title}
             loading="lazy"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "/assets/dx-logo-2.png"; // Fallback
-            }}
+            onError={(e) => { (e.target as HTMLImageElement).src = "/assets/dx-logo-2.png"; }}
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            className="group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              background:
-                'repeating-linear-gradient(45deg, #FF7F00, #FF7F00 10px, #FF4500 10px, #FF4500 20px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '52px',
-            }}
-          >
-
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+            <span className="text-gray-400 font-bold uppercase tracking-widest text-xs">No Image</span>
           </div>
         )}
-
-        {/* Funding badge */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '12px',
-            right: '-3px',
-            background: isComplete ? '#6EE7B7' : '#FFE066',
-            color: '#111',
-            fontSize: '11px',
-            fontWeight: 800,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase' as const,
-            padding: '5px 12px',
-            border: '2px solid #111',
-            borderRadius: '4px',
-            fontFamily: "'Sora', system-ui, sans-serif",
-            boxShadow: '3px 3px 0 #111',
-          }}
-        >
-          {progressPercentage.toFixed(0)}% Funded
-        </div>
       </div>
 
       {/* ── CONTENT ── */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          flex: 1,
-          padding: '18px 18px 16px',
-          gap: '14px',
-        }}
-      >
-        {/* Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          <h3
-            style={{
-              margin: 0,
-              fontSize: '17px',
-              fontWeight: 800,
-              lineHeight: 1.25,
-              color: '#111',
-              textTransform: 'uppercase' as const,
-              fontFamily: "'Sora', system-ui, sans-serif",
-              letterSpacing: '-0.02em',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical' as const,
-              overflow: 'hidden',
-            }}
-          >
-            {campaign.title}
-          </h3>
-          <p
-            style={{
-              margin: 0,
-              fontSize: '12px',
-              color: '#555',
-              fontWeight: 500,
-              borderLeft: '3px solid #FF7F00',
-              paddingLeft: '7px',
-            }}
-          >
-            <span style={{ display: 'block' }}>{campaign.club?.college || 'DreamXec Academy'}</span>
-            <span style={{ display: 'block' }}>{campaign.club?.name || 'DreamXec Club'}</span>
-          </p>
-        </div>
-
-        {/* Progress */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div
-            style={{
-              width: '100%',
-              height: '10px',
-              background: '#F3F4F6',
-              borderRadius: '3px',
-              border: '2px solid #111',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                width: `${progressPercentage}%`,
-                height: '100%',
-                background: isComplete ? '#22c55e' : '#FF7F00',
-                borderRadius: '1px',
-                transition: 'width 0.6s ease',
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span
-              style={{
-                fontSize: '15px',
-                fontWeight: 800,
-                color: isComplete ? '#16a34a' : '#FF7F00',
-                fontFamily: "'Sora', system-ui, sans-serif",
-                letterSpacing: '-0.02em',
-              }}
-            >
-              ₹{currentAmount.toLocaleString()}
-            </span>
-            <span style={{ fontSize: '12px', color: '#9CA3AF', fontWeight: 500 }}>
-              of ₹{goalAmount.toLocaleString()}
-            </span>
-          </div>
-        </div>
-
-        {/* Dashed divider */}
-        <div
-          style={{
-            height: '2px',
-            background:
-              'repeating-linear-gradient(90deg, #11111126 0px, #11111126 6px, transparent 6px, transparent 10px)',
-          }}
-        />
-
-        {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {/* Star Rating */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ display: 'flex', gap: '2px' }}>
-              {[1, 2, 3, 4, 5].map(star => (
-                <svg
-                  key={star}
-                  viewBox="0 0 24 24"
-                  fill={rating >= star ? '#FF7F00' : 'none'}
-                  stroke="#FF7F00"
-                  strokeWidth="2"
-                  style={{ width: '14px', height: '14px' }}
-                >
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                </svg>
-              ))}
-            </div>
-            <span
-              style={{
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#111',
-                fontFamily: "'Sora', sans-serif",
-              }}
-            >
-              {rating.toFixed(1)}
-            </span>
-          </div>
-
-          {/* Milestone chip */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              background: isComplete ? '#6EE7B7' : '#FFE066',
-              border: '2px solid #111',
-              borderRadius: '5px',
-              padding: '4px 10px',
-              boxShadow: '2px 2px 0 #111',
-              fontFamily: "'Sora', sans-serif",
-            }}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#111"
-              strokeWidth="2.4"
-              style={{ width: '13px', height: '13px' }}
-            >
-              <circle cx="12" cy="12" r="10" />
-              <circle cx="12" cy="12" r="6" />
-              <circle cx="12" cy="12" r="2" />
+      <div className="p-4 sm:p-5">
+        <h3 className="text-lg font-black text-dreamxec-navy uppercase leading-tight mb-2 line-clamp-2">
+          {campaign.title}
+        </h3>
+        
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs font-bold text-dreamxec-navy/60 uppercase tracking-wide bg-gray-100 px-2 py-1 rounded">
+            {campaign.category}
+          </span>
+          <div className="flex items-center gap-1">
+            <svg viewBox="0 0 24 24" fill="#FF7F00" stroke="#FF7F00" strokeWidth="2" className="w-4 h-4">
+              <polygon points="12 2 15 8 22 9 17 14 18 21 12 18 6 21 7 14 2 9 9 8 12 2" />
             </svg>
-            <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#111', letterSpacing: '0.02em' }}>
-              {totalMilestones} Milestone{totalMilestones !== 1 ? 's' : ''}
-            </span>
+            <span className="font-black text-dreamxec-navy text-sm">{rating.toFixed(1)}</span>
+          </div>
+        </div>
+
+        <div className="mb-2">
+          <div className="flex justify-between text-sm font-black text-dreamxec-navy mb-1">
+            <span>₹{currentAmount.toLocaleString()}</span>
+            <span>{progressPercentage.toFixed(0)}%</span>
+          </div>
+          <div className="w-full h-3 bg-gray-100 overflow-hidden" style={{ border: '2px solid #003366' }}>
+            <div
+              className="h-full bg-dreamxec-green transition-all duration-700"
+              style={{ width: `${Math.max(progressPercentage, 5)}%` }}
+            />
           </div>
         </div>
       </div>
