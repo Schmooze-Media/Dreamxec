@@ -20,8 +20,11 @@ const {
   submitMilestoneSchema,
 } = require('./user-project.validation');
 
+const transferRoutes = require('./transfers/transfer.routes');
+
 // 🟢 Import the new middleware
 const { validateCampaignEligibility, resolveCampaignClub } = require('../../middleware/club.middleware');
+const { checkTransferLock } = require('../../middleware/transferLock.middleware');
 
 const multer = require('multer');
 const catchAsync = require('../../utils/catchAsync');
@@ -47,9 +50,11 @@ router.get('/:id', getUserProject);
 
 /* ---------------------------
    AUTHENTICATED ROUTES
----------------------------- */
-router.use(protect);
-
+   ---------------------------- */
+   router.use(protect);
+   
+   router.use('/transfers', transferRoutes);
+   router.use('/:id/transfers', transferRoutes);
 
 // 🚀 CREATE CAMPAIGN
 router.post(
@@ -71,6 +76,7 @@ router.put(
   '/:id',
   restrictTo('USER', 'STUDENT_PRESIDENT'),
   validateCampaignEligibility, // (Optional: Keep strict check on updates too)
+  checkTransferLock,
   validate(updateUserProjectSchema),
   updateUserProject
 );
@@ -80,6 +86,7 @@ router.delete(
   '/:id',
   restrictTo('USER', 'STUDENT_PRESIDENT'),
   validateCampaignEligibility,
+  checkTransferLock,
   deleteUserProject
 );
 
@@ -87,9 +94,11 @@ router.patch(
   "/milestones/:milestoneId/submit",
   protect,
   restrictTo('USER', 'STUDENT_PRESIDENT'),
+  checkTransferLock,
   validate(submitMilestoneSchema),
   submitMilestone
 );
+
 
 
 

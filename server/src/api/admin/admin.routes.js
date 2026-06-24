@@ -67,6 +67,11 @@ router.patch('/student-verifications/:id/reject', studentVerificationController.
 // --------------------
 router.get('/audit-logs', adminController.getAuditLogs);
 
+// --------------------
+// TRANSFERS
+// --------------------
+router.get('/transfers', adminController.getAllTransfers);
+
 // getAllDonors is already there, but add these:
 router.patch('/donors/:id/verify', adminController.verifyDonor);
 router.patch('/donors/:id/status', adminController.manageDonorStatus);

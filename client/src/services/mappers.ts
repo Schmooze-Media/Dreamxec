@@ -59,6 +59,7 @@ export const mapFrontendRole = (
     donor: 'DONOR',
     DONOR: 'DONOR',
     admin: 'ADMIN',
+    ADMIN: 'ADMIN',
     STUDENT_PRESIDENT: 'STUDENT_PRESIDENT',
   };
 
@@ -147,6 +148,9 @@ export const mapUserProjectToCampaign = (
         approvedAt: m.approvedAt,
         submissions: m.submissions || [],
       })) || [],
+
+    transferStatus: userProject.transferStatus ?? 'NONE',
+    activeTransferId: userProject.activeTransferId ?? null,
   };
 };
 

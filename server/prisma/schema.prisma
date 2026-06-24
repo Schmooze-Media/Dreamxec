@@ -73,6 +73,26 @@ enum MilstoneStatus {
   REJECTED
 }
 
+enum TransferStatus {
+  PENDING_ACCEPTANCE
+  PENDING_PRESIDENT
+  PENDING_ADMIN
+  APPROVED
+  COMPLETED
+  REJECTED
+  TARGET_REJECTED
+  CANCELLED
+  EXPIRED
+  EXECUTION_FAILED
+}
+
+enum ProjectTransferStatus {
+  NONE
+  TRANSFER_PENDING
+  TRANSFER_EXECUTING
+  TRANSFER_RECOVERY
+}
+
 // -----------------------------
 // USER MODEL
 // -----------------------------
@@ -158,9 +178,12 @@ model User {
   clubsPresided       Club[]               @relation("ClubPresident")
   studentVerification StudentVerification?
 
-  // reverse relation (ClubMember.user)
   clubMembers ClubMember[] // optional helper
   joinRequests JoinRequest[]
+
+  // Transfer relations
+  sentTransfers       CampaignTransfer[] @relation("OriginalOwnerTransfers")
+  receivedTransfers   CampaignTransfer[] @relation("TargetUserTransfers")
 
   //admin feature
   adminNotes AdminNote[] @relation("AdminNoteAuthor")
@@ -229,7 +252,7 @@ model Donor {
   donations     Donation[]
   donorProjects DonorProject[]
   wishlist      Wishlist[]
-  adminNotes    AdminNote[]
+  adminNotes    AdminNote[] @relation("DonorNotes")
   comments CampaignComment[] @relation("DonorComments")
 
 
@@ -278,6 +301,10 @@ model UserProject {
 
   rating Float? @default(5.0)
 
+  transferStatus      ProjectTransferStatus @default(NONE)
+  activeTransferId    String? @db.ObjectId
+  lastTransferredAt   DateTime?
+
 
 
   clubId String? @db.ObjectId
@@ -296,6 +323,8 @@ model UserProject {
 
   //admin notes
   adminNotes AdminNote[]
+
+  transfers  CampaignTransfer[] @relation("ProjectTransfers")
 
   @@index([userId])
   @@index([status])
@@ -525,6 +554,8 @@ model Club {
   adminNotes      AdminNote[]
 
   joinRequests    JoinRequest[]
+
+  status          AccountStatus @default(ACTIVE)
 
   @@index([presidentEmail])
   @@index([college])
@@ -786,8 +817,64 @@ model AdminNote {
   targetClub   Club?   @relation(fields: [targetClubId], references: [id])
   targetClubId String? @db.ObjectId
 
-  targetDonor   Donor?  @relation(fields: [targetDonorId], references: [id])
+  targetDonor   Donor?  @relation("DonorNotes", fields: [targetDonorId], references: [id])
   targetDonorId String? @db.ObjectId
+}
+
+// -----------------------------
+// CAMPAIGN TRANSFER MODEL
+// -----------------------------
+model CampaignTransfer {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  campaignId        String   @db.ObjectId
+  fromUserId        String   @db.ObjectId
+  toUserId          String   @db.ObjectId
+
+  campaign          UserProject @relation("ProjectTransfers", fields: [campaignId], references: [id])
+  originalOwner     User        @relation("OriginalOwnerTransfers", fields: [fromUserId], references: [id])
+  targetUser        User        @relation("TargetUserTransfers", fields: [toUserId], references: [id])
+
+  status            TransferStatus @default(PENDING_ACCEPTANCE)
+
+  initiatedBy       String? @db.ObjectId
+  initiatorRole     String?
+
+  presidentId       String? @db.ObjectId
+  adminId           String? @db.ObjectId
+
+  acceptedBy        String? @db.ObjectId
+  rejectedBy        String? @db.ObjectId
+  rejectedRole      String?
+
+  requestNote       String?
+  presidentNote     String?
+  adminNote         String?
+  targetNote        String?
+
+  rejectionReason   String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  expiredAt         DateTime?
+
+  targetAcceptedAt  DateTime?
+  targetRejectedAt  DateTime?
+
+  expiresAt         DateTime
+  currentStageExpiresAt DateTime
+
+  amountAtTransfer  Float?
+
+  reminderCount     Int @default(0)
+  lastReminderSentAt DateTime?
+
+  @@index([campaignId, status])
+  @@index([status, expiresAt])
+  @@index([createdAt])
 }
 
 // ══════════════════════════════════════════════════════
